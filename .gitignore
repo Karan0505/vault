@@ -9,7 +9,7 @@ out/
 build/
 
 # env
-.env*.local
+.env.example *
 
 # misc
 .DS_Store
