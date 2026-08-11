@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 import { generateVariantMatrix } from "../src/lib/variants";
 
 const prisma = new PrismaClient();
@@ -13,10 +14,14 @@ async function main() {
     { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" as const, password: "supportpassword" },
   ];
   for (const u of staffUsers) {
+    const passwordHash = await bcrypt.hash(u.password, 12);
     await prisma.user.upsert({
       where: { email: u.email },
-      update: { password: u.password, staffRole: u.staffRole, name: u.name },
-      create: u,
+      update: { password: passwordHash, staffRole: u.staffRole, name: u.name },
+      create: {
+        ...u,
+        password: passwordHash,
+      },
     });
   }
 
