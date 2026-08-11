@@ -1,0 +1,241 @@
+// VAULT — Phase 1 schema: catalogue and data model.
+// Money is stored in integer minor units (cents). Currency is explicit
+// on every amount. There is no Float price column anywhere in this file
+// on purpose — see docs/decisions/0002-money-as-integer-minor-units.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Staff / auth (Auth.js v5 adapter tables land in phase 2; this is the
+// minimal role-bearing User needed so Media/Audit can reference an actor).
+// ---------------------------------------------------------------------------
+
+enum StaffRole {
+  admin
+  fulfilment
+  support
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  password  String?
+  staffRole StaffRole?
+  createdAt DateTime  @default(now())
+
+  uploadedMedia Media[]
+
+  @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue hierarchy
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  position    Int        @default(0)
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryToCategory")
+
+  products Product[]
+
+  createdAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Collection {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  isAutomatic Boolean  @default(false)
+  // For automatic collections: a small serialized rule set (e.g. category + tag).
+  // Kept as JSON rather than a bespoke rules engine — Phase 1 scope only needs
+  // manual curation; automatic rules are evaluated at read time in lib/collections.ts.
+  rules       Json?
+
+  products CollectionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("collections")
+}
+
+model CollectionProduct {
+  collectionId String
+  productId    String
+  position     Int    @default(0)
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, productId])
+  @@map("collection_products")
+}
+
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  description String?
+  status      ProductStatus @default(draft)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // The set of option dimensions this product varies by, e.g. ["Size", "Colour"].
+  // Order matters: it drives the order variant selectors render in.
+  optionNames String[]
+
+  variants    ProductVariant[]
+  media       Media[]
+  collections CollectionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Tag-based ISR revalidation keys off slug + category slug; see lib/revalidate.ts.
+  @@index([categoryId])
+  @@index([status])
+  @@map("products")
+}
+
+// A single point in the option matrix, e.g. { Size: "M", Colour: "Indigo" }.
+// Stored as JSON on the variant (not a normalized option-value table) because
+// Phase 1 only needs to render and validate combinations, not run cross-product
+// option analytics. See docs/decisions/0001-variant-options-as-json.md.
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku     String @unique
+  options Json // Record<string, string>, keys match Product.optionNames
+
+  // Money: integer minor units + explicit ISO 4217 currency. Never a Float.
+  priceAmount   Int
+  priceCurrency String @default("USD")
+
+  compareAtAmount Int?
+
+  isEnabled Boolean @default(true) // impossible/disabled combinations live here, not as 404s
+  position  Int     @default(0)
+
+  weightGrams Int?
+
+  inventoryItem InventoryItem?
+  priceListEntries PriceListEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory (levels only in Phase 1 — reservation + concurrency control is
+// Phase 2's job once checkout exists; the column shapes below anticipate it).
+// ---------------------------------------------------------------------------
+
+model InventoryItem {
+  id        String @id @default(cuid())
+  variantId String @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  onHand   Int @default(0)
+  reserved Int @default(0) // populated starting Phase 2; kept here so the model doesn't migrate later
+  // Optimistic concurrency column for the Phase 2 reservation system.
+  version  Int @default(0)
+
+  lowStockThreshold Int @default(5)
+
+  updatedAt DateTime @updatedAt
+
+  @@map("inventory_items")
+}
+
+// ---------------------------------------------------------------------------
+// Media
+// ---------------------------------------------------------------------------
+
+enum MediaKind {
+  image
+  video
+}
+
+model Media {
+  id       String    @id @default(cuid())
+  kind     MediaKind @default(image)
+  url      String
+  alt      String    @default("")
+  width    Int?
+  height   Int?
+  position Int       @default(0)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("media")
+}
+
+// ---------------------------------------------------------------------------
+// Price lists (per-region / promotional pricing groundwork for later phases)
+// ---------------------------------------------------------------------------
+
+model PriceList {
+  id       String  @id @default(cuid())
+  name     String
+  currency String
+  isActive Boolean @default(true)
+
+  entries PriceListEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("price_lists")
+}
+
+model PriceListEntry {
+  id          String @id @default(cuid())
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  amount Int // integer minor units, currency inherited from PriceList
+
+  @@unique([priceListId, variantId])
+  @@map("price_list_entries")
+}
