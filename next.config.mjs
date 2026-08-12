@@ -6,9 +6,9 @@ const nextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
+      { protocol: "https", hostname: "*.ufs.sh" },
       { protocol: "https", hostname: "utfs.io" },
       { protocol: "https", hostname: "*.utfs.io" },
-      { protocol: "https", hostname: "*.ufs.sh" },
       { protocol: "https", hostname: "*.s3.amazonaws.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],

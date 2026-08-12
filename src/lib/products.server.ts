@@ -209,7 +209,7 @@ export function getProductBySlugForStorefront(slug: string) {
         },
       }),
     [`product-by-slug:${slug}`],
-    { tags: [cacheTags.product(slug), cacheTags.productList()], revalidate: 3600 }
+    { tags: [cacheTags.product(slug), cacheTags.productList()], revalidate: 10 }
   )();
 }
 

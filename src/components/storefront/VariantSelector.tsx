@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/money";
 import { StockBadge } from "./StockBadge";
+import { AddToCartButton } from "./AddToCartButton";
 import {
   findVariant,
   getSelectableValues,
@@ -47,7 +48,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
     (dimension: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set(dimension.toLowerCase(), value);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+      router.replace((`${pathname}?${params.toString()}`) as any, { scroll: false });
     },
     [pathname, router, searchParams]
   );
@@ -123,6 +124,11 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
           </p>
         )}
       </motion.div>
+
+      <AddToCartButton
+        variantId={resolvedVariant?.id ?? null}
+        disabled={!resolvedVariant || resolvedVariant.onHand <= 0}
+      />
     </div>
   );
 }

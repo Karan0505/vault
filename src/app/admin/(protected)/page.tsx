@@ -9,13 +9,15 @@ async function getStats() {
     prisma.product.count({ where: { status: "active" } }),
     prisma.category.count(),
     prisma.inventoryItem.findMany({
-      where: { onHand: { gt: 0 } },
+      orderBy: { onHand: "asc" },
       include: { variant: { include: { product: true } } },
-      take: 200,
+      take: 500,
     }),
   ]);
 
-  const lowStockVariants = lowStock.filter((item) => item.onHand <= item.lowStockThreshold);
+  const lowStockVariants = lowStock.filter(
+    (item) => item.onHand <= Math.max(5, item.lowStockThreshold)
+  );
 
   return { productCount, activeCount, categoryCount, lowStockVariants };
 }
@@ -50,22 +52,27 @@ export default async function AdminDashboardPage() {
           <p className="font-display text-lg text-ink-100">Low stock</p>
           <Badge tone="amber">{lowStockVariants.length} variants</Badge>
         </div>
-        <div className="mt-4 flex flex-col divide-y divide-ink-800">
+        <div className="mt-4 flex max-h-[420px] flex-col divide-y divide-ink-800 overflow-y-auto pr-1">
           {lowStockVariants.length === 0 && (
             <p className="py-6 text-sm text-ink-500">Nothing below threshold right now.</p>
           )}
-          {lowStockVariants.slice(0, 8).map((item) => (
-            <Link
-              key={item.id}
-              href={`/admin/products/${item.variant.productId}/edit`}
-              className="flex items-center justify-between py-3 text-sm transition-colors hover:text-brass-300"
-            >
-              <span className="text-ink-200">{item.variant.product.title}</span>
-              <span className="font-mono text-xs text-ink-500">
-                {item.variant.sku} · {item.onHand} on hand
-              </span>
-            </Link>
-          ))}
+          {lowStockVariants.map((item) => {
+            const optionsText = Object.values(item.variant.options as Record<string, string>).join(" / ");
+            return (
+              <Link
+                key={item.id}
+                href={`/admin/products/${item.variant.productId}/edit`}
+                className="flex items-center justify-between py-3 text-sm transition-colors hover:text-brass-300"
+              >
+                <span className="text-ink-200">
+                  {item.variant.product.title} {optionsText ? `(${optionsText})` : ""}
+                </span>
+                <span className="font-mono text-xs text-ink-500">
+                  {item.variant.sku} · {item.onHand <= 0 ? "Out of stock" : `${item.onHand} on hand`}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </Card>
 

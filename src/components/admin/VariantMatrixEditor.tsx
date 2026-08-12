@@ -197,9 +197,7 @@ export function VariantMatrixEditor({
                 <th className="px-4 py-3 font-medium">SKU</th>
                 <th className="px-4 py-3 font-medium">Price (minor units)</th>
                 <th className="px-4 py-3 font-medium">On hand</th>
-                <th className="px-4 py-3 text-center font-medium uppercase tracking-wider text-ink-400">
-                  Enabled
-                </th>
+                <th className="px-4 py-3 font-medium">Enabled</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-ink-800">
@@ -242,22 +240,21 @@ export function VariantMatrixEditor({
                       className="w-20 rounded-md border border-ink-700 bg-ink-900 px-2 py-1.5 font-mono text-xs text-ink-100 focus:border-brass-400 focus:outline-none"
                     />
                   </td>
-                  <td className="px-4 py-3 text-center">
+                  <td className="px-4 py-3">
                     <button
                       type="button"
                       role="switch"
                       aria-checked={variant.isEnabled}
                       onClick={() => updateVariant(index, { isEnabled: !variant.isEnabled })}
-                      title={variant.isEnabled ? "Variant Enabled" : "Variant Disabled"}
                       className={cn(
-                        "relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brass-400/50 focus:ring-offset-2 focus:ring-offset-ink-950",
-                        variant.isEnabled ? "bg-signal-green" : "bg-ink-700 hover:bg-ink-600"
+                        "relative h-5 w-9 rounded-full transition-colors",
+                        variant.isEnabled ? "bg-signal-green/70" : "bg-ink-700"
                       )}
                     >
                       <span
                         className={cn(
-                          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out",
-                          variant.isEnabled ? "translate-x-5" : "translate-x-0"
+                          "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-ink-50 transition-transform",
+                          variant.isEnabled ? "translate-x-4" : "translate-x-0"
                         )}
                       />
                     </button>

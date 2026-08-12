@@ -1,5 +1,5 @@
 {
-  "name": "vault-phase1",
+  "name": "vault",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -8,15 +8,21 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "npm run test:unit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:concurrency": "vitest run --config vitest.integration.config.ts tests/concurrency",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
+    "@stripe/react-stripe-js": "^2.9.0",
+    "@stripe/stripe-js": "^4.8.0",
+    "@types/bcryptjs": "^2.4.6",
     "@uploadthing/react": "^7.1.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.9",
     "lucide-react": "^0.451.0",
@@ -24,11 +30,11 @@
     "next-auth": "5.0.0-beta.25",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "stripe": "^17.2.1",
     "uploadthing": "^7.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20.14.9",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",

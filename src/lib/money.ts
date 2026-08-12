@@ -57,10 +57,11 @@ export function addMoney(a: Money, b: Money): Money {
 }
 
 /**
- * Splits an integer amount into `parts` integer shares that sum back to
- * the original amount exactly, largest-remainder first. Used for
- * discount-across-line-items and split-refund math where naive division
- * leaves a remainder cent that must land somewhere deterministic.
+ * Splits an integer amount into `parts` equal integer shares that sum
+ * back to the original amount exactly, largest-remainder first. Used
+ * where shares are meant to be equal (e.g. splitting a flat refund
+ * across identical units) — see splitProportionally below for the
+ * weighted case (e.g. a discount spread by each line's subtotal share).
  */
 export function splitEvenly(amount: number, parts: number): number[] {
   assertIntegerMinorUnits(amount, "amount");
@@ -68,4 +69,39 @@ export function splitEvenly(amount: number, parts: number): number[] {
   const base = Math.floor(amount / parts);
   const remainder = amount - base * parts;
   return Array.from({ length: parts }, (_, i) => base + (i < remainder ? 1 : 0));
+}
+
+/**
+ * Splits an integer amount across `weights` proportionally (largest-
+ * remainder method), summing back to the original amount exactly. Used
+ * for distributing a cart-level discount across line items by each
+ * line's share of the subtotal — unlike splitEvenly, shares aren't
+ * equal, they're weighted, but the remainder cent still has to land
+ * somewhere deterministic.
+ */
+export function splitProportionally(amount: number, weights: readonly number[]): number[] {
+  assertIntegerMinorUnits(amount, "amount");
+  if (weights.length === 0) return [];
+  if (weights.some((w) => w < 0)) throw new Error("weights must be non-negative");
+
+  const weightSum = weights.reduce((sum, w) => sum + w, 0);
+  if (weightSum === 0) return weights.map(() => 0);
+
+  const raw = weights.map((w) => (amount * w) / weightSum);
+  const floors = raw.map(Math.floor);
+  const allocated = floors.reduce((sum, f) => sum + f, 0);
+  let remainder = amount - allocated;
+
+  const order = raw
+    .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+    .sort((a, b) => b.fraction - a.fraction);
+
+  const result = [...floors];
+  for (const { index } of order) {
+    if (remainder <= 0) break;
+    result[index] = (result[index] ?? 0) + 1;
+    remainder -= 1;
+  }
+
+  return result;
 }

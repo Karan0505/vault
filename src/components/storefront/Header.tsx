@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CartCountBadge } from "./CartCountBadge";
 
 export function Header() {
   return (
@@ -26,10 +27,11 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className="flex items-center gap-4 text-sm text-ink-300">
+        <div className="flex items-center gap-5 text-sm text-ink-300">
           <Link href="/admin" className="eyebrow hover:text-brass-300">
             Ops console
           </Link>
+          <CartCountBadge />
         </div>
       </div>
     </header>

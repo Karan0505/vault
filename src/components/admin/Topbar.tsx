@@ -1,6 +1,6 @@
+import { signOut } from "@/lib/auth";
 import { Badge } from "@/components/ui/Badge";
 import { LogOut } from "lucide-react";
-import { signOut } from "@/lib/auth";
 
 export function Topbar({ userEmail, staffRole }: { userEmail: string; staffRole: string }) {
   async function handleSignOut() {
@@ -14,18 +14,16 @@ export function Topbar({ userEmail, staffRole }: { userEmail: string; staffRole:
         Catalogue and operations — every write here revalidates the storefront in seconds.
       </p>
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2.5 rounded-full border border-ink-800 bg-ink-900/80 py-1 pl-1.5 pr-3">
-          <Badge tone="brass">{staffRole || "staff"}</Badge>
-          <span className="font-mono text-xs text-ink-200">{userEmail}</span>
-        </div>
+        <Badge tone="brass">{staffRole}</Badge>
+        <span className="text-sm text-ink-300">{userEmail}</span>
         <form action={handleSignOut}>
           <button
             type="submit"
-            className="flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs font-medium text-ink-300 transition-colors hover:border-signal-red/50 hover:bg-signal-red/10 hover:text-signal-red focus:outline-none"
-            title="Sign out of admin dashboard"
+            className="flex items-center gap-1.5 rounded-lg border border-ink-700 bg-ink-900 px-3 py-1.5 text-xs text-ink-300 transition-colors hover:border-ink-600 hover:bg-ink-800 hover:text-ink-100"
+            title="Sign out of console"
           >
             <LogOut size={14} />
-            <span>Exit</span>
+            <span>Sign out</span>
           </button>
         </form>
       </div>

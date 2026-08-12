@@ -1,4 +1,5 @@
-// VAULT — Phase 1 schema: catalogue and data model.
+// VAULT schema — Phase 1 (catalogue) + Phase 2 (cart, inventory
+// reservation, checkout, orders, discounts).
 // Money is stored in integer minor units (cents). Currency is explicit
 // on every amount. There is no Float price column anywhere in this file
 // on purpose — see docs/decisions/0002-money-as-integer-minor-units.md.
@@ -27,11 +28,14 @@ model User {
   id        String    @id @default(cuid())
   email     String    @unique
   name      String?
-  password  String?
+  password  String?   // Hashed password if password auth is used
   staffRole StaffRole?
   createdAt DateTime  @default(now())
 
   uploadedMedia Media[]
+  carts               Cart[]
+  orders              Order[]
+  discountRedemptions DiscountRedemption[]
 
   @@map("users")
 }
@@ -148,6 +152,8 @@ model ProductVariant {
 
   inventoryItem InventoryItem?
   priceListEntries PriceListEntry[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -172,6 +178,8 @@ model InventoryItem {
   version  Int @default(0)
 
   lowStockThreshold Int @default(5)
+
+  reservations Reservation[]
 
   updatedAt DateTime @updatedAt
 
@@ -238,4 +246,230 @@ model PriceListEntry {
 
   @@unique([priceListId, variantId])
   @@map("price_list_entries")
+}
+
+// =============================================================================
+// PHASE 2 — cart, inventory reservation, checkout, orders, discounts
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Cart. A guest cart is identified by an opaque session token in a cookie;
+// a signed-in cart is identified by userId. Logging in merges the guest
+// cart into the user's cart (see lib/cart.server.ts mergeGuestCartIntoUser).
+// CartItem stores ONLY variantId + quantity — never a price. Every read
+// recomputes price from ProductVariant.priceAmount at read time, which is
+// what makes a tampered client-supplied price a no-op. See
+// docs/decisions/0006-server-authoritative-cart.md.
+// ---------------------------------------------------------------------------
+
+model Cart {
+  id           String   @id @default(cuid())
+  sessionToken String?  @unique // set for guest carts, null once merged into a user
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items        CartItem[]
+  reservations Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  cartId    String
+  cart      Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+// ---------------------------------------------------------------------------
+// Reservation. Created only when a shopper enters checkout (never on
+// add-to-cart). Holds a claim on InventoryItem.reserved with a TTL;
+// SELECT ... FOR UPDATE on the InventoryItem row is what makes the
+// "twenty parallel checkouts, one unit of stock, exactly one winner"
+// guarantee hold. See docs/decisions/0007-inventory-reservation-locking.md.
+// ---------------------------------------------------------------------------
+
+model Reservation {
+  id              String   @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  cartId          String?
+  cart            Cart?    @relation(fields: [cartId], references: [id], onDelete: SetNull)
+  orderId         String?
+  order           Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  quantity  Int
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([expiresAt])
+  @@map("reservations")
+}
+
+// ---------------------------------------------------------------------------
+// Orders. State machine enforced in lib/orders.ts — illegal transitions are
+// rejected in the domain layer, not hidden behind a disabled button. Money
+// on every line is captured at the moment checkout started, so a later
+// price edit in admin never changes a placed order's total.
+// ---------------------------------------------------------------------------
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  delivered
+  cancelled
+  refunded
+}
+
+model Order {
+  id     String      @id @default(cuid())
+  number String      @unique // human-readable, e.g. VAULT-100042
+  status OrderStatus @default(pending)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email  String // captured even for guest checkout
+  guestToken String? // 64-char crypto token for guest order tracking access
+
+  currency String
+
+  subtotalAmount Int
+  discountAmount Int @default(0)
+  shippingAmount Int @default(0)
+  taxAmount      Int @default(0)
+  totalAmount    Int
+
+  discountId String?
+  discount   Discount? @relation(fields: [discountId], references: [id], onDelete: SetNull)
+
+  stripePaymentIntentId String?  @unique
+  reservationExpiresAt  DateTime // checkout-entry TTL; once paid, reservations convert to real stock decrement
+
+  items        OrderItem[]
+  reservations Reservation[]
+  refunds      Refund[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  // Snapshot of the variant at order time — title/SKU/options/price never
+  // drift even if the product is later edited or deleted.
+  titleSnapshot   String
+  skuSnapshot     String
+  optionsSnapshot Json
+
+  unitAmount Int
+  quantity   Int
+  lineTotal  Int // unitAmount * quantity, minus this line's share of the discount
+
+  @@map("order_items")
+}
+
+model Refund {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  amount              Int
+  reason              String?
+  stripeRefundId      String? @unique
+  restocked           Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("refunds")
+}
+
+// ---------------------------------------------------------------------------
+// Discounts. Percentage/fixed/free-shipping, with usage limits. The
+// remainder-cent problem when a percentage discount is spread across
+// multiple lines is handled by splitEvenly() in lib/money.ts — see
+// docs/decisions/0002 and 0008.
+// ---------------------------------------------------------------------------
+
+enum DiscountType {
+  percentage
+  fixed_amount
+  free_shipping
+}
+
+model Discount {
+  id   String @id @default(cuid())
+  code String @unique
+
+  type  DiscountType
+  value Int // percentage: 0-100. fixed_amount: integer minor units. free_shipping: ignored.
+
+  currency String? // required when type = fixed_amount
+
+  usageLimit       Int? // total redemptions allowed, null = unlimited
+  perCustomerLimit Int? @default(1)
+  minimumSpend     Int? // integer minor units, same currency as the order
+
+  startsAt  DateTime?
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+
+  redemptions DiscountRedemption[]
+  orders      Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("discounts")
+}
+
+model DiscountRedemption {
+  id         String   @id @default(cuid())
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId    String   @unique
+  createdAt  DateTime @default(now())
+
+  @@map("discount_redemptions")
+}
+
+// ---------------------------------------------------------------------------
+// Stripe webhook idempotency. The event id is the natural idempotency key —
+// Stripe guarantees it's unique and stable across redeliveries. Inserting it
+// first, inside the same transaction that processes the event, is what makes
+// "replay this event five times -> one order, one stock decrement" hold even
+// under concurrent duplicate delivery. See docs/decisions/0009.
+// ---------------------------------------------------------------------------
+
+model StripeEvent {
+  id          String   @id // Stripe's event.id, used as-is — no surrogate key
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("stripe_events")
 }

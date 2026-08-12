@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import { hashSync } from "bcryptjs";
 import { generateVariantMatrix } from "../src/lib/variants";
 
 const prisma = new PrismaClient();
@@ -8,20 +8,18 @@ const PLACEHOLDER_IMAGE = (seed: string) => `https://images.unsplash.com/${seed}
 
 async function main() {
   console.log("Seeding staff users…");
-  const staffUsers = [
-    { email: "admin@vault.internal", name: "Ada (Admin)", staffRole: "admin" as const, password: "adminpassword" },
-    { email: "fulfilment@vault.internal", name: "Femi (Fulfilment)", staffRole: "fulfilment" as const, password: "fulfilmentpassword" },
-    { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" as const, password: "supportpassword" },
+  const hashedPassword = hashSync("admin123", 10);
+  const staff = [
+    { email: "admin@vault.internal", name: "Ada (Admin)", staffRole: "admin" as const },
+    { email: "fulfilment@vault.internal", name: "Femi (Fulfilment)", staffRole: "fulfilment" as const },
+    { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" as const },
   ];
-  for (const u of staffUsers) {
-    const passwordHash = await bcrypt.hash(u.password, 12);
+
+  for (const s of staff) {
     await prisma.user.upsert({
-      where: { email: u.email },
-      update: { password: passwordHash, staffRole: u.staffRole, name: u.name },
-      create: {
-        ...u,
-        password: passwordHash,
-      },
+      where: { email: s.email },
+      update: { password: hashedPassword, staffRole: s.staffRole, name: s.name },
+      create: { email: s.email, name: s.name, staffRole: s.staffRole, password: hashedPassword },
     });
   }
 
@@ -59,16 +57,18 @@ async function main() {
     },
   });
 
-  type ProductSeed = {
+  console.log("Seeding products…");
+
+  interface ProductSeed {
     title: string;
     slug: string;
     description: string;
     categoryId: string;
     optionNames: string[];
-    optionValues: Record<string, readonly string[]>;
+    optionValues: Record<string, string[]>;
     basePriceAmount: number;
     images: string[];
-  };
+  }
 
   const productSeeds: ProductSeed[] = [
     {
@@ -180,6 +180,34 @@ async function main() {
       });
     }
   }
+
+  console.log("Seeding discount codes…");
+  await prisma.discount.upsert({
+    where: { code: "WELCOME10" },
+    update: {},
+    create: {
+      code: "WELCOME10",
+      type: "percentage",
+      value: 10,
+      usageLimit: null,
+      perCustomerLimit: 1,
+      minimumSpend: null,
+      isActive: true,
+    },
+  });
+  await prisma.discount.upsert({
+    where: { code: "FREESHIP" },
+    update: {},
+    create: {
+      code: "FREESHIP",
+      type: "free_shipping",
+      value: 0,
+      usageLimit: 100,
+      perCustomerLimit: null,
+      minimumSpend: 10000,
+      isActive: true,
+    },
+  });
 
   console.log("Seed complete.");
 }

@@ -48,3 +48,27 @@ export const categoryInputSchema = z.object({
 });
 
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 2 — cart and checkout
+// ---------------------------------------------------------------------------
+
+export const addCartItemSchema = z.object({
+  variantId: z.string().min(1),
+  quantity: z.number().int().positive().max(20),
+});
+
+export const updateCartItemSchema = z.object({
+  quantity: z.number().int().min(0).max(20),
+});
+
+export const applyDiscountSchema = z.object({
+  code: z.string().min(1),
+});
+
+export const checkoutInputSchema = z.object({
+  email: z.string().email(),
+  discountCode: z.string().optional(),
+});
+
+export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
