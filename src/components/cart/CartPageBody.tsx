@@ -109,7 +109,7 @@ export function CartPageBody() {
         <Button
           size="lg"
           disabled={!canCheckout}
-          onClick={() => router.push((`/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`) as any)}
+          onClick={() => router.push((`/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`) as Parameters<typeof router.push>[0])}
         >
           Checkout
         </Button>

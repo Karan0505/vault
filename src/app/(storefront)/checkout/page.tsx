@@ -76,7 +76,7 @@ async function CheckoutSummary({ discountCode }: { discountCode?: string }) {
         </div>
       </div>
       <p className="text-xs text-ink-600">
-        Shipping, discounts, and the final total are computed server-side from exactly what's in your cart right now.
+        Shipping, discounts, and the final total are computed server-side from exactly what&apos;s in your cart right now.
       </p>
     </div>
   );

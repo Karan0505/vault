@@ -1,5 +1,6 @@
 {
   "extends": ["next/core-web-vitals"],
+  "plugins": ["@typescript-eslint"],
   "overrides": [
     {
       "files": ["src/**/*.ts", "src/**/*.tsx"],

@@ -48,7 +48,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
     (dimension: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString());
       params.set(dimension.toLowerCase(), value);
-      router.replace((`${pathname}?${params.toString()}`) as any, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}` as Parameters<typeof router.replace>[0], { scroll: false });
     },
     [pathname, router, searchParams]
   );
