@@ -13,6 +13,11 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     testTimeout: 20_000,
     hookTimeout: 20_000,
+    server: {
+      deps: {
+        inline: ["next-auth", "@auth/core"],
+      },
+    },
   },
   resolve: {
     alias: {
