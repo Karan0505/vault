@@ -107,12 +107,21 @@ describe.skipIf(!hasDb)("discount usage limit concurrency", () => {
   });
 
   afterAll(async () => {
-    await prisma.discount.deleteMany({
-      where: { id: { in: [globalDiscountId, customerDiscountId] } },
-    }).catch(() => undefined);
-    await prisma.product.delete({ where: { id: productId } }).catch(() => undefined);
-    await prisma.category.delete({ where: { id: categoryId } }).catch(() => undefined);
-    await prisma.user.delete({ where: { id: userId } }).catch(() => undefined);
+    const discountIds = [globalDiscountId, customerDiscountId].filter(Boolean);
+    if (discountIds.length > 0) {
+      await prisma.discount.deleteMany({
+        where: { id: { in: discountIds } },
+      }).catch(() => undefined);
+    }
+    if (productId) {
+      await prisma.product.delete({ where: { id: productId } }).catch(() => undefined);
+    }
+    if (categoryId) {
+      await prisma.category.delete({ where: { id: categoryId } }).catch(() => undefined);
+    }
+    if (userId) {
+      await prisma.user.delete({ where: { id: userId } }).catch(() => undefined);
+    }
   });
 
   it("lets exactly one of ten concurrent checkouts redeem a discount code with usageLimit: 1", async () => {

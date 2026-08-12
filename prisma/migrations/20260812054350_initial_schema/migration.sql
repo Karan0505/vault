@@ -18,6 +18,7 @@ CREATE TABLE "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "name" TEXT,
+    "password" TEXT,
     "staffRole" "StaffRole",
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -188,6 +189,7 @@ CREATE TABLE "orders" (
     "status" "OrderStatus" NOT NULL DEFAULT 'pending',
     "userId" TEXT,
     "email" TEXT NOT NULL,
+    "guestToken" TEXT,
     "currency" TEXT NOT NULL,
     "subtotalAmount" INTEGER NOT NULL,
     "discountAmount" INTEGER NOT NULL DEFAULT 0,
