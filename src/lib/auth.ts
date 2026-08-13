@@ -40,7 +40,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const validation = validatePassword(password);
         if (!validation.isValid) return null;
 
-        const user = (await prisma.user.findUnique({ where: { email } })) as any;
+        const user = (await prisma.user.findUnique({ where: { email } })) as {
+          id: string;
+          email: string;
+          name: string | null;
+          staffRole: StaffRole | null;
+          passwordHash: string | null;
+        } | null;
         if (!user || !user.staffRole || !user.passwordHash) return null;
 
         const isPasswordMatch = await verifyPassword(password, user.passwordHash);

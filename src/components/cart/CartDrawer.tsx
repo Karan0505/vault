@@ -21,7 +21,7 @@ export function CartDrawer() {
     if (isOpen) {
       close();
     }
-  }, [pathname]);
+  }, [pathname, isOpen, close]);
 
   // Focus management on open/close — this is the "focus management when
   // the drawer opens and closes" the brief asks for, not just a visual

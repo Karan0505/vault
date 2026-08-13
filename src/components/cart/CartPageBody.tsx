@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import type { Route } from "next";
 import { motion, AnimatePresence } from "framer-motion";
 import { CartLineItem } from "./CartLineItem";
 import { DiscountCodeForm } from "./DiscountCodeForm";
@@ -123,7 +124,7 @@ export function CartPageBody({ isDrawer }: CartPageBodyProps) {
           disabled={!canCheckout}
           onClick={() => {
             const checkoutUrl = discount ? `/checkout?discount=${encodeURIComponent(discount.code)}` : "/checkout";
-            router.push(checkoutUrl as any);
+            router.push(checkoutUrl as Route);
           }}
         >
           Checkout
