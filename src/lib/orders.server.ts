@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { getCartView, decrementPurchasedCartItems } from "@/lib/cart.server";
 import { reserveCartLines, releaseReservations, commitReservations, InsufficientStockError } from "@/lib/inventory.server";
-import { applyDiscountCode } from "@/lib/discounts.server";
+import { applyDiscountCode, DiscountNotFoundError, DiscountUsageLimitError } from "@/lib/discounts.server";
 import { assertTransition } from "@/lib/orders";
 import { splitProportionally } from "@/lib/money";
 
@@ -95,6 +95,34 @@ export async function createCheckoutSession(params: {
     });
 
     const order = await prisma.$transaction(async (tx) => {
+      if (discountId) {
+        const [lockedDiscount] = await tx.$queryRaw<
+          Array<{ usageLimit: number | null; perCustomerLimit: number | null; isActive: boolean }>
+        >`SELECT "usageLimit", "perCustomerLimit", "isActive" FROM "discounts" WHERE id = ${discountId} FOR UPDATE`;
+
+        if (!lockedDiscount || !lockedDiscount.isActive) {
+          throw new DiscountNotFoundError(params.discountCode ?? "");
+        }
+
+        if (lockedDiscount.usageLimit !== null) {
+          const totalCount = await tx.discountRedemption.count({
+            where: { discountId },
+          });
+          if (totalCount >= lockedDiscount.usageLimit) {
+            throw new DiscountUsageLimitError(`Code "${params.discountCode}" has reached its usage limit`);
+          }
+        }
+
+        if (params.userId && lockedDiscount.perCustomerLimit !== null) {
+          const userCount = await tx.discountRedemption.count({
+            where: { discountId, userId: params.userId },
+          });
+          if (userCount >= lockedDiscount.perCustomerLimit) {
+            throw new DiscountUsageLimitError(`Code "${params.discountCode}" has already been used on this account`);
+          }
+        }
+      }
+
       const created = await tx.order.create({
         data: {
           number: generateOrderNumber(),

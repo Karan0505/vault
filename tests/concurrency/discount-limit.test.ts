@@ -109,9 +109,17 @@ describe.skipIf(!hasDb)("discount usage limit concurrency", () => {
   afterAll(async () => {
     const discountIds = [globalDiscountId, customerDiscountId].filter(Boolean);
     if (discountIds.length > 0) {
+      await prisma.discountRedemption.deleteMany({
+        where: { discountId: { in: discountIds } },
+      }).catch(() => undefined);
       await prisma.discount.deleteMany({
         where: { id: { in: discountIds } },
       }).catch(() => undefined);
+    }
+    if (variantId) {
+      await prisma.orderItem.deleteMany({ where: { variantId } }).catch(() => undefined);
+      await prisma.reservation.deleteMany({ where: { inventoryItem: { variantId } } }).catch(() => undefined);
+      await prisma.order.deleteMany({ where: { items: { some: { variantId } } } }).catch(() => undefined);
     }
     if (productId) {
       await prisma.product.delete({ where: { id: productId } }).catch(() => undefined);
