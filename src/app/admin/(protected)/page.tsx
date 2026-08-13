@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 
-export async function getLowStockVariants() {
+async function getLowStockVariants() {
   return prisma.inventoryItem.findMany({
     where: {
       onHand: { gte: 1, lte: 5 },
