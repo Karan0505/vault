@@ -354,6 +354,7 @@ model Order {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   email  String // captured even for guest checkout
+  guestToken String?
 
   currency String
 

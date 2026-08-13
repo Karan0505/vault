@@ -197,7 +197,7 @@ async function main() {
   }
 
   console.log("Seeding discount codes…");
-  await prisma.discountCode.upsert({
+  await prisma.discount.upsert({
     where: { code: "WELCOME10" },
     update: {},
     create: {
@@ -210,7 +210,7 @@ async function main() {
       isActive: true,
     },
   });
-  await prisma.discountCode.upsert({
+  await prisma.discount.upsert({
     where: { code: "FREESHIP" },
     update: {},
     create: {

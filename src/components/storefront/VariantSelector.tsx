@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import type { Route } from "next";
 import { motion } from "framer-motion";
 import { formatMoney } from "@/lib/money";
 import { StockBadge } from "./StockBadge";
@@ -56,7 +57,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
       const targetUrl = `${pathname}?${params.toString()}`;
 
       startTransition(() => {
-        router.replace(targetUrl, { scroll: false });
+        router.replace(targetUrl as Route, { scroll: false });
       });
     },
     [pathname, router, searchParams]

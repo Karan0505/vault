@@ -103,3 +103,21 @@ export const STAFF_ROLES: readonly StaffRole[] = ["admin", "fulfilment", "suppor
 export function requireStaff(role: StaffRole | null): role is StaffRole {
   return role !== null && STAFF_ROLES.includes(role);
 }
+
+export function verifyOrderAccess(
+  order: { userId?: string | null; guestToken?: string | null },
+  session: { user?: { id?: string; staffRole?: StaffRole | null } | null } | null,
+  token?: string | null
+): boolean {
+  if (session?.user?.staffRole && requireStaff(session.user.staffRole)) {
+    return true;
+  }
+  if (order.userId) {
+    return session?.user?.id === order.userId;
+  }
+  if (order.guestToken) {
+    if (!token) return false;
+    return order.guestToken === token;
+  }
+  return false;
+}

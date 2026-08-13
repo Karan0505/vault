@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { cn } from "@/lib/utils";
 import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
 import type { Facets } from "@/lib/search.server";
@@ -16,7 +17,7 @@ function FacetRow({
 }) {
   return (
     <Link
-      href={href}
+      href={href as Route}
       className={cn(
         "flex items-center justify-between rounded-lg px-2.5 py-1.5 text-sm transition-colors",
         active ? "bg-brass-400/10 text-brass-300" : "text-ink-300 hover:bg-ink-800/60 hover:text-ink-100",
@@ -70,7 +71,7 @@ export function FacetSidebar({ state, facets }: { state: ParsedSearchState; face
             {facets.sizes.map((facet) => (
               <Link
                 key={facet.value}
-                href={buildSearchHref(state, { size: state.size === facet.value ? null : facet.value })}
+                href={buildSearchHref(state, { size: state.size === facet.value ? null : facet.value }) as Route}
                 aria-current={state.size === facet.value}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs transition-colors",
@@ -94,7 +95,7 @@ export function FacetSidebar({ state, facets }: { state: ParsedSearchState; face
             {facets.colours.map((facet) => (
               <Link
                 key={facet.value}
-                href={buildSearchHref(state, { colour: state.colour === facet.value ? null : facet.value })}
+                href={buildSearchHref(state, { colour: state.colour === facet.value ? null : facet.value }) as Route}
                 aria-current={state.colour === facet.value}
                 className={cn(
                   "rounded-full border px-3 py-1 text-xs transition-colors",
