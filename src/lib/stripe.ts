@@ -10,6 +10,6 @@ if (!secretKey && process.env.NODE_ENV === "production") {
 // Pinned so a Stripe account-level API version bump can't silently
 // change webhook payload shapes under us.
 export const stripe = new Stripe(secretKey ?? "sk_test_placeholder", {
-  apiVersion: "2025-02-24.acacia",
+  apiVersion: "2024-09-30.acacia",
   typescript: true,
 });

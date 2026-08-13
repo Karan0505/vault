@@ -1,6 +1,13 @@
 import { ProductCard, type ProductCardData } from "./ProductCard";
 
-export function ProductGrid({ products }: { products: ProductCardData[] }) {
+export function ProductGrid({
+  products,
+  priorityCount = 4,
+}: {
+  products: ProductCardData[];
+  /** How many leading cards to mark as the LCP priority image — the ones actually above the fold on first paint. Pass 0 for grids that render below the fold (e.g. recommendations). */
+  priorityCount?: number;
+}) {
   if (products.length === 0) {
     return (
       <div className="ledger-rule flex flex-col items-center gap-2 py-24 text-center">
@@ -16,7 +23,7 @@ export function ProductGrid({ products }: { products: ProductCardData[] }) {
     <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
       {products.map((product, index) => (
         <div key={product.slug} style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}>
-          <ProductCard product={product} />
+          <ProductCard product={product} priority={index < priorityCount} />
         </div>
       ))}
     </div>

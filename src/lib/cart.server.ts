@@ -1,4 +1,5 @@
 import "server-only";
+import type { Prisma } from "@prisma/client";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -36,16 +37,9 @@ export interface CartView {
  */
 export async function getOrCreateCart(userId: string | null): Promise<{ id: string }> {
   if (userId) {
-    const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-    if (userExists) {
-      const existing = await prisma.cart.findFirst({ where: { userId } });
-      if (existing) return existing;
-      try {
-        return await prisma.cart.create({ data: { userId } });
-      } catch {
-        // Fall back to guest cookie cart if foreign key error occurs
-      }
-    }
+    const existing = await prisma.cart.findFirst({ where: { userId } });
+    if (existing) return existing;
+    return prisma.cart.create({ data: { userId } });
   }
 
   const cookieStore = await cookies();
@@ -68,15 +62,18 @@ export async function getOrCreateCart(userId: string | null): Promise<{ id: stri
   return cart;
 }
 
+/**
+ * Read-only cart lookup for chrome like the header item count — unlike
+ * getOrCreateCart, this never creates a cart or sets a cookie as a side
+ * effect of a page view that never touches the cart.
+ */
 export async function peekCartItemCount(userId: string | null): Promise<number> {
   let cartId: string | null = null;
 
   if (userId) {
     const cart = await prisma.cart.findFirst({ where: { userId }, select: { id: true } });
     cartId = cart?.id ?? null;
-  }
-
-  if (!cartId) {
+  } else {
     const cookieStore = await cookies();
     const token = cookieStore.get(CART_COOKIE)?.value;
     if (token) {
@@ -94,7 +91,9 @@ export async function peekCartItemCount(userId: string | null): Promise<number> 
   return result._sum.quantity ?? 0;
 }
 
-/** Adds a variant to the cart, or increments quantity if it's already a line, capped at available stock onHand. */
+import { InsufficientStockError } from "@/lib/inventory.server";
+
+/** Adds a variant to the cart, or increments quantity if it's already a line. */
 export async function addCartItem(cartId: string, variantId: string, quantity: number) {
   if (quantity <= 0) throw new Error("quantity must be positive");
 
@@ -104,33 +103,33 @@ export async function addCartItem(cartId: string, variantId: string, quantity: n
   });
 
   if (!variant || !variant.isEnabled) {
-    throw new Error("That variant is no longer available");
+    throw new Error("Variant is not available");
   }
 
-  const availableStock = variant.inventoryItem?.onHand ?? 0;
-  if (availableStock <= 0) {
-    throw new Error("That item is out of stock");
+  const available = Math.max(0, (variant.inventoryItem?.onHand ?? 0) - (variant.inventoryItem?.reserved ?? 0));
+  if (available <= 0) {
+    throw new InsufficientStockError(variantId, quantity, 0);
   }
 
   const existing = await prisma.cartItem.findUnique({
     where: { cartId_variantId: { cartId, variantId } },
   });
 
-  const existingQuantity = existing?.quantity ?? 0;
-  if (existingQuantity >= availableStock) {
-    throw new Error(`Only ${availableStock} available in stock`);
-  }
+  const currentQty = existing?.quantity ?? 0;
+  const newQty = currentQty + quantity;
 
-  const targetQuantity = Math.min(existingQuantity + quantity, availableStock);
+  if (newQty > available) {
+    throw new InsufficientStockError(variantId, newQty, available);
+  }
 
   if (existing) {
     return prisma.cartItem.update({
       where: { id: existing.id },
-      data: { quantity: targetQuantity },
+      data: { quantity: newQty },
     });
   }
 
-  return prisma.cartItem.create({ data: { cartId, variantId, quantity: targetQuantity } });
+  return prisma.cartItem.create({ data: { cartId, variantId, quantity: newQty } });
 }
 
 export async function updateCartItemQuantity(cartId: string, itemId: string, quantity: number) {
@@ -138,21 +137,19 @@ export async function updateCartItemQuantity(cartId: string, itemId: string, qua
     return prisma.cartItem.delete({ where: { id: itemId, cartId } }).catch(() => undefined);
   }
 
-  const existing = await prisma.cartItem.findUnique({
+  const item = await prisma.cartItem.findUnique({
     where: { id: itemId, cartId },
     include: { variant: { include: { inventoryItem: true } } },
   });
 
-  if (!existing) return;
+  if (!item) return;
 
-  const availableStock = existing.variant.inventoryItem?.onHand ?? 0;
-  const targetQuantity = Math.min(quantity, availableStock);
-
-  if (targetQuantity <= 0) {
-    return prisma.cartItem.delete({ where: { id: itemId, cartId } }).catch(() => undefined);
+  const available = Math.max(0, (item.variant.inventoryItem?.onHand ?? 0) - (item.variant.inventoryItem?.reserved ?? 0));
+  if (quantity > available) {
+    throw new InsufficientStockError(item.variantId, quantity, available);
   }
 
-  return prisma.cartItem.update({ where: { id: itemId, cartId }, data: { quantity: targetQuantity } });
+  return prisma.cartItem.update({ where: { id: itemId, cartId }, data: { quantity } });
 }
 
 export async function removeCartItem(cartId: string, itemId: string) {
@@ -234,4 +231,42 @@ export async function mergeGuestCartIntoUser(guestCartId: string, userId: string
 
   const cookieStore = await cookies();
   cookieStore.delete(CART_COOKIE);
+}
+
+/**
+  * Decrements or removes ONLY the purchased cart item quantities for a paid order.
+  * Preserves any newly added cart quantities or items added while checkout was in progress.
+  */
+export async function decrementPurchasedCartItems(
+  tx: Prisma.TransactionClient,
+  cartId: string | null,
+  userId: string | null,
+  purchasedItems: Array<{ variantId: string; quantity: number }>
+): Promise<void> {
+  if (purchasedItems.length === 0) return;
+
+  let targetCartId = cartId;
+  if (!targetCartId && userId) {
+    const userCart = await tx.cart.findFirst({ where: { userId } });
+    targetCartId = userCart?.id ?? null;
+  }
+
+  if (!targetCartId) return;
+
+  for (const item of purchasedItems) {
+    const cartItem = await tx.cartItem.findUnique({
+      where: { cartId_variantId: { cartId: targetCartId, variantId: item.variantId } },
+    });
+
+    if (!cartItem) continue;
+
+    if (cartItem.quantity <= item.quantity) {
+      await tx.cartItem.delete({ where: { id: cartItem.id } });
+    } else {
+      await tx.cartItem.update({
+        where: { id: cartItem.id },
+        data: { quantity: cartItem.quantity - item.quantity },
+      });
+    }
+  }
 }

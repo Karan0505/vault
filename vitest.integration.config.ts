@@ -13,17 +13,11 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     testTimeout: 20_000,
     hookTimeout: 20_000,
-    server: {
-      deps: {
-        inline: ["next-auth", "@auth/core"],
-      },
-    },
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "server-only": path.resolve(__dirname, "./test/stubs/server-only.ts"),
-      "next/server": path.resolve(__dirname, "./node_modules/next/server.js"),
     },
   },
 });

@@ -6,51 +6,27 @@ import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/orders";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
 
-import { stripe } from "@/lib/stripe";
-import { markOrderPaidByPaymentIntent } from "@/lib/orders.server";
-
-import { auth, verifyOrderAccess } from "@/lib/auth";
+import { PaymentStatusPoller } from "@/components/checkout/PaymentStatusPoller";
 
 export const metadata: Metadata = { title: "Order" };
 
 interface OrderPageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ token?: string }>;
 }
 
 const TIMELINE: OrderStatus[] = ["pending", "paid", "fulfilled", "delivered"];
 
-export default async function OrderPage({ params, searchParams }: OrderPageProps) {
+export default async function OrderPage({ params }: OrderPageProps) {
   const { id } = await params;
-  const { token } = await searchParams;
-  const session = await auth();
-
-  let order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+  const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
   if (!order) notFound();
-
-  if (!verifyOrderAccess(order, session, token ?? null)) {
-    notFound();
-  }
-
-  if (order.status === "pending" && order.stripePaymentIntentId) {
-    try {
-      const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-      if (pi.status === "succeeded") {
-        await prisma.$transaction(async (tx) => {
-          await markOrderPaidByPaymentIntent(tx, pi.id);
-        });
-        order = (await prisma.order.findUnique({ where: { id }, include: { items: true } })) ?? order;
-      }
-    } catch {
-      // Ignore if Stripe call fails
-    }
-  }
 
   const isCancelledOrRefunded = order.status === "cancelled" || order.status === "refunded";
   const currentIndex = TIMELINE.indexOf(order.status);
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-8 py-10">
+      <PaymentStatusPoller orderId={order.id} initialStatus={order.status} />
       <div>
         <p className="eyebrow">Order {order.number}</p>
         <h1 className="mt-2 font-display text-3xl italic text-ink-50">Order status</h1>

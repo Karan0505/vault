@@ -15,14 +15,14 @@ export async function POST(request: Request) {
   const cart = await getOrCreateCart(userId);
 
   try {
-    const { orderId, clientSecret, guestToken } = await createCheckoutSession({
+    const { orderId, clientSecret } = await createCheckoutSession({
       cartId: cart.id,
       userId,
       email: parsed.data.email,
       discountCode: parsed.data.discountCode,
     });
 
-    return NextResponse.json({ orderId, clientSecret, guestToken });
+    return NextResponse.json({ orderId, clientSecret });
   } catch (error) {
     if (error instanceof EmptyCartError) {
       return NextResponse.json({ error: "Your cart is empty" }, { status: 400 });

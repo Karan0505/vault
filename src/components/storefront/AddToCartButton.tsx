@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { notifyCartUpdated } from "@/lib/cart-events";
+import { useCartDrawer } from "@/components/cart/CartDrawerContext";
 
 interface AddToCartButtonProps {
   variantId: string | null;
@@ -13,12 +14,11 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({ variantId, disabled }: AddToCartButtonProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { open } = useCartDrawer();
 
   async function handleClick() {
     if (!variantId) return;
     setStatus("loading");
-    setErrorMsg(null);
 
     try {
       const res = await fetch("/api/cart", {
@@ -28,20 +28,16 @@ export function AddToCartButton({ variantId, disabled }: AddToCartButtonProps) {
       });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        setErrorMsg(typeof body?.error === "string" ? body.error : "Couldn't add — try again");
         setStatus("error");
-        setTimeout(() => setStatus("idle"), 2500);
         return;
       }
 
       notifyCartUpdated();
       setStatus("done");
+      open();
       setTimeout(() => setStatus("idle"), 1600);
     } catch {
-      setErrorMsg("Couldn't add — try again");
       setStatus("error");
-      setTimeout(() => setStatus("idle"), 2500);
     }
   }
 
@@ -66,7 +62,7 @@ export function AddToCartButton({ variantId, disabled }: AddToCartButtonProps) {
           </motion.span>
         ) : (
           <motion.span key="idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {status === "loading" ? "Adding…" : status === "error" ? (errorMsg ?? "Couldn't add — try again") : "Add to cart"}
+            {status === "loading" ? "Adding…" : status === "error" ? "Couldn't add — try again" : "Add to cart"}
           </motion.span>
         )}
       </AnimatePresence>

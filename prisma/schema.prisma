@@ -1,16 +1,18 @@
 // VAULT schema — Phase 1 (catalogue) + Phase 2 (cart, inventory
-// reservation, checkout, orders, discounts).
+// reservation, checkout, orders, discounts) + Phase 3 (search).
 // Money is stored in integer minor units (cents). Currency is explicit
 // on every amount. There is no Float price column anywhere in this file
 // on purpose — see docs/decisions/0002-money-as-integer-minor-units.md.
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
 }
 
 // ---------------------------------------------------------------------------
@@ -25,12 +27,12 @@ enum StaffRole {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  password  String?   // Hashed password if password auth is used
-  staffRole StaffRole?
-  createdAt DateTime  @default(now())
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String?
+  staffRole    StaffRole?
+  createdAt    DateTime   @default(now())
 
   uploadedMedia Media[]
   carts               Cart[]
@@ -118,12 +120,20 @@ model Product {
   media       Media[]
   collections CollectionProduct[]
 
+  // Maintained by the app layer on create/update (see
+  // lib/products.server.ts syncSearchVector) rather than a Postgres
+  // GENERATED column or trigger — see docs/decisions/0011-search-engine-choice.md
+  // for why. Excluded from normal Prisma Client selects; only ever
+  // touched via raw SQL in search.server.ts.
+  searchVector Unsupported("tsvector")?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Tag-based ISR revalidation keys off slug + category slug; see lib/revalidate.ts.
   @@index([categoryId])
   @@index([status])
+  @@index([searchVector], type: Gin)
   @@map("products")
 }
 
@@ -344,7 +354,6 @@ model Order {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   email  String // captured even for guest checkout
-  guestToken String? // 64-char crypto token for guest order tracking access
 
   currency String
 

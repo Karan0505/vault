@@ -14,7 +14,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "test:unit": "vitest run --config vitest.config.ts",
     "test:concurrency": "vitest run --config vitest.integration.config.ts tests/concurrency",
-    "test:integration": "vitest run --config vitest.integration.config.ts"
+    "test:integration": "vitest run --config vitest.integration.config.ts tests/integration",
+    "analyze": "ANALYZE=true next build"
   },
   "dependencies": {
     "@prisma/client": "^5.20.0",
@@ -35,11 +36,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^15.0.0",
     "@types/node": "^20.14.9",
     "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.1",
-    "@typescript-eslint/eslint-plugin": "^8.67.0",
-    "@typescript-eslint/parser": "^8.67.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^15.0.0",

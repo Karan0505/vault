@@ -15,6 +15,7 @@ env:
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
   UPLOADTHING_TOKEN: ci_placeholder
   REVALIDATE_SECRET: ci_placeholder
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
 jobs:
   test:
@@ -69,7 +70,7 @@ jobs:
       - name: Concurrency test (oversell prevention)
         run: npm run test:concurrency
 
-      - name: Remaining integration tests (webhook idempotency, cart pricing)
+      - name: Remaining integration tests (webhook idempotency, cart pricing, facet counts, search)
         run: npm run test:integration
 
       - name: Build

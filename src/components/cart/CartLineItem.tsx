@@ -13,15 +13,17 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
   const [localQuantity, setLocalQuantity] = useState(line.quantity);
 
   function updateQuantity(next: number) {
-    if (next < 0) return;
-    if (next > localQuantity && line.onHand > 0 && next > line.onHand) return;
+    if (next < 0 || (next > localQuantity && next > line.onHand)) return;
     setLocalQuantity(next);
     startTransition(async () => {
-      await fetch(`/api/cart/${line.itemId}`, {
+      const res = await fetch(`/api/cart/${line.itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: next }),
       });
+      if (!res.ok) {
+        setLocalQuantity(line.quantity);
+      }
       notifyCartUpdated();
       onChanged();
     });
@@ -36,7 +38,6 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
   }
 
   const overStock = localQuantity > line.onHand;
-  const isMaxStock = line.onHand > 0 && localQuantity >= line.onHand;
 
   return (
     <div className="flex items-start gap-4 border-b border-ink-800 py-5 last:border-0">
@@ -57,7 +58,7 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
         )}
         {line.isEnabled && overStock && (
           <Badge tone="amber" className="mt-2">
-            Only {line.onHand} left in stock
+            Only {line.onHand} left — reduce quantity before checkout
           </Badge>
         )}
 
@@ -66,7 +67,7 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
             <button
               type="button"
               onClick={() => updateQuantity(localQuantity - 1)}
-              disabled={isPending}
+              disabled={isPending || localQuantity <= 1}
               aria-label="Decrease quantity"
               className="p-2 text-ink-300 hover:text-brass-300 disabled:opacity-40"
             >
@@ -76,9 +77,9 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
             <button
               type="button"
               onClick={() => updateQuantity(localQuantity + 1)}
-              disabled={isPending || isMaxStock}
+              disabled={isPending || localQuantity >= line.onHand}
               aria-label="Increase quantity"
-              className="p-2 text-ink-300 hover:text-brass-300 disabled:opacity-30 disabled:hover:text-ink-300"
+              className="p-2 text-ink-300 hover:text-brass-300 disabled:opacity-40"
             >
               <Plus size={13} />
             </button>

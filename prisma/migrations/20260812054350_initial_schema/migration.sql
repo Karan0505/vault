@@ -412,3 +412,6 @@ ALTER TABLE "discount_redemptions" ADD CONSTRAINT "discount_redemptions_discount
 
 -- AddForeignKey
 ALTER TABLE "discount_redemptions" ADD CONSTRAINT "discount_redemptions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+
+

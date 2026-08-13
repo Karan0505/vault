@@ -18,8 +18,17 @@ interface AppliedDiscount {
 
 const FLAT_SHIPPING_AMOUNT = 599;
 
-export function CartPageBody() {
+import { cn } from "@/lib/utils";
+
+import { useCartDrawer } from "./CartDrawerContext";
+
+interface CartPageBodyProps {
+  isDrawer?: boolean;
+}
+
+export function CartPageBody({ isDrawer }: CartPageBodyProps) {
   const router = useRouter();
+  const { close: closeCartDrawer } = useCartDrawer();
   const [cart, setCart] = useState<CartView | null>(null);
   const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
 
@@ -59,17 +68,20 @@ export function CartPageBody() {
   const discountAmount = discount?.totalDiscount ?? 0;
   const total = cart.subtotal - discountAmount + shippingAmount;
   const currency = cart.currency ?? "USD";
-  const canCheckout = cart.lines.every((line) => line.isEnabled) && cart.lines.length > 0;
+  const canCheckout = cart.lines.every((line) => line.isEnabled && line.quantity <= line.onHand) && cart.lines.length > 0;
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[1fr_360px]">
-      <div>
+    <div className={isDrawer ? "flex flex-col gap-6" : "grid gap-10 lg:grid-cols-[1fr_360px]"}>
+      <div className="flex flex-col gap-4">
         {cart.lines.map((line) => (
           <CartLineItem key={line.itemId} line={line} onChanged={refresh} />
         ))}
       </div>
 
-      <div className="flex flex-col gap-6 rounded-2xl border border-ink-700 bg-ink-900/50 p-6 shadow-panel lg:sticky lg:top-24 lg:self-start">
+      <div className={cn(
+        "flex flex-col gap-6 rounded-2xl border border-ink-700 bg-ink-900/50 p-6 shadow-panel",
+        !isDrawer && "lg:sticky lg:top-24 lg:self-start"
+      )}>
         <DiscountCodeForm
           onApplied={(code, preview) =>
             setDiscount({ code, totalDiscount: preview.totalDiscount ?? 0, freeShipping: Boolean(preview.freeShipping) })
@@ -109,13 +121,18 @@ export function CartPageBody() {
         <Button
           size="lg"
           disabled={!canCheckout}
-          onClick={() => router.push((`/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`) as Parameters<typeof router.push>[0])}
+          onClick={() => {
+            const checkoutUrl = discount ? `/checkout?discount=${encodeURIComponent(discount.code)}` : "/checkout";
+            router.push(checkoutUrl as any);
+          }}
         >
           Checkout
         </Button>
         {!canCheckout && (
           <p className="text-center text-xs text-signal-red">
-            Remove unavailable items before checking out.
+            {cart.lines.some((line) => line.quantity > line.onHand)
+              ? "Adjust quantities for items exceeding available stock before checking out."
+              : "Remove unavailable items before checking out."}
           </p>
         )}
       </div>

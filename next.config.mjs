@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
+    //ppr: "incremental",
     typedRoutes: true,
   },
   images: {
@@ -19,4 +20,15 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default async () => {
+  if (process.env.ANALYZE === "true") {
+    try {
+      const createBundleAnalyzer = (await import("@next/bundle-analyzer")).default;
+      return createBundleAnalyzer({ enabled: true })(nextConfig);
+    } catch {
+      console.warn("@next/bundle-analyzer module not found. Run `npm install` to install missing packages.");
+    }
+  }
+  return nextConfig;
+};
+

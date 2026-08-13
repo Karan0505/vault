@@ -5,7 +5,16 @@ import { prisma } from "@/lib/prisma";
 import { getProductBySlugForStorefront } from "@/lib/products.server";
 import { ImageGallery } from "@/components/storefront/ImageGallery";
 import { VariantSelector, type SelectableVariant } from "@/components/storefront/VariantSelector";
+import { ProductJsonLd } from "@/components/storefront/ProductJsonLd";
+import { RecommendationsRail, RecommendationsRailSkeleton } from "@/components/storefront/RecommendationsRail";
 import { Badge } from "@/components/ui/Badge";
+
+// Opts this route into Partial Prerendering: everything above the
+// Suspense boundary below is prerendered and served from the ISR cache
+// like every other Phase 1 catalogue page; the recommendations rail
+// inside it is a genuinely per-request dynamic island, so co-purchase
+// data can be fresh without invalidating the rest of the page's cache.
+export const experimental_ppr = true;
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -31,6 +40,9 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   return {
     title: product.title,
     description: product.description ?? undefined,
+    alternates: {
+      canonical: `/products/${slug}`,
+    },
     openGraph: {
       title: product.title,
       description: product.description ?? undefined,
@@ -71,29 +83,51 @@ export default async function ProductPage({ params }: ProductPageProps) {
   }));
 
   const images = product.media.map((m) => ({ url: m.url, alt: m.alt }));
+  const cheapestForSchema = [...product.variants].sort((a, b) => a.priceAmount - b.priceAmount)[0];
+  const totalOnHand = product.variants.reduce((sum, v) => sum + (v.inventoryItem?.onHand ?? 0), 0);
 
   return (
-    <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-      <ImageGallery images={images} productTitle={product.title} />
+    <div>
+      {cheapestForSchema && (
+        <ProductJsonLd
+          name={product.title}
+          description={product.description}
+          slug={product.slug}
+          images={images.map((i) => i.url)}
+          sku={cheapestForSchema.sku}
+          priceAmount={cheapestForSchema.priceAmount}
+          priceCurrency={cheapestForSchema.priceCurrency}
+          availability={totalOnHand > 0 ? "InStock" : "OutOfStock"}
+          categoryName={product.category?.name}
+        />
+      )}
 
-      <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
-        <div>
-          {product.category && <Badge tone="brass">{product.category.name}</Badge>}
-          <h1 className="mt-3 font-display text-4xl italic text-ink-50">{product.title}</h1>
+      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+        <ImageGallery images={images} productTitle={product.title} />
+
+        <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+          <div>
+            {product.category && <Badge tone="brass">{product.category.name}</Badge>}
+            <h1 className="mt-3 font-display text-4xl italic text-ink-50">{product.title}</h1>
+          </div>
+
+          {product.description && (
+            <p className="max-w-md text-sm leading-relaxed text-ink-400">{product.description}</p>
+          )}
+
+          <Suspense fallback={<div className="skeleton h-40 rounded-xl" />}>
+            <VariantSelector
+              optionNames={product.optionNames}
+              optionValues={optionValues}
+              variants={selectableVariants}
+            />
+          </Suspense>
         </div>
-
-        {product.description && (
-          <p className="max-w-md text-sm leading-relaxed text-ink-400">{product.description}</p>
-        )}
-
-        <Suspense fallback={<div className="skeleton h-40 rounded-xl" />}>
-          <VariantSelector
-            optionNames={product.optionNames}
-            optionValues={optionValues}
-            variants={selectableVariants}
-          />
-        </Suspense>
       </div>
+
+      <Suspense fallback={<RecommendationsRailSkeleton />}>
+        <RecommendationsRail productId={product.id} categoryId={product.categoryId} />
+      </Suspense>
     </div>
   );
 }

@@ -247,18 +247,18 @@ export function VariantMatrixEditor({
                       aria-checked={variant.isEnabled}
                       onClick={() => updateVariant(index, { isEnabled: !variant.isEnabled })}
                       className={cn(
-                        "relative h-5 w-9 rounded-full transition-colors",
+                        "relative h-5 w-9 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brass-400/50",
                         variant.isEnabled ? "bg-signal-green/70" : "bg-ink-700"
                       )}
                     >
                       <span
                         className={cn(
-                          "absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-ink-50 transition-transform",
+                          "absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-ink-50 transition-transform",
                           variant.isEnabled ? "translate-x-4" : "translate-x-0"
                         )}
                       />
                     </button>
-                  </td>
+                   </td>
                 </tr>
               ))}
             </tbody>

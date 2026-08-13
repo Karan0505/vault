@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/money";
 import { StockBadge } from "./StockBadge";
 import { AddToCartButton } from "./AddToCartButton";
+import { VariantOptionGroup } from "./VariantOptionGroup";
 import {
   findVariant,
   getSelectableValues,
@@ -34,6 +34,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
 
   const selection: OptionSelection = useMemo(() => {
     const current: OptionSelection = {};
@@ -46,9 +47,17 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
 
   const setValue = useCallback(
     (dimension: string, value: string) => {
+      const paramKey = dimension.toLowerCase();
+      const currentValue = searchParams.get(paramKey);
+      if (currentValue === value) return; // Guard: No-op if already selected
+
       const params = new URLSearchParams(searchParams.toString());
-      params.set(dimension.toLowerCase(), value);
-      router.replace(`${pathname}?${params.toString()}` as Parameters<typeof router.replace>[0], { scroll: false });
+      params.set(paramKey, value);
+      const targetUrl = `${pathname}?${params.toString()}`;
+
+      startTransition(() => {
+        router.replace(targetUrl, { scroll: false });
+      });
     },
     [pathname, router, searchParams]
   );
@@ -67,32 +76,13 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
         return (
           <fieldset key={dimension} className="flex flex-col gap-2.5">
             <legend className="eyebrow">{dimension}</legend>
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={dimension}>
-              {values.map((value) => {
-                const isSelectable = selectable.has(value);
-                const isChosen = chosen === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={isChosen}
-                    disabled={!isSelectable}
-                    onClick={() => setValue(dimension, value)}
-                    className={cn(
-                      "relative rounded-full border px-4 py-2 text-sm transition-all duration-150",
-                      isChosen
-                        ? "border-brass-400 bg-brass-400/10 text-brass-200"
-                        : "border-ink-600 text-ink-200 hover:border-ink-400",
-                      !isSelectable &&
-                        "cursor-not-allowed border-ink-800 text-ink-600 line-through decoration-ink-600 hover:border-ink-800"
-                    )}
-                  >
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
+            <VariantOptionGroup
+              dimension={dimension}
+              values={values}
+              selectable={selectable}
+              chosen={chosen}
+              onSelect={(value) => setValue(dimension, value)}
+            />
           </fieldset>
         );
       })}

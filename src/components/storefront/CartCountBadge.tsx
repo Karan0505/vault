@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CART_UPDATED_EVENT } from "@/lib/cart-events";
+import { useCartDrawer } from "@/components/cart/CartDrawerContext";
 
 interface CartApiLine {
   quantity: number;
@@ -12,6 +12,7 @@ interface CartApiLine {
 
 export function CartCountBadge() {
   const [count, setCount] = useState<number | null>(null);
+  const { open } = useCartDrawer();
 
   useEffect(() => {
     let cancelled = false;
@@ -39,7 +40,12 @@ export function CartCountBadge() {
   }, []);
 
   return (
-    <Link href="/cart" className="relative flex items-center gap-1.5 text-ink-300 transition-colors hover:text-ink-50">
+    <button
+      type="button"
+      onClick={open}
+      aria-label={`Open cart${count ? `, ${count} items` : ""}`}
+      className="relative flex items-center gap-1.5 text-ink-300 transition-colors hover:text-ink-50"
+    >
       <ShoppingBag size={18} strokeWidth={1.75} />
       <AnimatePresence>
         {Boolean(count) && (
@@ -54,6 +60,6 @@ export function CartCountBadge() {
           </motion.span>
         )}
       </AnimatePresence>
-    </Link>
+    </button>
   );
 }

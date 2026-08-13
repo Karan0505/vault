@@ -11,8 +11,8 @@ import { Button } from "@/components/ui/Button";
 interface CheckoutResult {
   orderId: string;
   clientSecret: string;
-  guestToken?: string | null;
 }
+
 
 export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: string }) {
   const [email, setEmail] = useState("");
@@ -57,7 +57,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
     return (
       <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
         <Elements stripe={getStripeClient()} options={{ clientSecret: session.clientSecret, appearance: { theme: "night" } }}>
-          <PaymentStep orderId={session.orderId} guestToken={session.guestToken} />
+          <PaymentStep orderId={session.orderId} />
         </Elements>
       </motion.div>
     );

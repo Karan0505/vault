@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { optionKey } from "@/lib/variants";
 import type { ProductInput } from "@/lib/validation";
 import { revalidateProduct, cacheTags } from "@/lib/revalidate";
+import { syncProductSearchVector } from "@/lib/search-index.server";
 
 export class DuplicateVariantError extends Error {
   constructor(public readonly key: string) {
@@ -75,6 +76,8 @@ export async function createProduct(input: ProductInput, actorUserId?: string) {
         data: { productId: created.id, url: item.url, alt: item.alt, position },
       });
     }
+
+    await syncProductSearchVector(tx, created.id);
 
     return created;
   });
@@ -168,6 +171,8 @@ export async function updateProduct(productId: string, input: ProductInput) {
         data: { productId, url: item.url, alt: item.alt, position },
       });
     }
+
+    await syncProductSearchVector(tx, productId);
   });
 
   // Invalidate both the old and new slug/category — a slug or category
@@ -209,7 +214,7 @@ export function getProductBySlugForStorefront(slug: string) {
         },
       }),
     [`product-by-slug:${slug}`],
-    { tags: [cacheTags.product(slug), cacheTags.productList()], revalidate: 10 }
+    { tags: [cacheTags.product(slug), cacheTags.productList()], revalidate: 3600 }
   )();
 }
 

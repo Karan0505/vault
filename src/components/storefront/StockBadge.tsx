@@ -2,16 +2,15 @@ import { Badge } from "@/components/ui/Badge";
 
 interface StockBadgeProps {
   onHand: number;
-  lowStockThreshold: number;
+  lowStockThreshold?: number;
 }
 
-export function StockBadge({ onHand, lowStockThreshold }: StockBadgeProps) {
-  const threshold = Math.max(5, lowStockThreshold);
+export function StockBadge({ onHand }: StockBadgeProps) {
   if (onHand <= 0) {
-    return <Badge tone="red">Out of stock</Badge>;
+    return <Badge tone="red">OUT OF STOCK</Badge>;
   }
-  if (onHand <= threshold) {
-    return <Badge tone="amber">Only {onHand} left</Badge>;
+  if (onHand <= 5) {
+    return <Badge tone="amber">LOW STOCK · {onHand} LEFT</Badge>;
   }
-  return <Badge tone="green">In stock</Badge>;
+  return <Badge tone="green">IN STOCK</Badge>;
 }

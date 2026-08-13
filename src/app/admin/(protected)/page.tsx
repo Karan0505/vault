@@ -3,21 +3,32 @@ import { prisma } from "@/lib/prisma";
 import { Card } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 
+export async function getLowStockVariants() {
+  return prisma.inventoryItem.findMany({
+    where: {
+      onHand: { gte: 1, lte: 5 },
+    },
+    include: {
+      variant: {
+        include: {
+          product: true,
+        },
+      },
+    },
+    orderBy: [
+      { onHand: "asc" },
+      { updatedAt: "desc" },
+    ],
+  });
+}
+
 async function getStats() {
-  const [productCount, activeCount, categoryCount, lowStock] = await Promise.all([
+  const [productCount, activeCount, categoryCount, lowStockVariants] = await Promise.all([
     prisma.product.count(),
     prisma.product.count({ where: { status: "active" } }),
     prisma.category.count(),
-    prisma.inventoryItem.findMany({
-      orderBy: { onHand: "asc" },
-      include: { variant: { include: { product: true } } },
-      take: 500,
-    }),
+    getLowStockVariants(),
   ]);
-
-  const lowStockVariants = lowStock.filter(
-    (item) => item.onHand <= Math.max(5, item.lowStockThreshold)
-  );
 
   return { productCount, activeCount, categoryCount, lowStockVariants };
 }
@@ -50,29 +61,24 @@ export default async function AdminDashboardPage() {
       <Card>
         <div className="flex items-center justify-between">
           <p className="font-display text-lg text-ink-100">Low stock</p>
-          <Badge tone="amber">{lowStockVariants.length} variants</Badge>
+          <Badge tone="amber">{lowStockVariants.length} VARIANTS</Badge>
         </div>
-        <div className="mt-4 flex max-h-[420px] flex-col divide-y divide-ink-800 overflow-y-auto pr-1">
+        <div className="mt-4 flex flex-col divide-y divide-ink-800">
           {lowStockVariants.length === 0 && (
             <p className="py-6 text-sm text-ink-500">Nothing below threshold right now.</p>
           )}
-          {lowStockVariants.map((item) => {
-            const optionsText = Object.values(item.variant.options as Record<string, string>).join(" / ");
-            return (
-              <Link
-                key={item.id}
-                href={`/admin/products/${item.variant.productId}/edit`}
-                className="flex items-center justify-between py-3 text-sm transition-colors hover:text-brass-300"
-              >
-                <span className="text-ink-200">
-                  {item.variant.product.title} {optionsText ? `(${optionsText})` : ""}
-                </span>
-                <span className="font-mono text-xs text-ink-500">
-                  {item.variant.sku} · {item.onHand <= 0 ? "Out of stock" : `${item.onHand} on hand`}
-                </span>
-              </Link>
-            );
-          })}
+          {lowStockVariants.map((item) => (
+            <Link
+              key={item.id}
+              href={`/admin/products/${item.variant.productId}/edit`}
+              className="flex items-center justify-between py-3 text-sm transition-colors hover:text-brass-300"
+            >
+              <span className="text-ink-200">{item.variant.product.title}</span>
+              <span className="font-mono text-xs text-ink-500">
+                {item.variant.sku} · {item.onHand} on hand
+              </span>
+            </Link>
+          ))}
         </div>
       </Card>
 

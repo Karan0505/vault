@@ -13,7 +13,7 @@ export interface ProductCardData {
   totalOnHand: number;
 }
 
-export function ProductCard({ product }: { product: ProductCardData }) {
+export function ProductCard({ product, priority = false }: { product: ProductCardData; priority?: boolean }) {
   const priceLabel =
     product.minPriceAmount === product.maxPriceAmount
       ? formatMoney({ amount: product.minPriceAmount, currency: product.currency })
@@ -30,6 +30,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
             src={product.imageUrl}
             alt={product.imageAlt}
             fill
+            priority={priority}
             sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
           />

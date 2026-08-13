@@ -1,25 +1,36 @@
 import { PrismaClient } from "@prisma/client";
-import { hashSync } from "bcryptjs";
+import bcrypt from "bcryptjs";
 import { generateVariantMatrix } from "../src/lib/variants";
 
 const prisma = new PrismaClient();
 
 const PLACEHOLDER_IMAGE = (seed: string) => `https://images.unsplash.com/${seed}?w=1200&q=80`;
+const FLAT_SHIPPING_SEED = 599; // mirrors FLAT_SHIPPING_AMOUNT in lib/orders.server.ts
 
 async function main() {
   console.log("Seeding staff users…");
-  const hashedPassword = hashSync("admin123", 10);
-  const staff = [
+  // Default staff password satisfies length >= 8, number, and special character requirements
+  const defaultPasswordHash = await bcrypt.hash("AdminPassword123!", 10);
+
+  const staffUsers = [
     { email: "admin@vault.internal", name: "Ada (Admin)", staffRole: "admin" as const },
     { email: "fulfilment@vault.internal", name: "Femi (Fulfilment)", staffRole: "fulfilment" as const },
     { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" as const },
   ];
 
-  for (const s of staff) {
+  for (const staff of staffUsers) {
     await prisma.user.upsert({
-      where: { email: s.email },
-      update: { password: hashedPassword, staffRole: s.staffRole, name: s.name },
-      create: { email: s.email, name: s.name, staffRole: s.staffRole, password: hashedPassword },
+      where: { email: staff.email },
+      update: {
+        passwordHash: defaultPasswordHash,
+        staffRole: staff.staffRole,
+      },
+      create: {
+        email: staff.email,
+        name: staff.name,
+        staffRole: staff.staffRole,
+        passwordHash: defaultPasswordHash,
+      },
     });
   }
 
@@ -65,7 +76,7 @@ async function main() {
     description: string;
     categoryId: string;
     optionNames: string[];
-    optionValues: Record<string, string[]>;
+    optionValues: Record<string, readonly string[]>;
     basePriceAmount: number;
     images: string[];
   }
@@ -148,19 +159,22 @@ async function main() {
         categoryId: seed.categoryId,
         optionNames: seed.optionNames,
         media: {
-          create: seed.images.map((url, position) => ({ url, alt: seed.title, position })),
+          create: seed.images.map((url, position) => ({
+            url,
+            alt: `${seed.title} view ${position + 1}`,
+            position,
+          })),
         },
       },
     });
 
-    for (const [index, options] of combinations.entries()) {
-      const skuSuffix = Object.values(options)
-        .map((v) => v.slice(0, 3).toUpperCase())
-        .join("-");
-      const sku = `${seed.slug.toUpperCase().slice(0, 10)}-${skuSuffix}`;
-      // Small deterministic variance so the storefront doesn't show one flat price everywhere.
-      const priceAmount = seed.basePriceAmount + (index % 3) * 500;
-      const onHand = [0, 2, 4, 12, 20][index % 5] ?? 10;
+    for (const [vIndex, combo] of combinations.entries()) {
+      const skuParts = [
+        seed.slug.toUpperCase().slice(0, 10),
+        combo.Size ? (combo.Size as string).toUpperCase().replaceAll("/", "-") : null,
+        combo.Colour ? (combo.Colour as string).toUpperCase().slice(0, 3) : null,
+      ].filter(Boolean);
+      const sku = skuParts.join("-");
 
       await prisma.productVariant.upsert({
         where: { sku },
@@ -168,13 +182,14 @@ async function main() {
         create: {
           productId: product.id,
           sku,
-          options,
-          priceAmount,
-          priceCurrency: "USD",
-          isEnabled: true,
-          position: index,
+          options: combo as any,
+          priceAmount: seed.basePriceAmount,
+          position: vIndex,
           inventoryItem: {
-            create: { onHand, lowStockThreshold: 5 },
+            create: {
+              onHand: Math.floor(Math.random() * 10) + 1,
+              lowStockThreshold: 5,
+            },
           },
         },
       });
@@ -182,20 +197,20 @@ async function main() {
   }
 
   console.log("Seeding discount codes…");
-  await prisma.discount.upsert({
+  await prisma.discountCode.upsert({
     where: { code: "WELCOME10" },
     update: {},
     create: {
       code: "WELCOME10",
       type: "percentage",
       value: 10,
-      usageLimit: null,
+      usageLimit: 1000,
       perCustomerLimit: 1,
       minimumSpend: null,
       isActive: true,
     },
   });
-  await prisma.discount.upsert({
+  await prisma.discountCode.upsert({
     where: { code: "FREESHIP" },
     update: {},
     create: {
@@ -208,6 +223,64 @@ async function main() {
       isActive: true,
     },
   });
+
+  console.log("Seeding sample completed orders (for recommendations)…");
+
+  const seededProducts = await prisma.product.findMany({
+    where: { slug: { in: productSeeds.map((p) => p.slug) } },
+    include: { variants: { orderBy: { position: "asc" }, take: 1 } },
+  });
+  type VariantType = (typeof seededProducts)[number]["variants"][number];
+  const firstVariantByProduct = new Map<string, VariantType>();
+  for (const p of seededProducts) {
+    if (p.variants[0]) {
+      firstVariantByProduct.set(p.slug, p.variants[0]);
+    }
+  }
+
+  const orderPairings: { slugs: string[]; email: string }[] = [
+    { slugs: ["waxed-field-jacket", "service-boot"], email: "customer1@example.com" },
+    { slugs: ["waxed-field-jacket", "merino-watch-cap"], email: "customer2@example.com" },
+    { slugs: ["waxed-field-jacket", "service-boot", "merino-watch-cap"], email: "customer3@example.com" },
+    { slugs: ["shell-anorak", "canvas-low-top"], email: "customer4@example.com" },
+    { slugs: ["shell-anorak", "waxed-canvas-belt"], email: "customer5@example.com" },
+    { slugs: ["service-boot", "waxed-canvas-belt"], email: "customer6@example.com" },
+  ];
+
+  for (const [index, pairing] of orderPairings.entries()) {
+    const variants: VariantType[] = pairing.slugs
+      .map((slug) => firstVariantByProduct.get(slug))
+      .filter((v): v is VariantType => Boolean(v));
+    if (variants.length === 0) continue;
+
+    const subtotal = variants.reduce((sum, v) => sum + v.priceAmount, 0);
+
+    await prisma.order.upsert({
+      where: { number: `VAULT-SEED-${index + 1}` },
+      update: {},
+      create: {
+        number: `VAULT-SEED-${index + 1}`,
+        status: "delivered",
+        email: pairing.email,
+        currency: "USD",
+        subtotalAmount: subtotal,
+        totalAmount: subtotal + FLAT_SHIPPING_SEED,
+        shippingAmount: FLAT_SHIPPING_SEED,
+        reservationExpiresAt: new Date(),
+        items: {
+          create: variants.map((v) => ({
+            variantId: v.id,
+            titleSnapshot: v.sku,
+            skuSnapshot: v.sku,
+            optionsSnapshot: v.options as object,
+            unitAmount: v.priceAmount,
+            quantity: 1,
+            lineTotal: v.priceAmount,
+          })),
+        },
+      },
+    });
+  }
 
   console.log("Seed complete.");
 }

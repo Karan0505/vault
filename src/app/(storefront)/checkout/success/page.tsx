@@ -7,52 +7,30 @@ import { ORDER_STATUS_LABEL } from "@/lib/orders";
 import { Badge } from "@/components/ui/Badge";
 import { CheckCircle2, Clock } from "lucide-react";
 
-import { auth, verifyOrderAccess } from "@/lib/auth";
+import { PaymentStatusPoller } from "@/components/checkout/PaymentStatusPoller";
 
 export const metadata: Metadata = { title: "Order confirmed" };
 
 interface SuccessPageProps {
-  searchParams: Promise<{ order_id?: string; token?: string }>;
+  searchParams: Promise<{ order_id?: string }>;
 }
 
-import { stripe } from "@/lib/stripe";
-import { markOrderPaidByPaymentIntent } from "@/lib/orders.server";
-
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
-  const { order_id: orderId, token } = await searchParams;
+  const { order_id: orderId } = await searchParams;
   if (!orderId) notFound();
 
-  const session = await auth();
-
-  let order = await prisma.order.findUnique({
+  const order = await prisma.order.findUnique({
     where: { id: orderId },
     include: { items: true },
   });
 
   if (!order) notFound();
 
-  if (!verifyOrderAccess(order, session, token ?? null)) {
-    notFound();
-  }
-
-  if (order.status === "pending" && order.stripePaymentIntentId) {
-    try {
-      const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-      if (pi.status === "succeeded") {
-        await prisma.$transaction(async (tx) => {
-          await markOrderPaidByPaymentIntent(tx, pi.id);
-        });
-        order = (await prisma.order.findUnique({ where: { id: orderId }, include: { items: true } })) ?? order;
-      }
-    } catch {
-      // Ignore if Stripe call fails
-    }
-  }
-
   const isPaid = order.status !== "pending";
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-6 py-16 text-center">
+      <PaymentStatusPoller orderId={order.id} initialStatus={order.status} />
       {isPaid ? (
         <CheckCircle2 size={40} className="text-signal-green" strokeWidth={1.5} />
       ) : (
@@ -85,7 +63,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             </div>
           ))}
         </div>
-        <div className="ledger-rule flex flex-col gap-2.5 pt-3 font-mono text-sm">
+        <div className="ledger-rule flex flex-col gap-1.5 pt-3 font-mono text-sm">
           <div className="flex justify-between text-ink-400">
             <span>Subtotal</span>
             <span>{formatMoney({ amount: order.subtotalAmount, currency: order.currency })}</span>
@@ -100,7 +78,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             <span>Shipping</span>
             <span>{order.shippingAmount === 0 ? "Free" : formatMoney({ amount: order.shippingAmount, currency: order.currency })}</span>
           </div>
-          <div className="ledger-rule flex justify-between pt-2.5 text-base text-ink-50 font-medium">
+          <div className="flex justify-between pt-1.5 text-base font-semibold text-ink-50">
             <span>Total</span>
             <span>{formatMoney({ amount: order.totalAmount, currency: order.currency })}</span>
           </div>
@@ -108,10 +86,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       </div>
 
       <div className="flex gap-4 text-sm">
-        <Link
-          href={`/orders/${order.id}${order.guestToken ? `?token=${order.guestToken}` : ""}`}
-          className="text-brass-300 hover:text-brass-200"
-        >
+        <Link href={`/orders/${order.id}`} className="text-brass-300 hover:text-brass-200">
           Track this order →
         </Link>
         <Link href="/" className="text-ink-500 hover:text-ink-300">

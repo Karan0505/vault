@@ -35,58 +35,17 @@ async function releaseExpiredReservationsLocked(
     select: { id: true, quantity: true },
   });
 
-  if (expired.length > 0) {
-    await tx.reservation.deleteMany({ where: { id: { in: expired.map((r) => r.id) } } });
-  }
+  if (expired.length === 0) return 0;
 
-  const activeSum = await tx.reservation.aggregate({
-    where: { inventoryItemId },
-    _sum: { quantity: true },
-  });
+  const releasedQuantity = expired.reduce((sum, r) => sum + r.quantity, 0);
 
-  const actualReserved = activeSum._sum.quantity ?? 0;
-
+  await tx.reservation.deleteMany({ where: { id: { in: expired.map((r) => r.id) } } });
   await tx.inventoryItem.update({
     where: { id: inventoryItemId },
-    data: { reserved: actualReserved },
+    data: { reserved: { decrement: releasedQuantity } },
   });
 
-  return actualReserved;
-}
-
-async function releaseCartReservationsLocked(
-  tx: Tx,
-  cartId: string
-): Promise<void> {
-  const existing = await tx.reservation.findMany({
-    where: {
-      cartId,
-      OR: [{ orderId: null }, { order: { status: "pending" } }],
-    },
-    select: { id: true, inventoryItemId: true, quantity: true, orderId: true },
-  });
-
-  if (existing.length === 0) return;
-
-  for (const res of existing) {
-    await tx.inventoryItem.update({
-      where: { id: res.inventoryItemId },
-      data: { reserved: { decrement: res.quantity } },
-    });
-
-    if (res.orderId) {
-      await tx.order
-        .update({
-          where: { id: res.orderId },
-          data: { status: "cancelled" },
-        })
-        .catch(() => undefined);
-    }
-  }
-
-  await tx.reservation.deleteMany({
-    where: { id: { in: existing.map((r) => r.id) } },
-  });
+  return releasedQuantity;
 }
 
 /**
@@ -117,10 +76,6 @@ export async function reserveStock(params: {
   if (quantity <= 0) throw new Error("quantity must be positive");
 
   return prisma.$transaction(async (tx) => {
-    if (cartId) {
-      await releaseCartReservationsLocked(tx, cartId);
-    }
-
     const locked = await tx.$queryRaw<{ id: string; onHand: number; reserved: number }[]>`
       SELECT "id", "onHand", "reserved"
       FROM "inventory_items"
@@ -170,8 +125,6 @@ export async function reserveCartLines(
   ttlMs = RESERVATION_TTL_MS
 ): Promise<{ reservationIds: string[]; expiresAt: Date }> {
   return prisma.$transaction(async (tx) => {
-    await releaseCartReservationsLocked(tx, cartId);
-
     const expiresAt = new Date(Date.now() + ttlMs);
     const reservationIds: string[] = [];
 

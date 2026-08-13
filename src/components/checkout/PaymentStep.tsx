@@ -4,13 +4,7 @@ import { useState } from "react";
 import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/components/ui/Button";
 
-export function PaymentStep({
-  orderId,
-  guestToken,
-}: {
-  orderId: string;
-  guestToken?: string | null;
-}) {
+export function PaymentStep({ orderId }: { orderId: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -23,14 +17,10 @@ export function PaymentStep({
     setIsSubmitting(true);
     setError(null);
 
-    const returnUrl = guestToken
-      ? `${window.location.origin}/checkout/success?order_id=${orderId}&token=${guestToken}`
-      : `${window.location.origin}/checkout/success?order_id=${orderId}`;
-
     const { error: confirmError } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: returnUrl,
+        return_url: `${window.location.origin}/checkout/success?order_id=${orderId}`,
       },
     });
 
