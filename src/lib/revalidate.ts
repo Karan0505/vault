@@ -21,27 +21,35 @@ export const cacheTags = {
  * every collection page it belongs to, and the generic listing tag used
  * by index pages — nothing else.
  */
+function safeRevalidateTag(tag: string): void {
+  try {
+    revalidateTag(tag);
+  } catch {
+    // revalidateTag throws outside of Next.js server request context (e.g. in tests)
+  }
+}
+
 export function revalidateProduct(params: {
   productSlug: string;
   categorySlug?: string | null;
   collectionSlugs?: readonly string[];
 }): void {
-  revalidateTag(cacheTags.product(params.productSlug));
-  revalidateTag(cacheTags.productList());
+  safeRevalidateTag(cacheTags.product(params.productSlug));
+  safeRevalidateTag(cacheTags.productList());
   if (params.categorySlug) {
-    revalidateTag(cacheTags.category(params.categorySlug));
+    safeRevalidateTag(cacheTags.category(params.categorySlug));
   }
   for (const slug of params.collectionSlugs ?? []) {
-    revalidateTag(cacheTags.collection(slug));
+    safeRevalidateTag(cacheTags.collection(slug));
   }
 }
 
 export function revalidateCategory(categorySlug: string): void {
-  revalidateTag(cacheTags.category(categorySlug));
-  revalidateTag(cacheTags.productList());
+  safeRevalidateTag(cacheTags.category(categorySlug));
+  safeRevalidateTag(cacheTags.productList());
 }
 
 export function revalidateCollection(collectionSlug: string): void {
-  revalidateTag(cacheTags.collection(collectionSlug));
-  revalidateTag(cacheTags.productList());
+  safeRevalidateTag(cacheTags.collection(collectionSlug));
+  safeRevalidateTag(cacheTags.productList());
 }

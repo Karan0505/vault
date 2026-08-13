@@ -88,19 +88,12 @@ function buildConditions(filters: SearchFilters, exclude: ReadonlySet<FilterKey>
   }
 
   if (filters.q && !exclude.has("q")) {
-    const terms = filters.q.trim().split(/\s+/).filter(Boolean);
-    if (terms.length > 0) {
-      const termConditions = terms.map((term) => {
-        const pattern = `%${term}%`;
-        return Prisma.sql`(
-          p.title ILIKE ${pattern} OR
-          p.description ILIKE ${pattern} OR
-          p.slug ILIKE ${pattern} OR
-          v.sku ILIKE ${pattern} OR
-          c.name ILIKE ${pattern}
-        )`;
-      });
-      conditions.push(Prisma.sql`(${Prisma.join(termConditions, " AND ")})`);
+    const q = filters.q.trim();
+    if (q.length > 0) {
+      conditions.push(Prisma.sql`(
+        p."searchVector" @@ websearch_to_tsquery('english', ${q})
+        OR (p."searchVector" IS NOT NULL AND similarity(p.title, ${q}) > 0.1)
+      )`);
     }
   }
 
