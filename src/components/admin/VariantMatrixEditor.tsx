@@ -228,7 +228,7 @@ export function VariantMatrixEditor({
                 </tr>
               )}
               {variants.map((variant, index) => (
-                <tr key={variant.id ?? (Object.values(variant.options).join("-") || String(index))}>
+                <tr key={variant.id ?? `${variant.sku}-${index}`}>
                   <td className="px-4 py-3 font-mono text-xs text-ink-300">
 
                     {optionNames.map((n) => variant.options[n]).join(" / ") || "—"}

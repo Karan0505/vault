@@ -20,7 +20,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-screen bg-ink-950">
       <Sidebar staffRole={session.user.staffRole} />
       <div className="flex flex-1 flex-col">
-        <Topbar userEmail={session.user.email} staffRole={session.user.staffRole ?? "admin"} />
+        <Topbar
+          userEmail={session.user.email}
+          userName={session.user.name}
+          staffRole={session.user.staffRole ?? "admin"}
+        />
         <main className="flex-1 p-8">{children}</main>
       </div>
     </div>
