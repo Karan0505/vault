@@ -1,4 +1,4 @@
-import type { ProductCardData } from "@/components/storefront/ProductCard";
+import type { ProductCardData } from "@/components/product";
 
 interface VariantForCard {
   priceAmount: number;

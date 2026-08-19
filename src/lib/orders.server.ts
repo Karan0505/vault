@@ -2,7 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
-import { getCartView, decrementPurchasedCartItems } from "@/lib/cart.server";
+import { getCartView } from "@/lib/cart.server";
 import { reserveCartLines, releaseReservations, commitReservations, InsufficientStockError } from "@/lib/inventory.server";
 import { applyDiscountCode } from "@/lib/discounts.server";
 import { assertTransition } from "@/lib/orders";
@@ -160,31 +160,19 @@ export async function createCheckoutSession(params: {
  * Safe to no-op if the order is already past `pending` (e.g. a
  * near-simultaneous duplicate delivery that raced past the StripeEvent
  * guard some other way) rather than throwing on a redundant call.
+ *
+ * Returns the paid order's id when this call is what actually
+ * transitioned it (or null on a no-op) — the caller sends the order
+ * confirmation email using that id *after* this transaction commits,
+ * never from inside it. See ADR 0019.
  */
-import { revalidateTag, revalidatePath } from "next/cache";
-import { revalidateProduct } from "@/lib/revalidate";
-import type { OrderStatus } from "@/lib/orders";
-
-export function triggerOrderRevalidations(orderId: string, productSlugs: string[]) {
-  for (const slug of productSlugs) {
-    revalidateProduct({ productSlug: slug });
-  }
-  try {
-    revalidatePath("/checkout/success");
-    revalidatePath(`/orders/${orderId}`);
-    revalidatePath("/admin");
-  } catch (e) {
-    // Ignore cache revalidation errors outside request context
-  }
-}
-
 export async function markOrderPaidByPaymentIntent(
   tx: Prisma.TransactionClient,
   paymentIntentId: string
-): Promise<{ orderId: string; productSlugs: string[] } | null> {
+): Promise<{ orderId: string } | null> {
   const order = await tx.order.findUnique({
     where: { stripePaymentIntentId: paymentIntentId },
-    include: { reservations: true, items: { include: { variant: { include: { product: true } } } } },
+    include: { reservations: true },
   });
 
   if (!order) return null; // PaymentIntent not tied to an order we know about — nothing to do
@@ -198,67 +186,7 @@ export async function markOrderPaidByPaymentIntent(
     order.reservations.map((r) => r.id)
   );
 
-  let cartId: string | null = null;
-  try {
-    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
-    cartId = pi.metadata?.cartId ?? null;
-  } catch {
-    // If Stripe API call fails or mock test environment, fallback to userId
-  }
-
-  const purchasedItems = order.items.map((i) => ({
-    variantId: i.variantId,
-    quantity: i.quantity,
-  }));
-
-  await decrementPurchasedCartItems(tx, cartId, order.userId, purchasedItems);
-
-  const productSlugs = order.items
-    .map((item) => item.variant?.product?.slug)
-    .filter((slug): slug is string => Boolean(slug));
-
-  // Transactional email (order confirmation) is Phase 4 scope (Resend +
-  // React Email). Logged here so the seam is visible and testable now.
-  console.log(`[order ${order.number}] paid — confirmation email would send to ${order.email}`);
-
-  return { orderId: order.id, productSlugs };
-}
-
-export async function verifyAndUpdateOrderStatus(orderId: string): Promise<{ id: string; status: OrderStatus }> {
-  const order = await prisma.order.findUnique({
-    where: { id: orderId },
-    select: { id: true, status: true, stripePaymentIntentId: true },
-  });
-
-  if (!order) throw new Error("Order not found");
-  if (order.status !== "pending" || !order.stripePaymentIntentId) {
-    return { id: order.id, status: order.status };
-  }
-
-  // Retrieve PaymentIntent from Stripe server-side only when DB status is still pending
-  const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-
-    if (paymentIntent.status === "succeeded") {
-      let revalResult: { orderId: string; productSlugs: string[] } | null = null;
-      try {
-        await prisma.$transaction(async (tx) => {
-          const res = await markOrderPaidByPaymentIntent(tx, paymentIntent.id);
-          if (res) revalResult = res;
-        });
-      } catch (err) {
-        // Race condition handled safely: if another transaction marked it paid concurrently
-      }
-
-      const resultData = revalResult as { orderId: string; productSlugs: string[] } | null;
-      if (resultData) {
-        triggerOrderRevalidations(resultData.orderId, resultData.productSlugs);
-      }
-
-    const updated = await prisma.order.findUnique({ where: { id: orderId }, select: { status: true } });
-    return { id: order.id, status: updated?.status ?? "paid" };
-  }
-
-  return { id: order.id, status: order.status };
+  return { orderId: order.id };
 }
 
 /** Marks an order cancelled and releases (not commits) its reservations — used for payment_intent.payment_failed and explicit cancellation. */

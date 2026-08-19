@@ -5,6 +5,7 @@ import { optionKey } from "@/lib/variants";
 import type { ProductInput } from "@/lib/validation";
 import { revalidateProduct, cacheTags } from "@/lib/revalidate";
 import { syncProductSearchVector } from "@/lib/search-index.server";
+import { appendAuditLog, type AuditActor } from "@/lib/audit.server";
 
 export class DuplicateVariantError extends Error {
   constructor(public readonly key: string) {
@@ -32,7 +33,7 @@ function assertVariantsMatchOptions(input: ProductInput): void {
   }
 }
 
-export async function createProduct(input: ProductInput, actorUserId?: string) {
+export async function createProduct(input: ProductInput, actor: AuditActor) {
   assertVariantsMatchOptions(input);
 
   const category = input.categoryId
@@ -79,16 +80,27 @@ export async function createProduct(input: ProductInput, actorUserId?: string) {
 
     await syncProductSearchVector(tx, created.id);
 
+    await appendAuditLog(tx, {
+      actor,
+      entityType: "Product",
+      entityId: created.id,
+      action: "create",
+      after: {
+        title: input.title,
+        slug: input.slug,
+        status: input.status,
+        variants: input.variants.map((v) => ({ sku: v.sku, priceAmount: v.priceAmount, onHand: v.onHand })),
+      },
+    });
+
     return created;
   });
-
-  void actorUserId; // parameter kept so call sites don't change when the Phase 4 audit log lands
 
   revalidateProduct({ productSlug: product.slug, categorySlug: category?.slug });
   return product;
 }
 
-export async function updateProduct(productId: string, input: ProductInput) {
+export async function updateProduct(productId: string, input: ProductInput, actor: AuditActor) {
   assertVariantsMatchOptions(input);
 
   const existing = await prisma.product.findUniqueOrThrow({
@@ -173,6 +185,25 @@ export async function updateProduct(productId: string, input: ProductInput) {
     }
 
     await syncProductSearchVector(tx, productId);
+
+    await appendAuditLog(tx, {
+      actor,
+      entityType: "Product",
+      entityId: productId,
+      action: "update",
+      before: {
+        title: existing.title,
+        slug: existing.slug,
+        status: existing.status,
+        variants: existing.variants.map((v) => ({ sku: v.sku, priceAmount: v.priceAmount })),
+      },
+      after: {
+        title: input.title,
+        slug: input.slug,
+        status: input.status,
+        variants: input.variants.map((v) => ({ sku: v.sku, priceAmount: v.priceAmount })),
+      },
+    });
   });
 
   // Invalidate both the old and new slug/category — a slug or category
@@ -183,12 +214,23 @@ export async function updateProduct(productId: string, input: ProductInput) {
   }
 }
 
-export async function deleteProduct(productId: string) {
+export async function deleteProduct(productId: string, actor: AuditActor) {
   const existing = await prisma.product.findUniqueOrThrow({
     where: { id: productId },
     include: { category: true },
   });
-  await prisma.product.delete({ where: { id: productId } });
+
+  await prisma.$transaction(async (tx) => {
+    await tx.product.delete({ where: { id: productId } });
+    await appendAuditLog(tx, {
+      actor,
+      entityType: "Product",
+      entityId: productId,
+      action: "delete",
+      before: { title: existing.title, slug: existing.slug, status: existing.status },
+    });
+  });
+
   revalidateProduct({ productSlug: existing.slug, categorySlug: existing.category?.slug });
 }
 

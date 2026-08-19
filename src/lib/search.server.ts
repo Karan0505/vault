@@ -88,20 +88,13 @@ function buildConditions(filters: SearchFilters, exclude: ReadonlySet<FilterKey>
   }
 
   if (filters.q && !exclude.has("q")) {
-    const terms = filters.q.trim().split(/\s+/).filter(Boolean);
-    if (terms.length > 0) {
-      const termConditions = terms.map((term) => {
-        const pattern = `%${term}%`;
-        return Prisma.sql`(
-          p.title ILIKE ${pattern} OR
-          p.description ILIKE ${pattern} OR
-          p.slug ILIKE ${pattern} OR
-          v.sku ILIKE ${pattern} OR
-          c.name ILIKE ${pattern}
-        )`;
-      });
-      conditions.push(Prisma.sql`(${Prisma.join(termConditions, " AND ")})`);
-    }
+    // Hybrid match: stemmed full-text OR trigram similarity, so a
+    // misspelled query ("jaket") still finds "Jacket" through the
+    // similarity() fallback even though it fails websearch_to_tsquery
+    // outright. See docs/decisions/0011-search-engine-choice.md.
+    conditions.push(
+      Prisma.sql`(p."searchVector" @@ websearch_to_tsquery('english', ${filters.q}) OR similarity(p.title, ${filters.q}) > 0.25)`
+    );
   }
 
   return conditions;
@@ -154,9 +147,11 @@ function orderByFragment(sort: SortOption, q: string | undefined): Prisma.Sql {
       return Prisma.sql`MAX(p."createdAt") DESC`;
     case "relevance":
     default:
-      if (q && q.trim()) {
-        const firstTerm = `%${q.trim().split(/\s+/)[0]}%`;
-        return Prisma.sql`CASE WHEN p.title ILIKE ${firstTerm} THEN 0 ELSE 1 END, MAX(p."updatedAt") DESC`;
+      if (q) {
+        return Prisma.sql`GREATEST(
+          ts_rank(p."searchVector", websearch_to_tsquery('english', ${q})),
+          similarity(p.title, ${q}) * 0.5
+        ) DESC`;
       }
       return Prisma.sql`MAX(p."updatedAt") DESC`;
   }

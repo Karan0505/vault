@@ -72,3 +72,52 @@ export const checkoutInputSchema = z.object({
 });
 
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;
+
+// ---------------------------------------------------------------------------
+// Phase 4 — order management, refunds, inventory adjustments
+// ---------------------------------------------------------------------------
+
+export const fulfilOrderSchema = z.object({
+  trackingNumber: z.string().min(1),
+  carrier: z.string().optional(),
+  items: z
+    .array(
+      z.object({
+        orderItemId: z.string().min(1),
+        quantity: z.number().int().positive(),
+      })
+    )
+    .min(1),
+});
+
+export const cancelOrderSchema = z.object({
+  reason: z.string().optional(),
+});
+
+export const itemizedRefundSchema = z.object({
+  kind: z.literal("itemized"),
+  items: z
+    .array(
+      z.object({
+        orderItemId: z.string().min(1),
+        quantity: z.number().int().positive(),
+      })
+    )
+    .min(1),
+  reason: z.string().optional(),
+  restock: z.boolean(),
+});
+
+export const goodwillRefundSchema = z.object({
+  kind: z.literal("goodwill"),
+  amount: z.number().int().positive(),
+  reason: z.string().min(1),
+});
+
+export const refundInputSchema = z.discriminatedUnion("kind", [itemizedRefundSchema, goodwillRefundSchema]);
+
+export const adjustStockSchema = z.object({
+  delta: z.number().int().refine((n) => n !== 0, "delta must be non-zero"),
+  reason: z.enum(["received", "damaged", "lost", "returned", "correction", "other"]),
+  note: z.string().optional(),
+});

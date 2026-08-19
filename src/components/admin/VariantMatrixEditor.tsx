@@ -28,8 +28,12 @@ interface VariantMatrixEditorProps {
 }
 
 function suggestSku(productSlug: string, options: OptionSelection, optionNames: string[]): string {
-  const parts = optionNames.map((name) => (options[name] ?? "").slice(0, 3).toUpperCase());
-  return [productSlug.toUpperCase().slice(0, 8), ...parts].filter(Boolean).join("-");
+  const cleanSlug = (productSlug || "sku").replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 8);
+  const parts = optionNames.map((name) => {
+    const raw = (options[name] ?? "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    return raw.slice(0, 4) || "VAR";
+  });
+  return [cleanSlug, ...parts].filter(Boolean).join("-");
 }
 
 export function VariantMatrixEditor({
@@ -45,16 +49,31 @@ export function VariantMatrixEditor({
   const [valueDrafts, setValueDrafts] = useState<Record<string, string>>({});
 
   function recompute(nextNames: string[], nextValues: Record<string, string[]>) {
-    const reconciled = reconcileVariantMatrix(nextNames, nextValues, variants, (options) => ({
-      sku: suggestSku(productSlug || "sku", options, nextNames),
-      options,
-      priceAmount: 0,
-      priceCurrency: "USD",
-      compareAtAmount: null,
-      isEnabled: true,
-      onHand: 0,
-      lowStockThreshold: 5,
-    }));
+    const usedSkus = new Set<string>();
+    for (const v of variants) {
+      if (v.sku) usedSkus.add(v.sku);
+    }
+
+    const reconciled = reconcileVariantMatrix(nextNames, nextValues, variants, (options) => {
+      const baseSku = suggestSku(productSlug || "sku", options, nextNames);
+      let uniqueSku = baseSku;
+      let counter = 1;
+      while (usedSkus.has(uniqueSku)) {
+        uniqueSku = `${baseSku}-${counter++}`;
+      }
+      usedSkus.add(uniqueSku);
+
+      return {
+        sku: uniqueSku,
+        options,
+        priceAmount: 0,
+        priceCurrency: "USD",
+        compareAtAmount: null,
+        isEnabled: true,
+        onHand: 0,
+        lowStockThreshold: 5,
+      };
+    });
     onVariantsChange(reconciled);
   }
 
@@ -209,8 +228,9 @@ export function VariantMatrixEditor({
                 </tr>
               )}
               {variants.map((variant, index) => (
-                <tr key={variant.id ?? (Object.values(variant.options).join("-") || index)}>
+                <tr key={variant.id ?? (Object.values(variant.options).join("-") || String(index))}>
                   <td className="px-4 py-3 font-mono text-xs text-ink-300">
+
                     {optionNames.map((n) => variant.options[n]).join(" / ") || "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -247,18 +267,18 @@ export function VariantMatrixEditor({
                       aria-checked={variant.isEnabled}
                       onClick={() => updateVariant(index, { isEnabled: !variant.isEnabled })}
                       className={cn(
-                        "relative h-5 w-9 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brass-400/50",
+                        "relative h-5 w-9 rounded-full transition-colors",
                         variant.isEnabled ? "bg-signal-green/70" : "bg-ink-700"
                       )}
                     >
                       <span
                         className={cn(
-                          "absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-ink-50 transition-transform",
-                          variant.isEnabled ? "translate-x-4" : "translate-x-0"
+                          "absolute top-0.5 h-4 w-4 rounded-full bg-ink-50 transition-transform",
+                          variant.isEnabled ? "translate-x-[18px]" : "translate-x-0.5"
                         )}
                       />
                     </button>
-                   </td>
+                  </td>
                 </tr>
               ))}
             </tbody>

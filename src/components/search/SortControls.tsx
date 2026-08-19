@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import type { Route } from "next";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
@@ -48,7 +47,7 @@ export function Pagination({ state, totalPages }: { state: ParsedSearchState; to
   return (
     <nav className="flex items-center justify-center gap-1.5 pt-4" aria-label="Search results pages">
       <Link
-        href={buildSearchHref(state, { page: Math.max(1, state.page - 1) }) as Route}
+        href={buildSearchHref(state, { page: Math.max(1, state.page - 1) })}
         aria-disabled={state.page === 1}
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full border border-ink-700 text-ink-300 transition-colors hover:border-brass-400",
@@ -65,7 +64,7 @@ export function Pagination({ state, totalPages }: { state: ParsedSearchState; to
           <span key={page} className="flex items-center gap-1.5">
             {showEllipsis && <span className="px-1 text-ink-600">…</span>}
             <Link
-              href={buildSearchHref(state, { page }) as Route}
+              href={buildSearchHref(state, { page })}
               aria-current={page === state.page ? "page" : undefined}
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full border font-mono text-xs transition-colors",
@@ -81,7 +80,7 @@ export function Pagination({ state, totalPages }: { state: ParsedSearchState; to
       })}
 
       <Link
-        href={buildSearchHref(state, { page: Math.min(totalPages, state.page + 1) }) as Route}
+        href={buildSearchHref(state, { page: Math.min(totalPages, state.page + 1) })}
         aria-disabled={state.page === totalPages}
         className={cn(
           "flex h-8 w-8 items-center justify-center rounded-full border border-ink-700 text-ink-300 transition-colors hover:border-brass-400",

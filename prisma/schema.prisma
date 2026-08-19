@@ -354,7 +354,6 @@ model Order {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
   email  String // captured even for guest checkout
-  guestToken String?
 
   currency String
 
@@ -373,6 +372,7 @@ model Order {
   items        OrderItem[]
   reservations Reservation[]
   refunds      Refund[]
+  fulfillments Fulfillment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -399,6 +399,17 @@ model OrderItem {
   quantity   Int
   lineTotal  Int // unitAmount * quantity, minus this line's share of the discount
 
+  // Phase 4: how much of this line has shipped and how much has been
+  // refunded, tracked independently so a line can be partially
+  // fulfilled AND later partially refunded without either number lying
+  // about the other. Both are invariant-checked in fulfillment.server.ts
+  // and refunds.server.ts respectively — neither can exceed `quantity`.
+  fulfilledQuantity Int @default(0)
+  refundedQuantity  Int @default(0)
+
+  fulfillmentItems FulfillmentItem[]
+  refundItems      RefundLineItem[]
+
   @@map("order_items")
 }
 
@@ -412,9 +423,27 @@ model Refund {
   stripeRefundId      String? @unique
   restocked           Boolean @default(false)
 
+  items RefundLineItem[]
+
   createdAt DateTime @default(now())
 
   @@map("refunds")
+}
+
+// An itemized line within a refund — what was refunded, how much of it,
+// so the restock decision (Phase 4) can act on specific variants
+// instead of guessing from a bare dollar amount. A goodwill refund with
+// no items is still valid (amount-only, restocked always false — see
+// docs/decisions/0017-refunds-and-restock.md) so this list can be empty.
+model RefundLineItem {
+  id          String    @id @default(cuid())
+  refundId    String
+  refund      Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity    Int
+
+  @@map("refund_line_items")
 }
 
 // ---------------------------------------------------------------------------
@@ -482,4 +511,123 @@ model StripeEvent {
   processedAt DateTime @default(now())
 
   @@map("stripe_events")
+}
+
+// =============================================================================
+// PHASE 4 — operations and hardening: fulfillment, inventory adjustments,
+// audit log
+// =============================================================================
+
+// ---------------------------------------------------------------------------
+// Fulfillment. One order can have multiple fulfillments (partial
+// shipments), each covering some quantity of some order items. An
+// order's derived "fully fulfilled" state is computed by comparing
+// each OrderItem.fulfilledQuantity against its quantity — see
+// lib/fulfillment.server.ts — rather than stored as a separate flag
+// that could drift from the line-item detail backing it.
+// ---------------------------------------------------------------------------
+
+model Fulfillment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  trackingNumber String
+  carrier        String?
+
+  items FulfillmentItem[]
+
+  createdAt DateTime @default(now())
+
+  @@map("fulfillments")
+}
+
+model FulfillmentItem {
+  id            String      @id @default(cuid())
+  fulfillmentId String
+  fulfillment   Fulfillment @relation(fields: [fulfillmentId], references: [id], onDelete: Cascade)
+  orderItemId   String
+  orderItem     OrderItem   @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity      Int
+
+  @@map("fulfillment_items")
+}
+
+// ---------------------------------------------------------------------------
+// Inventory adjustments. Every manual stock change goes through
+// adjustStock() in lib/inventory-admin.server.ts, which uses the same
+// SELECT ... FOR UPDATE locking as the Phase 2 reservation path (see
+// ADR 0007) and writes exactly one of these rows per adjustment — the
+// running history the brief's "adjustment history with reason codes"
+// asks for.
+// ---------------------------------------------------------------------------
+
+enum InventoryAdjustmentReason {
+  received
+  damaged
+  lost
+  returned
+  correction
+  other
+}
+
+model InventoryAdjustment {
+  id              String  @id @default(cuid())
+  inventoryItemId String
+  variantId       String // denormalized alongside inventoryItemId so history survives a variant's inventory row being recreated
+
+  delta          Int // positive or negative
+  resultingOnHand Int // onHand immediately after this adjustment — makes the history self-contained, no need to replay deltas to know stock at any point in time
+
+  reason InventoryAdjustmentReason
+  note   String?
+
+  actorUserId  String // no FK — see docs/decisions/0018-audit-log-append-only.md; the record must outlive the actor
+  actorEmail   String
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([variantId])
+  @@map("inventory_adjustments")
+}
+
+// ---------------------------------------------------------------------------
+// Audit log. Append-only in two senses: the application layer exposes
+// only appendAuditLog() (lib/audit.server.ts) and never an update or
+// delete function; the database itself additionally enforces this with
+// a trigger (see prisma/manual/audit-log-append-only.sql) so the
+// guarantee doesn't depend on every future caller reading the
+// application-layer rule. See docs/decisions/0018.
+// ---------------------------------------------------------------------------
+
+enum AuditAction {
+  create
+  update
+  delete
+  transition
+  refund
+  adjustment
+}
+
+model AuditLogEntry {
+  id String @id @default(cuid())
+
+  actorUserId String // no FK — see above
+  actorEmail  String
+  actorRole   StaffRole?
+
+  entityType String // "Product", "Order", "InventoryItem", ...
+  entityId   String
+  action     AuditAction
+
+  before Json? // null for a create
+  after  Json? // null for a delete
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@map("audit_log_entries")
 }

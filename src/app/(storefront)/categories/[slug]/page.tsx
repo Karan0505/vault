@@ -2,17 +2,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getCategoryWithProducts } from "@/lib/products.server";
-import { toProductCardData } from "@/lib/catalogue-view";
-import { CategoryHero } from "@/components/storefront/CategoryHero";
-import { ProductGrid } from "@/components/storefront/ProductGrid";
+import { CatalogBrowser, type CategoryItem, type CatalogProduct } from "@/components/product";
 
 interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 
-// ISR: this page is static at build time for every known category and
-// re-rendered on demand only when revalidateProduct()/revalidateCategory()
-// invalidate its tag from an admin write — never on a fixed timer alone.
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
@@ -25,7 +20,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const category = await getCategoryWithProducts(slug);
   if (!category) return {};
   return {
-    title: category.name,
+    title: `${category.name} · VAULT`,
     description: category.description ?? undefined,
     alternates: { canonical: `/categories/${slug}` },
   };
@@ -33,15 +28,58 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = await getCategoryWithProducts(slug);
+  const [category, allCategoriesData, allProductsData] = await Promise.all([
+    getCategoryWithProducts(slug),
+    prisma.category.findMany({
+      include: {
+        products: { where: { status: "active" }, select: { id: true } },
+      },
+    }),
+    prisma.product.findMany({
+      where: { status: "active" },
+      include: {
+        media: { orderBy: { position: "asc" }, take: 1 },
+        variants: { where: { isEnabled: true } },
+        category: true,
+      },
+    }),
+  ]);
+
   if (!category) notFound();
 
-  const products = category.products.map(toProductCardData);
+  const categories: CategoryItem[] = allCategoriesData.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    count: c.products.length,
+  }));
+
+  const initialProducts: CatalogProduct[] = allProductsData.map((p) => {
+    const prices = p.variants.map((v) => v.priceAmount);
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+    return {
+      slug: p.slug,
+      title: p.title,
+      minPriceAmount: minPrice,
+      maxPriceAmount: maxPrice,
+      currency: p.variants[0]?.priceCurrency ?? "USD",
+      imageUrl: p.media[0]?.url ?? null,
+      imageAlt: p.media[0]?.alt ?? p.title,
+      totalOnHand: 10,
+      categorySlug: p.category?.slug,
+      categoryName: p.category?.name,
+    };
+  });
 
   return (
-    <div className="flex flex-col gap-10">
-      <CategoryHero name={category.name} description={category.description} count={products.length} />
-      <ProductGrid products={products} />
+    <div className="mx-auto max-w-7xl py-6">
+      <CatalogBrowser
+        initialProducts={initialProducts}
+        categories={categories}
+        title={category.name}
+      />
     </div>
   );
 }

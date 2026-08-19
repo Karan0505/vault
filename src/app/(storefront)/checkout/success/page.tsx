@@ -7,8 +7,6 @@ import { ORDER_STATUS_LABEL } from "@/lib/orders";
 import { Badge } from "@/components/ui/Badge";
 import { CheckCircle2, Clock } from "lucide-react";
 
-import { PaymentStatusPoller } from "@/components/checkout/PaymentStatusPoller";
-
 export const metadata: Metadata = { title: "Order confirmed" };
 
 interface SuccessPageProps {
@@ -30,7 +28,6 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-6 py-16 text-center">
-      <PaymentStatusPoller orderId={order.id} initialStatus={order.status} />
       {isPaid ? (
         <CheckCircle2 size={40} className="text-signal-green" strokeWidth={1.5} />
       ) : (
@@ -63,25 +60,9 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
             </div>
           ))}
         </div>
-        <div className="ledger-rule flex flex-col gap-1.5 pt-3 font-mono text-sm">
-          <div className="flex justify-between text-ink-400">
-            <span>Subtotal</span>
-            <span>{formatMoney({ amount: order.subtotalAmount, currency: order.currency })}</span>
-          </div>
-          {order.discountAmount > 0 && (
-            <div className="flex justify-between text-signal-green">
-              <span>Discount</span>
-              <span>−{formatMoney({ amount: order.discountAmount, currency: order.currency })}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-ink-400">
-            <span>Shipping</span>
-            <span>{order.shippingAmount === 0 ? "Free" : formatMoney({ amount: order.shippingAmount, currency: order.currency })}</span>
-          </div>
-          <div className="flex justify-between pt-1.5 text-base font-semibold text-ink-50">
-            <span>Total</span>
-            <span>{formatMoney({ amount: order.totalAmount, currency: order.currency })}</span>
-          </div>
+        <div className="ledger-rule flex justify-between pt-3 font-mono text-sm text-ink-50">
+          <span>Total</span>
+          <span>{formatMoney({ amount: order.totalAmount, currency: order.currency })}</span>
         </div>
       </div>
 

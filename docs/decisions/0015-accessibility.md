@@ -41,13 +41,14 @@ options. Tabbing through every size and colour individually — as the
 old version did — is slower and less predictable for a keyboard user
 than the brief's "keyboard navigable" implies.
 
-`VariantOptionGroup` (`src/components/storefront/VariantOptionGroup.tsx`)
+`VariantOptionGroup` (`src/components/product/VariantOptionGroup.tsx`)
 replaces that: only one button per dimension is in the Tab order at a
 time (the selected value, or the first *selectable* one — an ARIA
 radiogroup ignores disabled/out-of-stock options as if they weren't
 there), and `ArrowRight`/`ArrowDown`/`ArrowLeft`/`ArrowUp`/`Home`/`End`
 move between the selectable values in that dimension, skipping disabled
 ones entirely rather than landing on a value that can't be chosen.
+
 
 ## Consequences
 - The focus trap and roving tabindex are both hand-rolled rather than

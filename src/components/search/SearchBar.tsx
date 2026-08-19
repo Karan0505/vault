@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Route } from "next";
 import { Search, X } from "lucide-react";
 import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
 
@@ -21,14 +20,14 @@ export function SearchBar({ state }: { state: ParsedSearchState }) {
     setValue(next);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      router.push(buildSearchHref(state, { q: next || null }) as Route);
+      router.push(buildSearchHref(state, { q: next || null }));
     }, 350);
   }
 
   function clear() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setValue("");
-    router.push(buildSearchHref(state, { q: null }) as Route);
+    router.push(buildSearchHref(state, { q: null }));
   }
 
   return (

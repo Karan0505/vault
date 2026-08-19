@@ -1,5 +1,4 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import { generateVariantMatrix } from "../src/lib/variants";
 
 const prisma = new PrismaClient();
@@ -9,30 +8,14 @@ const FLAT_SHIPPING_SEED = 599; // mirrors FLAT_SHIPPING_AMOUNT in lib/orders.se
 
 async function main() {
   console.log("Seeding staff users…");
-  // Default staff password satisfies length >= 8, number, and special character requirements
-  const defaultPasswordHash = await bcrypt.hash("AdminPassword123!", 10);
-
-  const staffUsers = [
-    { email: "admin@vault.internal", name: "Ada (Admin)", staffRole: "admin" as const },
-    { email: "fulfilment@vault.internal", name: "Femi (Fulfilment)", staffRole: "fulfilment" as const },
-    { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" as const },
-  ];
-
-  for (const staff of staffUsers) {
-    await prisma.user.upsert({
-      where: { email: staff.email },
-      update: {
-        passwordHash: defaultPasswordHash,
-        staffRole: staff.staffRole,
-      },
-      create: {
-        email: staff.email,
-        name: staff.name,
-        staffRole: staff.staffRole,
-        passwordHash: defaultPasswordHash,
-      },
-    });
-  }
+  await prisma.user.createMany({
+    data: [
+      { email: "admin@vault.internal", name: "Ada (Admin)", staffRole: "admin" },
+      { email: "fulfilment@vault.internal", name: "Femi (Fulfilment)", staffRole: "fulfilment" },
+      { email: "support@vault.internal", name: "Sam (Support)", staffRole: "support" },
+    ],
+    skipDuplicates: true,
+  });
 
   console.log("Seeding categories…");
   const outerwear = await prisma.category.upsert({
@@ -70,18 +53,7 @@ async function main() {
 
   console.log("Seeding products…");
 
-  interface ProductSeed {
-    title: string;
-    slug: string;
-    description: string;
-    categoryId: string;
-    optionNames: string[];
-    optionValues: Record<string, readonly string[]>;
-    basePriceAmount: number;
-    images: string[];
-  }
-
-  const productSeeds: ProductSeed[] = [
+  const productSeeds = [
     {
       title: "Waxed Field Jacket",
       slug: "waxed-field-jacket",
@@ -146,7 +118,7 @@ async function main() {
   ];
 
   for (const seed of productSeeds) {
-    const combinations = generateVariantMatrix(seed.optionNames, seed.optionValues);
+    const combinations = generateVariantMatrix(seed.optionNames, seed.optionValues as Record<string, readonly string[]>);
 
     const product = await prisma.product.upsert({
       where: { slug: seed.slug },
@@ -159,22 +131,20 @@ async function main() {
         categoryId: seed.categoryId,
         optionNames: seed.optionNames,
         media: {
-          create: seed.images.map((url, position) => ({
-            url,
-            alt: `${seed.title} view ${position + 1}`,
-            position,
-          })),
+          create: seed.images.map((url, position) => ({ url, alt: seed.title, position })),
         },
       },
     });
 
-    for (const [vIndex, combo] of combinations.entries()) {
-      const skuParts = [
-        seed.slug.toUpperCase().slice(0, 10),
-        combo.Size ? (combo.Size as string).toUpperCase().replaceAll("/", "-") : null,
-        combo.Colour ? (combo.Colour as string).toUpperCase().slice(0, 3) : null,
-      ].filter(Boolean);
-      const sku = skuParts.join("-");
+    for (const [index, options] of combinations.entries()) {
+      const skuSuffix = Object.values(options)
+        .map((v) => v.slice(0, 3).toUpperCase())
+        .join("-");
+      const sku = `${seed.slug.toUpperCase().slice(0, 10)}-${skuSuffix}`;
+      // Small deterministic variance so the storefront doesn't show one flat price everywhere.
+      const priceAmount = seed.basePriceAmount + (index % 3) * 500;
+      // Distribute a bit of low-stock and out-of-stock across the catalogue for demo.
+      const onHand = index === 0 ? 0 : index === 1 ? 3 : 15;
 
       await prisma.productVariant.upsert({
         where: { sku },
@@ -182,14 +152,13 @@ async function main() {
         create: {
           productId: product.id,
           sku,
-          options: combo as any,
-          priceAmount: seed.basePriceAmount,
-          position: vIndex,
+          options,
+          priceAmount,
+          priceCurrency: "USD",
+          isEnabled: true,
+          position: index,
           inventoryItem: {
-            create: {
-              onHand: Math.floor(Math.random() * 10) + 1,
-              lowStockThreshold: 5,
-            },
+            create: { onHand, lowStockThreshold: 5 },
           },
         },
       });
@@ -204,7 +173,7 @@ async function main() {
       code: "WELCOME10",
       type: "percentage",
       value: 10,
-      usageLimit: 1000,
+      usageLimit: null,
       perCustomerLimit: 1,
       minimumSpend: null,
       isActive: true,
@@ -230,13 +199,14 @@ async function main() {
     where: { slug: { in: productSeeds.map((p) => p.slug) } },
     include: { variants: { orderBy: { position: "asc" }, take: 1 } },
   });
-  type VariantType = (typeof seededProducts)[number]["variants"][number];
-  const firstVariantByProduct = new Map<string, VariantType>();
-  for (const p of seededProducts) {
-    if (p.variants[0]) {
-      firstVariantByProduct.set(p.slug, p.variants[0]);
-    }
-  }
+  const firstVariantByProduct = new Map(
+    seededProducts
+      .map((p) => {
+        const firstVariant = p.variants[0];
+        return firstVariant ? ([p.slug, firstVariant] as const) : null;
+      })
+      .filter((entry): entry is readonly [string, (typeof seededProducts)[0]["variants"][0]] => entry !== null)
+  );
 
   const orderPairings: { slugs: string[]; email: string }[] = [
     { slugs: ["waxed-field-jacket", "service-boot"], email: "customer1@example.com" },
@@ -248,9 +218,9 @@ async function main() {
   ];
 
   for (const [index, pairing] of orderPairings.entries()) {
-    const variants: VariantType[] = pairing.slugs
+    const variants = pairing.slugs
       .map((slug) => firstVariantByProduct.get(slug))
-      .filter((v): v is VariantType => Boolean(v));
+      .filter((v): v is NonNullable<typeof v> => typeof v === "object" && v !== null);
     if (variants.length === 0) continue;
 
     const subtotal = variants.reduce((sum, v) => sum + v.priceAmount, 0);

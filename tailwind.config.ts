@@ -27,10 +27,33 @@ const config: Config = {
           100: "#F8EFD9",
         },
         signal: {
-          green: "#3E7A5C",
-          red: "#B5473C",
-          amber: "#C08A2E",
+          green: "#10B981",
+          red: "#EF4444",
+          amber: "#F59E0B",
+          blue: "#3B82F6",
+          purple: "#8B5CF6",
         },
+        admin: {
+          bg: "#0B0F19",
+          card: "#111827",
+          cardHover: "#182235",
+          border: "#1E293B",
+          borderLight: "#334155",
+          text: "#F8FAFC",
+          muted: "#94A3B8",
+          dim: "#64748B",
+          accent: "#6366F1",
+          accentHover: "#4F46E5",
+        },
+        store: {
+          bg: "#FFFFFF",
+          surface: "#F9FAFB",
+          card: "#FFFFFF",
+          border: "#E5E7EB",
+          text: "#111827",
+          muted: "#6B7280",
+          accent: "#000000",
+        }
       },
       fontFamily: {
         display: ["var(--font-display)", "serif"],
@@ -44,6 +67,9 @@ const config: Config = {
       boxShadow: {
         vault: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 12px 32px -12px rgba(0,0,0,0.5)",
         panel: "0 1px 0 0 rgba(255,255,255,0.03) inset, 0 2px 8px -2px rgba(0,0,0,0.4)",
+        store: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
+        storeHover: "0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04)",
+        glow: "0 0 20px -3px rgba(99, 102, 241, 0.3)",
       },
       keyframes: {
         "fade-up": {

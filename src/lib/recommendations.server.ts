@@ -1,7 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import type { ProductCardData } from "@/components/storefront/ProductCard";
+import type { ProductCardData } from "@/components/product";
 
 // Only orders that actually completed count as a "purchase" signal —
 // a pending order (payment not yet confirmed, or abandoned) says

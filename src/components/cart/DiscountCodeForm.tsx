@@ -61,22 +61,23 @@ export function DiscountCodeForm({ onApplied }: { onApplied: (code: string, prev
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+      <label className="font-sans text-xs font-semibold text-gray-700">Discount code</label>
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-500" />
+          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="Discount code"
-            className="w-full rounded-lg border border-ink-600 bg-ink-900 py-2.5 pl-9 pr-3 font-mono text-sm uppercase text-ink-50 placeholder:text-ink-500 placeholder:normal-case focus:border-brass-400 focus:outline-none"
+            placeholder="Enter code"
+            className="w-full rounded-xl border border-gray-200 bg-gray-50/70 py-2.5 pl-9 pr-3 font-mono text-xs uppercase text-gray-900 placeholder:text-gray-400 placeholder:normal-case focus:border-black focus:bg-white focus:outline-none transition-colors"
           />
         </div>
         <button
           type="submit"
-          disabled={status === "loading"}
-          className="rounded-lg border border-ink-600 px-4 text-sm text-ink-200 transition-colors hover:border-brass-400 hover:text-brass-300 disabled:opacity-50"
+          disabled={status === "loading" || !code.trim()}
+          className="rounded-xl border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 cursor-pointer"
         >
-          {status === "loading" ? "Checking…" : "Apply"}
+          {status === "loading" ? "…" : "Apply"}
         </button>
       </div>
       <AnimatePresence>
@@ -85,7 +86,7 @@ export function DiscountCodeForm({ onApplied }: { onApplied: (code: string, prev
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="text-xs text-signal-red"
+            className="text-xs text-rose-600"
           >
             {message}
           </motion.p>
@@ -94,3 +95,4 @@ export function DiscountCodeForm({ onApplied }: { onApplied: (code: string, prev
     </form>
   );
 }
+
