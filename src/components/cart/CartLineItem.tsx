@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
@@ -38,8 +39,20 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
 
   return (
     <div className="flex items-start gap-4 border-b border-gray-100 py-4.5 last:border-0">
-      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gray-100 border border-gray-200/70 font-sans text-xs text-gray-500">
-        📦
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200/70">
+        {line.imageUrl ? (
+          <Image
+            src={line.imageUrl}
+            alt={line.productTitle}
+            fill
+            sizes="64px"
+            className="object-cover object-center"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-500">
+            📦
+          </div>
+        )}
       </div>
 
       <div className="min-w-0 flex-1">

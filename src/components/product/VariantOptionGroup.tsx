@@ -1,42 +1,48 @@
 "use client";
 
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
+import { resolveColor } from "@/lib/colors";
 
 interface VariantOptionGroupProps {
   dimension: string;
   values: string[];
   selectable: Set<string>;
   chosen: string | undefined;
+  explicitColorValues?: Record<string, string>;
   onSelect: (value: string) => void;
 }
-
-const COLOR_MAP: Record<string, string> = {
-  Black: "#111827",
-  Cream: "#F5F5DC",
-  Olive: "#556B2F",
-  Brown: "#8B4513",
-  White: "#FFFFFF",
-  Navy: "#1E3A8A",
-  Charcoal: "#374151",
-  Moss: "#3F6212",
-  Loden: "#4D7C0F",
-  Rust: "#B45309",
-  Oat: "#D6D3D1",
-  Chestnut: "#78350F",
-  Ink: "#0F172A",
-};
 
 export function VariantOptionGroup({
   dimension,
   values,
   selectable,
   chosen,
+  explicitColorValues,
   onSelect,
 }: VariantOptionGroupProps) {
   const buttonRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
   const isColor = dimension.toLowerCase() === "colour" || dimension.toLowerCase() === "color";
+
+  // Normalize selectable set and chosen value for robust case-insensitive matching
+  const normalizedSelectable = useMemo(() => {
+    const set = new Set<string>();
+    for (const val of selectable) {
+      set.add(val.trim().toLowerCase());
+    }
+    return set;
+  }, [selectable]);
+
+  const chosenNorm = chosen?.trim().toLowerCase();
+
+  function isValueSelectable(val: string): boolean {
+    return selectable.has(val) || normalizedSelectable.has(val.trim().toLowerCase());
+  }
+
+  function isValueChosen(val: string): boolean {
+    return chosen === val || (chosenNorm !== undefined && val.trim().toLowerCase() === chosenNorm);
+  }
 
   function focusAndSelect(value: string) {
     onSelect(value);
@@ -44,16 +50,20 @@ export function VariantOptionGroup({
   }
 
   const tabbableValue =
-    chosen && selectable.has(chosen) ? chosen : values.find((v) => selectable.has(v));
+    chosen && isValueSelectable(chosen)
+      ? chosen
+      : values.find((v) => isValueSelectable(v));
 
   return (
     <div className="flex flex-wrap items-center gap-2.5" role="radiogroup" aria-label={dimension}>
       {values.map((value) => {
-        const isSelectable = selectable.has(value);
-        const isChosen = chosen === value;
-        const colorHex = COLOR_MAP[value];
+        const isSelectable = isValueSelectable(value);
+        const isChosen = isValueChosen(value);
 
-        if (isColor && colorHex) {
+        if (isColor) {
+          const explicit = explicitColorValues?.[value] ?? explicitColorValues?.[value.trim().toLowerCase()];
+          const colorInfo = resolveColor(value, explicit);
+
           return (
             <button
               key={value}
@@ -71,16 +81,17 @@ export function VariantOptionGroup({
               className={cn(
                 "relative flex h-8 w-8 items-center justify-center rounded-full border transition-all",
                 isChosen
-                  ? "ring-2 ring-black ring-offset-2 scale-105"
-                  : "border-gray-300 hover:scale-105",
+                  ? "ring-2 ring-black ring-offset-2 scale-105 shadow-xs"
+                  : "hover:scale-105",
+                colorInfo.isLight ? "border-gray-300" : "border-transparent",
                 !isSelectable && "opacity-30 cursor-not-allowed"
               )}
-              style={{ backgroundColor: colorHex }}
+              style={{ backgroundColor: colorInfo.bg }}
             >
               {isChosen && (
                 <Check
                   size={14}
-                  className={value === "White" || value === "Cream" || value === "Oat" ? "text-black" : "text-white"}
+                  className={colorInfo.isLight ? "text-gray-900 stroke-[2.5]" : "text-white stroke-[2.5]"}
                 />
               )}
             </button>

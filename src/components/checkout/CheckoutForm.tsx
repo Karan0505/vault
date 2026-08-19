@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ShieldCheck, Check } from "lucide-react";
 import { getStripeClient } from "@/lib/stripe-client";
 import { PaymentStep } from "./PaymentStep";
+import { notifyCartUpdated } from "@/lib/cart-events";
 
 interface CheckoutResult {
   orderId: string;
@@ -13,6 +15,7 @@ interface CheckoutResult {
 }
 
 export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: string }) {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +29,26 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
   const [session, setSession] = useState<CheckoutResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.user?.email && !email) {
+            setEmail(data.user.email);
+          }
+          if (data?.user?.name && !fullName) {
+            setFullName(data.user.name);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+    loadUser();
+  }, [email, fullName]);
 
   async function handleStartPayment(e: React.FormEvent) {
     e.preventDefault();
@@ -42,6 +65,11 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
       const body = await res.json();
 
       if (!res.ok) {
+        if (res.status === 401) {
+          router.push(`/login?redirect=${encodeURIComponent("/checkout")}`);
+          return;
+        }
+
         if (typeof body.available === "number") {
           setError(
             `Only ${body.available} left of one item in your cart — update quantity and try again.`
@@ -55,6 +83,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
 
       setSession(body);
       setCurrentStep(3);
+      notifyCartUpdated();
     } catch {
       setError("Something went wrong — try again.");
       setIsSubmitting(false);

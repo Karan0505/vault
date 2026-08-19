@@ -38,11 +38,35 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
   const selection: OptionSelection = useMemo(() => {
     const current: OptionSelection = {};
     for (const name of optionNames) {
-      const value = searchParams.get(name.toLowerCase());
-      if (value) current[name] = value;
+      const rawParam = searchParams.get(name.toLowerCase());
+      if (rawParam) {
+        const available = optionValues[name] ?? [];
+        const matched = available.find(
+          (v) => v.trim().toLowerCase() === rawParam.trim().toLowerCase()
+        );
+        current[name] = matched ?? rawParam;
+      }
     }
     return current;
-  }, [optionNames, searchParams]);
+  }, [optionNames, optionValues, searchParams]);
+
+  const explicitColorValues: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const v of variants) {
+      const opts = v.options as Record<string, unknown>;
+      const colorVal = (opts["Colour"] ?? opts["Color"] ?? opts["colour"] ?? opts["color"]) as
+        | string
+        | undefined;
+      const explicit = (opts["colorValue"] ??
+        opts["hex"] ??
+        opts["swatch"] ??
+        opts["cssColor"]) as string | undefined;
+      if (colorVal && explicit) {
+        map[colorVal] = explicit;
+      }
+    }
+    return map;
+  }, [variants]);
 
   const setValue = useCallback(
     (dimension: string, value: string) => {
@@ -77,6 +101,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
               values={values}
               selectable={selectable}
               chosen={chosen}
+              explicitColorValues={explicitColorValues}
               onSelect={(value) => setValue(dimension, value)}
             />
           </fieldset>

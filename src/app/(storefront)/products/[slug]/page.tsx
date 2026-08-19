@@ -60,13 +60,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const optionValues: Record<string, string[]> = {};
   for (const name of product.optionNames) {
-    const values = new Set<string>();
+    const seenLower = new Set<string>();
+    const values: string[] = [];
     for (const variant of product.variants) {
       const options = variant.options as Record<string, string>;
-      const value = options[name];
-      if (value) values.add(value);
+      const rawValue = options[name];
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        const lower = trimmed.toLowerCase();
+        if (trimmed && !seenLower.has(lower)) {
+          seenLower.add(lower);
+          values.push(trimmed);
+        }
+      }
     }
-    optionValues[name] = Array.from(values);
+    optionValues[name] = values;
   }
 
   const selectableVariants: SelectableVariant[] = product.variants.map((v) => ({

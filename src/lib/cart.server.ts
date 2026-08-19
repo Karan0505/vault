@@ -19,6 +19,7 @@ export interface CartLineView {
   lineTotal: number;
   onHand: number;
   isEnabled: boolean;
+  imageUrl?: string | null;
 }
 
 export interface CartView {
@@ -35,14 +36,20 @@ export interface CartView {
  * client directly — only ever the cookie or the session.
  */
 export async function getOrCreateCart(userId: string | null): Promise<{ id: string }> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(CART_COOKIE)?.value;
+
   if (userId) {
+    if (token) {
+      const guestCart = await prisma.cart.findUnique({ where: { sessionToken: token } });
+      if (guestCart) {
+        await mergeGuestCartIntoUser(guestCart.id, userId);
+      }
+    }
     const existing = await prisma.cart.findFirst({ where: { userId } });
     if (existing) return existing;
     return prisma.cart.create({ data: { userId } });
   }
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get(CART_COOKIE)?.value;
 
   if (token) {
     const existing = await prisma.cart.findUnique({ where: { sessionToken: token } });
@@ -131,7 +138,14 @@ export async function getCartView(cartId: string): Promise<CartView> {
     where: { cartId },
     include: {
       variant: {
-        include: { product: true, inventoryItem: true },
+        include: {
+          product: {
+            include: {
+              media: { orderBy: { position: "asc" } },
+            },
+          },
+          inventoryItem: true,
+        },
       },
     },
     orderBy: { createdAt: "asc" },
@@ -150,6 +164,7 @@ export async function getCartView(cartId: string): Promise<CartView> {
     lineTotal: item.variant.priceAmount * item.quantity,
     onHand: item.variant.inventoryItem?.onHand ?? 0,
     isEnabled: item.variant.isEnabled,
+    imageUrl: item.variant.product.media[0]?.url ?? null,
   }));
 
   const currency = lines[0]?.currency ?? null;

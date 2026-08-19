@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { verifyAndUpdateOrderStatus } from "@/lib/orders.server";
+import { getCurrentUserId, getStaffActor } from "@/lib/session";
+import { hasPermission } from "@/lib/permissions";
+import { syncOrderPaymentStatusWithStripe } from "@/lib/orders.server";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: Request, { params }: RouteParams) {
+export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Order ID required" }, { status: 400 });
@@ -15,30 +16,42 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
   const order = await prisma.order.findUnique({
     where: { id },
-    select: { id: true, userId: true, email: true },
+    select: {
+      id: true,
+      number: true,
+      status: true,
+      userId: true,
+      currency: true,
+      totalAmount: true,
+    },
   });
 
   if (!order) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  const session = await auth();
-  const currentUserId = session?.user?.id;
-  const isStaff = Boolean(session?.user?.staffRole);
+  // Check authorization
+  const currentUserId = await getCurrentUserId();
+  const staffActor = await getStaffActor();
 
-  if (order.userId && order.userId !== currentUserId && !isStaff) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const isOwner = Boolean(order.userId && currentUserId && order.userId === currentUserId);
+  const isAuthorizedStaff = Boolean(staffActor && hasPermission(staffActor.role, "orders:view"));
+
+  // If order was created by an authenticated user and requester is not the owner or staff, reject
+  if (order.userId && !isOwner && !isAuthorizedStaff) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  try {
-    const result = await verifyAndUpdateOrderStatus(id);
-    return NextResponse.json({
-      id: result.id,
-      status: result.status,
-      isPaid: result.status !== "pending" && result.status !== "cancelled",
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to verify status";
-    return NextResponse.json({ error: message }, { status: 500 });
+  // Reconcile with Stripe if order is still pending
+  let status = order.status;
+  if (status === "pending") {
+    status = await syncOrderPaymentStatusWithStripe(order.id);
   }
+
+  return NextResponse.json({
+    orderId: order.id,
+    orderNumber: order.number,
+    status,
+    isPaid: status !== "pending",
+  });
 }

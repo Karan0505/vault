@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/session";
 import { getOrCreateCart, getCartView } from "@/lib/cart.server";
 import { formatMoney } from "@/lib/money";
@@ -11,8 +12,7 @@ interface CheckoutPageProps {
   searchParams: Promise<{ discount?: string }>;
 }
 
-async function CheckoutSummary() {
-  const userId = await getCurrentUserId();
+async function CheckoutSummary({ userId }: { userId: string }) {
   const cart = await getOrCreateCart(userId);
   const view = await getCartView(cart.id);
   const currency = view.currency ?? "USD";
@@ -43,6 +43,12 @@ async function CheckoutSummary() {
 
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
   const { discount } = await searchParams;
+  const userId = await getCurrentUserId();
+
+  if (!userId) {
+    const targetUrl = `/checkout${discount ? `?discount=${encodeURIComponent(discount)}` : ""}`;
+    redirect(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+  }
 
   return (
     <div className="mx-auto max-w-5xl py-6">
@@ -52,7 +58,7 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
         </div>
         <div>
           <Suspense fallback={<div className="skeleton h-64 rounded-3xl" />}>
-            <CheckoutSummary />
+            <CheckoutSummary userId={userId} />
           </Suspense>
         </div>
       </div>

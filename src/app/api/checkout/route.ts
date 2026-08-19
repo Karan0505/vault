@@ -12,6 +12,10 @@ export async function POST(request: Request) {
   }
 
   const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Authentication required to checkout" }, { status: 401 });
+  }
+
   const cart = await getOrCreateCart(userId);
 
   try {
@@ -46,6 +50,7 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    throw error;
+    const message = error instanceof Error ? error.message : "Couldn't create checkout session";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

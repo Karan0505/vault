@@ -21,6 +21,7 @@ export function CartPageBody() {
   const router = useRouter();
   const [cart, setCart] = useState<CartView | null>(null);
   const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/cart", { cache: "no-store" });
@@ -33,6 +34,29 @@ export function CartPageBody() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  async function handleCheckout() {
+    if (isRedirecting) return;
+    setIsRedirecting(true);
+
+    const targetUrl = `/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`;
+
+    try {
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      if (!res.ok) {
+        router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+        return;
+      }
+      const data = await res.json();
+      if (data?.user?.id) {
+        router.push(targetUrl);
+      } else {
+        router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+      }
+    } catch {
+      router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+    }
+  }
 
   if (!cart) {
     return (
@@ -126,11 +150,18 @@ export function CartPageBody() {
       {/* Checkout CTA */}
       <button
         type="button"
-        disabled={!canCheckout}
-        onClick={() => router.push(`/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`)}
-        className="inline-flex w-full items-center justify-center rounded-full bg-black py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] cursor-pointer"
+        disabled={!canCheckout || isRedirecting}
+        onClick={handleCheckout}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] cursor-pointer"
       >
-        Checkout
+        {isRedirecting ? (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <span>Checking authentication...</span>
+          </>
+        ) : (
+          <span>Checkout</span>
+        )}
       </button>
 
       {!canCheckout && (

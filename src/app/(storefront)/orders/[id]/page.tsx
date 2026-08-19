@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { Check, ChevronRight, Package, Truck, CreditCard, ShoppingBag } from "lucide-react";
 import { prisma } from "@/lib/prisma";
@@ -23,7 +24,21 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const { id } = await params;
   const order = await prisma.order.findFirst({
     where: { OR: [{ id }, { number: id }] },
-    include: { items: true },
+    include: {
+      items: {
+        include: {
+          variant: {
+            include: {
+              product: {
+                include: {
+                  media: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
   if (!order) notFound();
 
@@ -113,24 +128,43 @@ export default async function OrderPage({ params }: OrderPageProps) {
             Items
           </h3>
           <div className="flex flex-col divide-y divide-gray-100">
-            {order.items.map((item) => (
-              <div key={item.id} className="flex items-center justify-between py-4 text-xs">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 border border-gray-200 font-sans text-xs text-gray-500">
-                    📦
+            {order.items.map((item) => {
+              const imageUrl = item.variant?.product?.media?.[0]?.url ?? null;
+
+              return (
+                <div key={item.id} className="flex items-center justify-between py-4 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200">
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={item.titleSnapshot}
+                          fill
+                          sizes="56px"
+                          className="object-cover object-center"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-400">
+                          📦
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{item.titleSnapshot}</p>
+                      <p className="text-[11px] text-gray-500 font-mono mt-0.5">
+                        {item.optionsSnapshot && typeof item.optionsSnapshot === "object"
+                          ? Object.values(item.optionsSnapshot as Record<string, string>).join(" / ") + " · "
+                          : ""}
+                        Qty {item.quantity}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">{item.titleSnapshot}</p>
-                    <p className="text-[11px] text-gray-500 font-mono mt-0.5">
-                      {Object.values(item.optionsSnapshot as Record<string, string>).join(" / ")} · Qty {item.quantity}
-                    </p>
-                  </div>
+                  <span className="font-mono font-bold text-gray-900">
+                    {formatMoney({ amount: item.lineTotal, currency: order.currency })}
+                  </span>
                 </div>
-                <span className="font-mono font-bold text-gray-900">
-                  {formatMoney({ amount: item.lineTotal, currency: order.currency })}
-                </span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

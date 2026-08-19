@@ -5,8 +5,10 @@ import { stripe } from "@/lib/stripe";
 import { getCartView } from "@/lib/cart.server";
 import { reserveCartLines, releaseReservations, commitReservations, InsufficientStockError } from "@/lib/inventory.server";
 import { applyDiscountCode } from "@/lib/discounts.server";
-import { assertTransition } from "@/lib/orders";
+import { assertTransition, type OrderStatus } from "@/lib/orders";
 import { splitProportionally } from "@/lib/money";
+import { sendOrderConfirmationEmail } from "@/lib/email.server";
+import { logger } from "@/lib/logger";
 
 /** Flat placeholder shipping rate — a real rates engine (carrier rates, free thresholds) is Phase 3+/stretch scope, not this phase's problem. */
 const FLAT_SHIPPING_AMOUNT = 599;
@@ -135,6 +137,11 @@ export async function createCheckoutSession(params: {
         });
       }
 
+      // Clear the purchased items from the active checkout cart
+      await tx.cartItem.deleteMany({
+        where: { cartId: params.cartId },
+      });
+
       return created;
     });
 
@@ -172,7 +179,7 @@ export async function markOrderPaidByPaymentIntent(
 ): Promise<{ orderId: string } | null> {
   const order = await tx.order.findUnique({
     where: { stripePaymentIntentId: paymentIntentId },
-    include: { reservations: true },
+    include: { reservations: true, items: true },
   });
 
   if (!order) return null; // PaymentIntent not tied to an order we know about — nothing to do
@@ -185,6 +192,29 @@ export async function markOrderPaidByPaymentIntent(
     tx,
     order.reservations.map((r) => r.id)
   );
+
+  // Clear any corresponding items from user's cart
+  if (order.userId) {
+    const userCart = await tx.cart.findFirst({
+      where: { userId: order.userId },
+      include: { items: true },
+    });
+    if (userCart) {
+      for (const item of order.items) {
+        const cartItem = userCart.items.find((ci) => ci.variantId === item.variantId);
+        if (cartItem) {
+          if (cartItem.quantity <= item.quantity) {
+            await tx.cartItem.delete({ where: { id: cartItem.id } });
+          } else {
+            await tx.cartItem.update({
+              where: { id: cartItem.id },
+              data: { quantity: cartItem.quantity - item.quantity },
+            });
+          }
+        }
+      }
+    }
+  }
 
   return { orderId: order.id };
 }
@@ -209,6 +239,50 @@ export async function cancelOrderByPaymentIntent(
     tx,
     order.reservations.map((r) => r.id)
   );
+}
+
+/**
+ * Authoritatively queries Stripe for the current PaymentIntent status
+ * and reconciles the local database if Stripe has already confirmed success/cancellation.
+ */
+export async function syncOrderPaymentStatusWithStripe(orderId: string): Promise<OrderStatus> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, status: true, stripePaymentIntentId: true },
+  });
+
+  if (!order) return "pending";
+  if (order.status !== "pending" || !order.stripePaymentIntentId) {
+    return order.status;
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+    if (paymentIntent.status === "succeeded") {
+      let paidId: string | null = null;
+      await prisma.$transaction(async (tx) => {
+        const result = await markOrderPaidByPaymentIntent(tx, paymentIntent.id);
+        if (result) paidId = result.orderId;
+      });
+
+      if (paidId) {
+        const fullOrder = await prisma.order.findUnique({ where: { id: paidId }, include: { items: true } });
+        if (fullOrder) {
+          await sendOrderConfirmationEmail(fullOrder);
+        }
+      }
+      return "paid";
+    } else if (paymentIntent.status === "canceled") {
+      await prisma.$transaction(async (tx) => {
+        await cancelOrderByPaymentIntent(tx, paymentIntent.id);
+      });
+      return "cancelled";
+    }
+  } catch (error) {
+    logger.warn("stripe.reconcile_status_failed", { orderId, error });
+  }
+
+  return order.status;
 }
 
 export { InsufficientStockError, splitProportionally };

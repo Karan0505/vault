@@ -55,12 +55,21 @@ export async function processStripeEvent(event: Stripe.Event): Promise<WebhookOu
         case "payment_intent.succeeded": {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           const result = await markOrderPaidByPaymentIntent(tx, paymentIntent.id);
-          if (result) paidOrderId = result.orderId;
+          if (result) {
+            paidOrderId = result.orderId;
+            logger.info("webhook.payment_intent_succeeded", {
+              paymentIntentId: paymentIntent.id,
+              orderId: result.orderId,
+            });
+          }
           break;
         }
         case "payment_intent.payment_failed": {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
           await cancelOrderByPaymentIntent(tx, paymentIntent.id);
+          logger.info("webhook.payment_intent_failed", {
+            paymentIntentId: paymentIntent.id,
+          });
           break;
         }
         default:
@@ -72,6 +81,7 @@ export async function processStripeEvent(event: Stripe.Event): Promise<WebhookOu
     });
   } catch (error) {
     if (isUniqueConstraintViolation(error)) {
+      logger.info("webhook.duplicate_event_ignored", { eventId: event.id, type: event.type });
       return "duplicate";
     }
     throw error;

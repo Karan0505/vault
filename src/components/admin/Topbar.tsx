@@ -44,7 +44,7 @@ export function Topbar({ userEmail, userName, staffRole }: TopbarProps) {
     setIsLoggingOut(true);
     setIsOpen(false);
     await signOut({ redirect: false });
-    router.push("/admin/sign-in");
+    router.push("/");
     router.refresh();
   }
 
