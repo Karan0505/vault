@@ -18,7 +18,7 @@
 export type OptionSelection = Record<string, string>;
 
 export interface VariantLike {
-  id: string;
+  id?: string;
   options: OptionSelection;
   isEnabled: boolean;
 }

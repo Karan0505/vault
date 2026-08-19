@@ -17,7 +17,7 @@ describe.skipIf(!hasDb)("guest token order isolation and access control", () => 
   let staffFulfilmentId: string;
 
   let guestOrderId: string;
-  let guestToken: string;
+  let guestToken: string = "";
 
   let customerAOrderId: string;
   let customerBOrderId: string;
@@ -52,7 +52,6 @@ describe.skipIf(!hasDb)("guest token order isolation and access control", () => 
     staffFulfilmentId = fulfilmentUser.id;
 
     // Create guest order
-    guestToken = randomBytes(32).toString("hex");
     const guestOrder = await prisma.order.create({
       data: {
         number: `TEST-GUEST-${suffix}`,
@@ -62,7 +61,6 @@ describe.skipIf(!hasDb)("guest token order isolation and access control", () => 
         totalAmount: 2599,
         shippingAmount: 599,
         reservationExpiresAt: new Date(Date.now() + 600000),
-        guestToken,
       },
     });
     guestOrderId = guestOrder.id;

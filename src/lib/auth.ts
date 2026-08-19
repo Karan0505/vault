@@ -8,20 +8,20 @@ import { getEffectiveRole, type UserRole } from "@/lib/roles";
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;
-      email: string;
+      id?: string;
+      email?: string | null;
       name?: string | null;
-      staffRole: StaffRole | null;
-      role: UserRole;
+      staffRole?: StaffRole | null;
+      role?: UserRole;
     };
   }
 
   interface User {
-    id: string;
-    email: string;
+    id?: string;
+    email?: string | null;
     name?: string | null;
-    staffRole: StaffRole | null;
-    role: UserRole;
+    staffRole?: StaffRole | null;
+    role?: UserRole;
   }
 }
 
@@ -169,4 +169,18 @@ export const STAFF_ROLES: readonly StaffRole[] = ["admin", "fulfilment", "suppor
 
 export function requireStaff(role: StaffRole | null): role is StaffRole {
   return role !== null && STAFF_ROLES.includes(role);
+}
+
+export function verifyOrderAccess(
+  order: { userId: string | null },
+  session: { user?: { id?: string; staffRole?: StaffRole | null } } | null,
+  _token?: string | null
+): boolean {
+  if (session?.user?.staffRole && requireStaff(session.user.staffRole)) {
+    return true;
+  }
+  if (order.userId) {
+    return Boolean(session?.user?.id && session.user.id === order.userId);
+  }
+  return false;
 }

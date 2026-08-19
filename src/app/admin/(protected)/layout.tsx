@@ -18,11 +18,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-ink-950">
-      <Sidebar staffRole={session.user.staffRole} />
+      <Sidebar staffRole={session.user.staffRole ?? null} />
       <div className="flex flex-1 flex-col">
         <Topbar
-          userEmail={session.user.email}
-          userName={session.user.name}
+          userEmail={session.user.email ?? ""}
+          userName={session.user.name ?? undefined}
           staffRole={session.user.staffRole ?? "admin"}
         />
         <main className="flex-1 p-8">{children}</main>

@@ -71,7 +71,7 @@ export function CartPageBody() {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
         <p className="font-sans text-lg font-semibold text-gray-800">Your cart is empty</p>
-        <p className="text-xs text-gray-500">Looks like you haven't added anything yet.</p>
+        <p className="text-xs text-gray-500">Looks like you haven&apos;t added anything yet.</p>
         <Link
           href="/"
           className="mt-3 inline-flex items-center rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 transition-colors"

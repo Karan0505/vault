@@ -17,6 +17,6 @@ export async function getCurrentUserId(): Promise<string | null> {
  */
 export async function getStaffActor(): Promise<AuditActor | null> {
   const session = await auth();
-  if (!session?.user) return null;
+  if (!session?.user?.id || !session?.user?.email) return null;
   return { userId: session.user.id, email: session.user.email, role: session.user.staffRole ?? null };
 }

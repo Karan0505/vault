@@ -35,9 +35,9 @@ describe("Stripe Payment Status & Synchronization Logic", () => {
     });
 
     it("distinguishes customer ownership logic correctly", () => {
-      const orderUserId = "user_123";
-      const authenticatedUserId = "user_123";
-      const unauthorizedUserId = "user_999";
+      const orderUserId: string = "user_123";
+      const authenticatedUserId: string = "user_123";
+      const unauthorizedUserId: string = "user_999";
 
       const isOwner = orderUserId === authenticatedUserId;
       const isUnauthorized = orderUserId === unauthorizedUserId;

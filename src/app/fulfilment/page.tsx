@@ -143,7 +143,7 @@ export default async function FulfilmentDashboardPage() {
 
                     {order.fulfillments.length > 0 ? (
                       <span className="rounded-lg bg-slate-800/80 px-2.5 py-1 text-[11px] font-mono text-blue-300">
-                        Track: {order.fulfillments[0].trackingNumber}
+                        Track: {order.fulfillments[0]?.trackingNumber}
                       </span>
                     ) : (
                       <span className="rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 px-2.5 py-1 text-[11px] font-medium">

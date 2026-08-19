@@ -138,7 +138,7 @@ function LoginForm() {
           </form>
 
           <div className="mt-8 border-t border-gray-100 pt-6 text-center text-xs text-gray-500">
-            <span>Don't have an account? </span>
+            <span>Don&apos;t have an account? </span>
             <Link href="/register" className="font-semibold text-black hover:underline">
               Create account
             </Link>

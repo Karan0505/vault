@@ -1,3 +1,3 @@
 export { SearchBar } from "./SearchBar";
 export { FacetSidebar } from "./FacetSidebar";
-export { SortControls } from "./SortControls";
+export { SortSelect, Pagination } from "./SortControls";
