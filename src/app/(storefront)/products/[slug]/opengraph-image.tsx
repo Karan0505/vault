@@ -8,10 +8,15 @@ export const contentType = "image/png";
 
 export default async function OpengraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await prisma.product.findFirst({
-    where: { slug, status: "active" },
-    include: { variants: { orderBy: { priceAmount: "asc" }, take: 1 } },
-  });
+  let product: { title: string; variants: { priceAmount: number; priceCurrency: string }[] } | null = null;
+  try {
+    product = await prisma.product.findFirst({
+      where: { slug, status: "active" },
+      include: { variants: { orderBy: { priceAmount: "asc" }, take: 1 } },
+    });
+  } catch {
+    // Graceful fallback for build-time rendering when DB is not reachable
+  }
 
   const price = product?.variants[0];
 
