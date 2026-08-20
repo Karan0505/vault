@@ -16,7 +16,10 @@ export type Permission =
   | "refunds:issue"
   | "inventory:view"
   | "inventory:adjust"
-  | "audit-log:view";
+  | "audit-log:view"
+  | "staff:manage"
+  | "settings:manage"
+  | "discounts:manage";
 
 /**
  * The full matrix. Two cells are pinned directly by the brief:
@@ -35,6 +38,9 @@ const ROLE_PERMISSIONS: Record<StaffRole, ReadonlySet<Permission>> = {
     "inventory:view",
     "inventory:adjust",
     "audit-log:view",
+    "staff:manage",
+    "settings:manage",
+    "discounts:manage",
   ]),
   fulfilment: new Set<Permission>([
     "orders:view",

@@ -303,7 +303,7 @@ export function AddressManager({
           </button>
         </div>
       ) : (
-        /* Address Cards Grid (Flipkart style) */
+        /* Address Cards Grid */
         <div className="grid gap-4 sm:grid-cols-2">
           {addresses.map((addr) => {
             const isSelected = isSelectable && selectedAddressId === addr.id;
@@ -324,43 +324,43 @@ export function AddressManager({
                     onAddressSelect(addr);
                   }
                 }}
-                className={`relative flex flex-col justify-between rounded-2xl border p-4.5 transition-all text-xs ${
+                className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all text-xs bg-white ${
                   isSelected
-                    ? "border-black bg-gray-50/80 ring-2 ring-black/5 shadow-xs"
-                    : "border-gray-200 bg-white hover:border-gray-300"
+                    ? "border-black ring-2 ring-black/10 shadow-xs"
+                    : "border-slate-200 hover:border-slate-300 shadow-xs"
                 } ${isSelectable ? "cursor-pointer" : ""}`}
               >
                 <div>
                   {/* Top Bar: Label & Badges */}
-                  <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-1.5 text-slate-800">
                       {getLabelIcon(addr.label)}
-                      <span className="font-bold uppercase tracking-wider text-[11px] text-gray-700">
+                      <span className="font-bold uppercase tracking-wider text-xs">
                         {addr.label}
                       </span>
                     </div>
 
                     {addr.isDefault && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800">
-                        <CheckCircle2 size={11} />
-                        Default
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                        <CheckCircle2 size={12} className="text-emerald-600" />
+                        DEFAULT
                       </span>
                     )}
                   </div>
 
                   {/* Recipient and Address Details */}
-                  <div className="mt-3 space-y-1 text-gray-700">
-                    <p className="font-bold text-gray-900 text-sm">{addr.fullName}</p>
-                    <p className="text-gray-600 leading-relaxed">
+                  <div className="mt-3.5 space-y-1">
+                    <p className="font-bold text-slate-900 text-sm">{addr.fullName}</p>
+                    <p className="text-slate-600 text-xs leading-relaxed">
                       {addr.address}
                       {addr.apartment ? `, ${addr.apartment}` : ""}
                     </p>
-                    <p className="text-gray-600">
+                    <p className="text-slate-600 text-xs">
                       {addr.city}, {addr.state} {addr.zip}
                     </p>
-                    <p className="text-gray-500 font-medium">{addr.country}</p>
+                    <p className="text-slate-600 text-xs font-normal">{addr.country}</p>
                     {addr.phone && (
-                      <p className="text-[11px] text-gray-400 font-mono mt-1">
+                      <p className="text-[11px] text-slate-400 font-mono mt-1">
                         Phone: {addr.phone}
                       </p>
                     )}
@@ -368,7 +368,7 @@ export function AddressManager({
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -376,12 +376,12 @@ export function AddressManager({
                         e.stopPropagation();
                         openEditModal(addr);
                       }}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-600 hover:text-black transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
                     >
-                      <Edit2 size={12} />
+                      <Edit2 size={13} className="text-slate-500" />
                       <span>Edit</span>
                     </button>
-                    <span className="text-gray-200">|</span>
+                    <span className="text-slate-200">|</span>
                     <button
                       type="button"
                       disabled={actionInProgressId === addr.id}
@@ -389,12 +389,12 @@ export function AddressManager({
                         e.stopPropagation();
                         handleDeleteAddress(addr.id);
                       }}
-                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors disabled:opacity-50"
                     >
                       {actionInProgressId === addr.id ? (
-                        <Loader2 size={12} className="animate-spin" />
+                        <Loader2 size={13} className="animate-spin" />
                       ) : (
-                        <Trash2 size={12} />
+                        <Trash2 size={13} className="text-rose-500" />
                       )}
                       <span>Delete</span>
                     </button>
@@ -408,7 +408,7 @@ export function AddressManager({
                         e.stopPropagation();
                         handleSetDefault(addr.id);
                       }}
-                      className="text-[11px] font-semibold text-gray-600 hover:text-black transition-colors disabled:opacity-50"
+                      className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
                     >
                       {actionInProgressId === addr.id ? "Updating..." : "Set as Default"}
                     </button>

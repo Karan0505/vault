@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Check, Home, Briefcase, Building, MapPin, Loader2, X } from "lucide-react";
+import { Plus, Check, CheckCircle2, Home, Briefcase, Building, MapPin, Loader2, X } from "lucide-react";
 import type { AddressInput } from "@/lib/validation/validation";
 import type { AddressItem } from "@/components/account/AddressManager";
 
@@ -163,10 +163,11 @@ export function SavedAddressSelector({
 
   if (loading) {
     return (
-      <div className="mb-6 rounded-2xl border border-gray-200 bg-gray-50/50 p-4">
-        <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
-          <Loader2 size={14} className="animate-spin text-black" />
-          <span>Loading your saved addresses...</span>
+      <div className="mb-6 space-y-3">
+        <div className="h-4 w-40 rounded-sm bg-gray-100 animate-pulse" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="h-28 rounded-2xl border border-gray-100 bg-gray-50/50 p-3 animate-pulse" />
+          <div className="h-28 rounded-2xl border border-gray-100 bg-gray-50/50 p-3 animate-pulse" />
         </div>
       </div>
     );
@@ -227,14 +228,14 @@ export function SavedAddressSelector({
                 }
               }}
               onClick={() => onSelectAddress(addr)}
-              className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-3.5 transition-all text-xs focus:outline-none ${
+              className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all text-xs focus:outline-hidden bg-white ${
                 isSelected
-                  ? "border-black bg-gray-50/90 ring-2 ring-black/10 shadow-xs"
-                  : "border-gray-200 bg-white hover:border-gray-300"
+                  ? "border-black ring-2 ring-black/10 shadow-xs"
+                  : "border-slate-200 hover:border-slate-300 shadow-xs"
               }`}
             >
               <div>
-                <div className="flex items-center justify-between gap-2 pb-2 border-b border-gray-100">
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     {/* Custom Radio Circle */}
                     <div
@@ -245,17 +246,18 @@ export function SavedAddressSelector({
                       {isSelected && <Check size={10} strokeWidth={3} />}
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5 text-slate-800">
                       {getLabelIcon(addr.label)}
-                      <span className="font-bold uppercase tracking-wider text-[11px] text-gray-800">
+                      <span className="font-bold uppercase tracking-wider text-xs">
                         {addr.label}
                       </span>
                     </div>
                   </div>
 
                   {addr.isDefault && (
-                    <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-800">
-                      Default
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
+                      <CheckCircle2 size={10} className="text-emerald-600" />
+                      DEFAULT
                     </span>
                   )}
                 </div>

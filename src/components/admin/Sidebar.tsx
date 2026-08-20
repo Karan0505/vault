@@ -44,17 +44,17 @@ const navGroups: NavGroup[] = [
   {
     title: "OPERATIONS",
     items: [
-      { href: "/admin/orders", label: "Fulfillment", icon: Truck, permission: "orders:fulfil" },
-      { href: "/admin/orders", label: "Refunds", icon: RotateCcw, permission: "refunds:issue" },
-      { href: "/admin/collections", label: "Discounts", icon: Percent, permission: null },
+      { href: "/admin/fulfillment", label: "Fulfillment", icon: Truck, permission: "orders:fulfil" },
+      { href: "/admin/refunds", label: "Refunds", icon: RotateCcw, permission: "refunds:issue" },
+      { href: "/admin/discounts", label: "Discounts", icon: Percent, permission: "discounts:manage" },
       { href: "/admin/audit-log", label: "Audit Log", icon: ScrollText, permission: "audit-log:view" },
     ],
   },
   {
     title: "SETTINGS",
     items: [
-      { href: "/admin/audit-log", label: "Users & Roles", icon: Users, permission: null },
-      { href: "/admin/categories", label: "Settings", icon: Settings, permission: null },
+      { href: "/admin/users", label: "Users & Roles", icon: Users, permission: "staff:manage" },
+      { href: "/admin/settings", label: "Settings", icon: Settings, permission: "settings:manage" },
     ],
   },
 ];

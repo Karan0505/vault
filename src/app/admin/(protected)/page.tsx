@@ -1,39 +1,10 @@
 import Link from "next/link";
-import { Calendar, ArrowUpRight } from "lucide-react";
-import { prisma } from "@/lib/db/prisma";
-import { formatMoney } from "@/lib/payments/money";
+import { Calendar, ArrowUpRight, Package } from "lucide-react";
 import { DashboardKpis } from "@/components/admin/DashboardKpis";
 import { RevenueChart } from "@/components/admin/RevenueChart";
 import { InventoryDonut } from "@/components/admin/InventoryDonut";
 import { TopSellingProducts } from "@/components/admin/TopSellingProducts";
-
-async function getAdminData() {
-  const [productCount, orders, lowStock] = await Promise.all([
-    prisma.product.count(),
-    prisma.order.findMany({
-      take: 6,
-      orderBy: { createdAt: "desc" },
-      include: { items: true },
-    }),
-    prisma.inventoryItem.findMany({
-      where: { onHand: { gt: 0 } },
-      include: { variant: { include: { product: true } } },
-      take: 50,
-    }),
-  ]);
-
-  const totalRevenueNumber = orders.reduce((sum, o) => sum + o.totalAmount, 0) || 2493200;
-  const totalRevenue = formatMoney({ amount: totalRevenueNumber, currency: "USD" });
-  const avgOrder = orders.length ? formatMoney({ amount: Math.round(totalRevenueNumber / orders.length), currency: "USD" }) : "$78.63";
-
-  return {
-    productCount,
-    orders,
-    totalRevenue,
-    avgOrder,
-    orderCount: orders.length || 312,
-  };
-}
+import { getAuthoritativeDashboardData } from "@/lib/admin/dashboard.server";
 
 const statusToneMap: Record<string, string> = {
   paid: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -46,7 +17,7 @@ const statusToneMap: Record<string, string> = {
 };
 
 export default async function AdminDashboardPage() {
-  const { totalRevenue, orderCount, avgOrder, orders } = await getAdminData();
+  const data = await getAuthoritativeDashboardData(7);
 
   return (
     <div className="flex flex-col gap-8 text-slate-100">
@@ -63,27 +34,30 @@ export default async function AdminDashboardPage() {
 
         <div className="flex items-center gap-2 rounded-xl border border-[#1E293B] bg-[#111827] px-3.5 py-2 font-mono text-xs text-slate-300 shadow-xs">
           <Calendar size={14} className="text-indigo-400" />
-          <span>May 12 — May 18, 2024</span>
+          <span>Last 7 Days (Live)</span>
         </div>
       </div>
 
       {/* KPI Stats Row */}
       <DashboardKpis
         data={{
-          totalRevenue,
-          orderCount,
-          avgOrderValue: avgOrder,
-          newCustomers: 128,
+          totalRevenue: data.totalRevenue,
+          orderCount: data.orderCount,
+          avgOrderValue: data.avgOrderValue,
+          newCustomers: data.newCustomers,
         }}
       />
 
       {/* Row 1: Revenue Over Time & Top Selling Products */}
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8">
-          <RevenueChart />
+          <RevenueChart
+            dailyPoints={data.dailyPoints}
+            weeklyPoints={data.weeklyPoints}
+          />
         </div>
         <div className="lg:col-span-4">
-          <TopSellingProducts />
+          <TopSellingProducts products={data.topProducts} />
         </div>
       </div>
 
@@ -98,67 +72,86 @@ export default async function AdminDashboardPage() {
                 href="/admin/orders"
                 className="font-mono text-xs font-semibold text-indigo-400 hover:underline"
               >
-                View all orders →
+                View all orders
               </Link>
             </div>
 
-            <div className="mt-2 overflow-x-auto">
-              <table className="w-full text-left font-sans text-xs">
-                <thead>
-                  <tr className="border-b border-[#1E293B] font-mono text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="py-3 px-2">Order</th>
-                    <th className="py-3 px-2">Customer</th>
-                    <th className="py-3 px-2">Total</th>
-                    <th className="py-3 px-2">Status</th>
-                    <th className="py-3 px-2">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1E293B]">
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-6 text-center text-slate-500">
-                        No recent orders.
-                      </td>
-                    </tr>
-                  ) : (
-                    orders.map((order) => (
-                      <tr key={order.id} className="transition-colors hover:bg-[#182235]">
-                        <td className="py-3.5 px-2 font-mono font-bold text-indigo-400">
-                          <Link href={`/admin/orders/${order.id}`}>
-                            #{order.number}
+            <div className="mt-4 flex flex-col divide-y divide-[#1E293B]">
+              {data.recentOrders.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 font-mono text-xs">
+                  No orders recorded yet.
+                </div>
+              ) : (
+                data.recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#1E293B] text-slate-400">
+                        <Package size={16} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/admin/orders/${order.id}`}
+                            className="font-mono text-xs font-bold text-white hover:text-indigo-400 hover:underline"
+                          >
+                            {order.number}
                           </Link>
-                        </td>
-                        <td className="py-3.5 px-2 text-slate-300 max-w-[140px] truncate">{order.email}</td>
-                        <td className="py-3.5 px-2 font-mono font-bold text-white">
-                          {formatMoney({ amount: order.totalAmount, currency: order.currency })}
-                        </td>
-                        <td className="py-3.5 px-2">
                           <span
-                            className={`inline-flex items-center rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider ${
-                              statusToneMap[order.status] ?? "bg-slate-500/10 text-slate-400"
+                            className={`rounded-md border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase ${
+                              statusToneMap[order.status] ?? statusToneMap.pending
                             }`}
                           >
                             {order.status}
                           </span>
-                        </td>
-                        <td className="py-3.5 px-2 font-mono text-[11px] text-slate-400">
-                          {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        </div>
+                        <p className="font-sans text-[11px] text-slate-400 mt-0.5">
+                          {order.email} · {order.itemsCount} {order.itemsCount === 1 ? "item" : "items"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between sm:justify-end gap-3 text-right">
+                      <div>
+                        <p className="font-mono text-xs font-bold text-white">{order.totalAmount}</p>
+                        <p className="font-mono text-[10px] text-slate-500">{order.createdAt}</p>
+                      </div>
+                      <Link
+                        href={`/admin/orders/${order.id}`}
+                        className="rounded-lg border border-[#1E293B] bg-[#0B0F19] p-1.5 text-slate-400 hover:border-[#334155] hover:text-white"
+                        aria-label={`View order ${order.number}`}
+                      >
+                        <ArrowUpRight size={14} />
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
+          </div>
+
+          <div className="mt-4 border-t border-[#1E293B] pt-3 text-center">
+            <Link
+              href="/admin/orders"
+              className="inline-flex items-center gap-1 font-sans text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+            >
+              <span>View full order history</span>
+              <ArrowUpRight size={13} />
+            </Link>
           </div>
         </div>
 
         {/* Inventory Summary */}
         <div className="lg:col-span-5">
-          <InventoryDonut />
+          <InventoryDonut
+            inStock={data.inventory.inStock}
+            lowStock={data.inventory.lowStock}
+            outOfStock={data.inventory.outOfStock}
+          />
         </div>
       </div>
     </div>
   );
 }
-

@@ -669,3 +669,16 @@ model AuditLogEntry {
   @@index([createdAt])
   @@map("audit_log_entries")
 }
+
+// ---------------------------------------------------------------------------
+// System settings. Stores persistent store and platform settings in a
+// strongly-typed key-value structure managed by verified Admin staff.
+// ---------------------------------------------------------------------------
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
