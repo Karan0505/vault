@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { matchesRoute } from "@/lib/roles";
+import { matchesRoute } from "@/lib/auth/roles";
 
 /**
  * Next.js 16 Edge / Proxy routing gate.

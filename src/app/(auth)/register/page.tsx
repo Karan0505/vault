@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Lock, Mail, User as UserIcon, Check, AlertCircle, ArrowRight } from "lucide-react";
-import { validatePassword } from "@/lib/password";
+import { validatePassword } from "@/lib/auth/password";
 
 export default function RegisterPage() {
   const router = useRouter();

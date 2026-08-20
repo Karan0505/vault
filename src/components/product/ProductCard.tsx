@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 
 export interface ProductCardData {
   slug: string;

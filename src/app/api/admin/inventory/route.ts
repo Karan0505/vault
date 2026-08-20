@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
-import { listInventory } from "@/lib/inventory-admin.server";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
+import { listInventory } from "@/lib/inventory/inventory-admin.server";
 
 export async function GET(request: Request) {
   const actor = await getStaffActor();

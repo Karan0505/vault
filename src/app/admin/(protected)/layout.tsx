@@ -1,8 +1,8 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Topbar } from "@/components/admin/Topbar";
-import { getEffectiveRole } from "@/lib/roles";
+import { getEffectiveRole } from "@/lib/auth/roles";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

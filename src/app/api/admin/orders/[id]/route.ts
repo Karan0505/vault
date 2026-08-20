@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
+import { prisma } from "@/lib/db/prisma";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
 
 interface RouteParams {
   params: Promise<{ id: string }>;

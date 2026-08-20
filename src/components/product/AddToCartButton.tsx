@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { notifyCartUpdated } from "@/lib/cart-events";
+import { notifyCartUpdated } from "@/lib/cart/cart-events";
 import { useCartDrawer } from "@/components/cart/CartDrawerContext";
 
 interface AddToCartButtonProps {

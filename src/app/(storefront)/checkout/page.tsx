@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart, getCartView } from "@/lib/cart.server";
-import { formatMoney } from "@/lib/money";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart, getCartView } from "@/lib/cart/cart.server";
+import { formatMoney } from "@/lib/payments/money";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 
 export const metadata: Metadata = { title: "Checkout" };

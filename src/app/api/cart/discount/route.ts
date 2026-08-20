@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart, getCartView } from "@/lib/cart.server";
-import { applyDiscountCode, DiscountNotFoundError, DiscountUsageLimitError } from "@/lib/discounts.server";
-import { applyDiscountSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart, getCartView } from "@/lib/cart/cart.server";
+import { applyDiscountCode, DiscountNotFoundError, DiscountUsageLimitError } from "@/lib/checkout/discounts.server";
+import { applyDiscountSchema } from "@/lib/validation/validation";
 
 export async function POST(request: Request) {
   const parsed = applyDiscountSchema.safeParse(await request.json());

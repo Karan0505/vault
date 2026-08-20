@@ -1,4 +1,4 @@
-import { getRecommendationsForProduct } from "@/lib/recommendations.server";
+import { getRecommendationsForProduct } from "@/lib/recommendations/recommendations.server";
 import { ProductGrid } from "./ProductGrid";
 
 export async function RecommendationsRail({

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/auth/auth";
+import { hasPermission } from "@/lib/auth/permissions";
+import { prisma } from "@/lib/db/prisma";
 import { Card } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
+import { buildSearchHref, type ParsedSearchState } from "@/lib/search/search-params";
 
 export function SearchBar({ state }: { state: ParsedSearchState }) {
   const router = useRouter();

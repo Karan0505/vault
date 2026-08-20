@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Clock, CheckCircle2, Truck, CreditCard, ShieldAlert, ArrowLeft } from "lucide-react";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { hasPermission } from "@/lib/permissions";
+import { auth } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { hasPermission } from "@/lib/auth/permissions";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { OrderActions } from "@/components/admin/OrderActions";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;

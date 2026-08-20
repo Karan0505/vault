@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CartLineItem } from "./CartLineItem";
 import { DiscountCodeForm } from "./DiscountCodeForm";
-import { formatMoney } from "@/lib/money";
-import type { CartView } from "@/lib/cart.server";
+import { formatMoney } from "@/lib/payments/money";
+import type { CartView } from "@/lib/cart/cart.server";
 
 interface AppliedDiscount {
   code: string;

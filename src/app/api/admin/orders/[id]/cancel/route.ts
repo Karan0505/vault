@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
-import { cancelOrder } from "@/lib/fulfillment.server";
-import { cancelOrderSchema } from "@/lib/validation";
-import { logger } from "@/lib/logger";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
+import { cancelOrder } from "@/lib/fulfilment/fulfillment.server";
+import { cancelOrderSchema } from "@/lib/validation/validation";
+import { logger } from "@/lib/shared/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;

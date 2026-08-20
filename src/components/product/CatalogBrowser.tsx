@@ -11,11 +11,17 @@ export interface CategoryItem {
   count: number;
 }
 
+export interface CatalogProductVariant {
+  size?: string;
+  color?: string;
+}
+
 export interface CatalogProduct extends ProductCardData {
   categorySlug?: string;
   categoryName?: string;
   sizes?: string[];
   colors?: string[];
+  variants?: CatalogProductVariant[];
 }
 
 interface CatalogBrowserProps {
@@ -34,6 +40,25 @@ const AVAILABLE_COLORS = [
   { name: "Charcoal", hex: "#4B5563" },
 ];
 
+export function matchesVariantSize(variantSize: string | undefined, selectedSizes: string[]): boolean {
+  if (!variantSize || selectedSizes.length === 0) return false;
+  const normalizedVariantSize = variantSize.trim().toLowerCase();
+  return selectedSizes.some((selected) => {
+    const normSelected = selected.trim().toLowerCase();
+    if (normalizedVariantSize === normSelected) return true;
+    const parts = normalizedVariantSize.split(/[\/\s,-]+/);
+    return parts.includes(normSelected);
+  });
+}
+
+export function matchesVariantColor(variantColor: string | undefined, selectedColors: string[]): boolean {
+  if (!variantColor || selectedColors.length === 0) return false;
+  const normalizedVariantColor = variantColor.trim().toLowerCase();
+  return selectedColors.some((selected) => {
+    return normalizedVariantColor === selected.trim().toLowerCase();
+  });
+}
+
 export function CatalogBrowser({
   initialProducts,
   categories,
@@ -51,9 +76,9 @@ export function CatalogBrowser({
     );
   }
 
-  function toggleColor(colorHex: string) {
+  function toggleColor(colorName: string) {
     setSelectedColors((prev) =>
-      prev.includes(colorHex) ? prev.filter((c) => c !== colorHex) : [...prev, colorHex]
+      prev.includes(colorName) ? prev.filter((c) => c !== colorName) : [...prev, colorName]
     );
   }
 
@@ -67,6 +92,28 @@ export function CatalogBrowser({
       );
     }
 
+    // Filter by Size & Color (Authoritative Source: p.variants[])
+    if (selectedSizes.length > 0 && selectedColors.length > 0) {
+      // Both Size and Color selected -> At least one actual variant must satisfy BOTH criteria simultaneously
+      result = result.filter((p) =>
+        (p.variants ?? []).some(
+          (v) =>
+            matchesVariantSize(v.size, selectedSizes) &&
+            matchesVariantColor(v.color, selectedColors)
+        )
+      );
+    } else if (selectedSizes.length > 0) {
+      // Only Size selected -> At least one actual variant must satisfy Size
+      result = result.filter((p) =>
+        (p.variants ?? []).some((v) => matchesVariantSize(v.size, selectedSizes))
+      );
+    } else if (selectedColors.length > 0) {
+      // Only Color selected -> At least one actual variant must satisfy Color
+      result = result.filter((p) =>
+        (p.variants ?? []).some((v) => matchesVariantColor(v.color, selectedColors))
+      );
+    }
+
     // Sort
     if (sortBy === "price-asc") {
       result.sort((a, b) => a.minPriceAmount - b.minPriceAmount);
@@ -75,7 +122,8 @@ export function CatalogBrowser({
     }
 
     return result;
-  }, [initialProducts, selectedCategory, sortBy]);
+  }, [initialProducts, selectedCategory, selectedSizes, selectedColors, sortBy]);
+
 
   return (
     <div id="catalog" className="scroll-mt-20">
@@ -196,14 +244,14 @@ export function CatalogBrowser({
             </h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {AVAILABLE_COLORS.map((c) => {
-                const isSelected = selectedColors.includes(c.hex);
+                const isSelected = selectedColors.includes(c.name);
                 return (
                   <button
                     key={c.name}
                     type="button"
-                    onClick={() => toggleColor(c.hex)}
+                    onClick={() => toggleColor(c.name)}
                     title={c.name}
-                    className={`relative flex h-6 w-6 items-center justify-center rounded-full border transition-all ${
+                    className={`relative flex h-6 w-6 items-center justify-center rounded-full border transition-all cursor-pointer ${
                       isSelected
                         ? "ring-2 ring-black ring-offset-2 scale-110"
                         : "border-gray-300 hover:scale-105"
@@ -213,7 +261,7 @@ export function CatalogBrowser({
                     {isSelected && (
                       <Check
                         size={12}
-                        className={c.hex === "#F3F4F6" ? "text-black" : "text-white"}
+                        className={c.name === "White" ? "text-black" : "text-white"}
                       />
                     )}
                   </button>

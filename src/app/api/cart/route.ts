@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart, addCartItem, getCartView } from "@/lib/cart.server";
-import { addCartItemSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart, addCartItem, getCartView } from "@/lib/cart/cart.server";
+import { addCartItemSchema } from "@/lib/validation/validation";
 
 export async function GET() {
   const userId = await getCurrentUserId();

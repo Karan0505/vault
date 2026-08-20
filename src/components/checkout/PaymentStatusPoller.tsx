@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
-import { notifyCartUpdated } from "@/lib/cart-events";
+import { notifyCartUpdated } from "@/lib/cart/cart-events";
 
 interface PaymentStatusPollerProps {
   orderId: string;

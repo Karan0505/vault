@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { verifyOrderAccess } from "@/lib/auth";
+import { prisma } from "@/lib/db/prisma";
+import { verifyOrderAccess } from "@/lib/auth/auth";
 import { randomBytes } from "node:crypto";
 
 const hasDb = Boolean(process.env.DATABASE_URL);

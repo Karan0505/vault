@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useRef } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 import { Check } from "lucide-react";
-import { resolveColor } from "@/lib/colors";
+import { resolveColor } from "@/lib/shared/colors";
 
 interface VariantOptionGroupProps {
   dimension: string;

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart, updateCartItemQuantity, removeCartItem, getCartView } from "@/lib/cart.server";
-import { updateCartItemSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart, updateCartItemQuantity, removeCartItem, getCartView } from "@/lib/cart/cart.server";
+import { updateCartItemSchema } from "@/lib/validation/validation";
 
 interface RouteParams {
   params: Promise<{ itemId: string }>;

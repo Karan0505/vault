@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getCurrentUserId, getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
-import { syncOrderPaymentStatusWithStripe } from "@/lib/orders.server";
+import { prisma } from "@/lib/db/prisma";
+import { getCurrentUserId, getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
+import { syncOrderPaymentStatusWithStripe } from "@/lib/orders/orders.server";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -23,6 +23,15 @@ export async function GET(request: Request, { params }: RouteParams) {
       userId: true,
       currency: true,
       totalAmount: true,
+      fulfillments: {
+        select: {
+          id: true,
+          trackingNumber: true,
+          carrier: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
@@ -48,10 +57,15 @@ export async function GET(request: Request, { params }: RouteParams) {
     status = await syncOrderPaymentStatusWithStripe(order.id);
   }
 
+  const latestFulfillment = order.fulfillments[0] ?? null;
+
   return NextResponse.json({
     orderId: order.id,
     orderNumber: order.number,
     status,
     isPaid: status !== "pending",
+    trackingNumber: latestFulfillment?.trackingNumber ?? null,
+    carrier: latestFulfillment?.carrier ?? null,
+    fulfilledAt: latestFulfillment?.createdAt ?? null,
   });
 }

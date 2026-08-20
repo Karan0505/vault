@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Lock, Mail, AlertCircle, ArrowRight, CheckCircle2 } from "lucide-react";
-import { getRoleRedirectUrl, type UserRole } from "@/lib/roles";
+import { getRoleRedirectUrl, type UserRole } from "@/lib/auth/roles";
 
 function LoginForm() {
   const router = useRouter();

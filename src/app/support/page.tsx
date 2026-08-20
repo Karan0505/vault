@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { HelpCircle, Users, Package, Search, ArrowLeft } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
-import { requireRole } from "@/lib/rbac";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
+import { requireRole } from "@/lib/auth/rbac";
 
 export const metadata: Metadata = { title: "Support Dashboard · VAULT Ops" };
 

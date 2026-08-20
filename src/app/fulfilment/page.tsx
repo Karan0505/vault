@@ -1,9 +1,11 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Truck, Package, Clock, CheckCircle, ArrowLeft } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
-import { requireRole } from "@/lib/rbac";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
+import { requireRole } from "@/lib/auth/rbac";
+import { ReadyToPackButton } from "@/components/admin/ReadyToPackButton";
+import { MarkDeliveredButton } from "@/components/admin/MarkDeliveredButton";
 
 export const metadata: Metadata = { title: "Fulfilment Dashboard · VAULT Ops" };
 
@@ -15,15 +17,15 @@ export default async function FulfilmentDashboardPage() {
 
   const orders = await prisma.order.findMany({
     where: {
-      status: { in: ["paid", "pending", "fulfilled"] },
+      status: { in: ["paid", "pending", "fulfilled", "delivered"] },
     },
-    take: 15,
+    take: 20,
     orderBy: { createdAt: "desc" },
     include: { items: true, fulfillments: true },
   });
 
   const pendingCount = orders.filter((o) => o.status === "paid" && o.fulfillments.length === 0).length;
-  const fulfilledCount = orders.filter((o) => o.fulfillments.length > 0 || o.status === "fulfilled").length;
+  const fulfilledCount = orders.filter((o) => o.status === "fulfilled" || (o.fulfillments.length > 0 && o.status !== "delivered")).length;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 sm:p-10 font-sans">
@@ -134,6 +136,8 @@ export default async function FulfilmentDashboardPage() {
                         order.status === "paid"
                           ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                           : order.status === "fulfilled"
+                          ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                          : order.status === "delivered"
                           ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                           : "bg-slate-800 text-slate-300 border-slate-700"
                       }`}
@@ -141,13 +145,30 @@ export default async function FulfilmentDashboardPage() {
                       {order.status}
                     </span>
 
-                    {order.fulfillments.length > 0 ? (
+                    {order.fulfillments.length > 0 && (
                       <span className="rounded-lg bg-slate-800/80 px-2.5 py-1 text-[11px] font-mono text-blue-300">
                         Track: {order.fulfillments[0]?.trackingNumber}
                       </span>
-                    ) : (
-                      <span className="rounded-lg bg-blue-600/20 text-blue-300 border border-blue-500/30 px-2.5 py-1 text-[11px] font-medium">
-                        Ready to Pack
+                    )}
+
+                    {order.status === "paid" && (
+                      <ReadyToPackButton orderId={order.id} orderNumber={order.number} />
+                    )}
+
+                    {order.status === "fulfilled" && (
+                      <MarkDeliveredButton orderId={order.id} orderNumber={order.number} />
+                    )}
+
+                    {order.status === "delivered" && (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 text-[11px] font-medium">
+                        <span>Delivered</span>
+                        <span>✓</span>
+                      </span>
+                    )}
+
+                    {order.status === "pending" && (
+                      <span className="rounded-lg bg-slate-800/60 text-slate-400 border border-slate-700 px-2.5 py-1 text-[11px] font-medium">
+                        Awaiting Payment
                       </span>
                     )}
                   </div>

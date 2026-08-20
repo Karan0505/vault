@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { Select, Textarea } from "@/components/ui/Field";
 import { VariantMatrixEditor, type VariantDraft } from "./VariantMatrixEditor";
 import { ImageUploader, type MediaDraft } from "./ImageUploader";
-import { slugify } from "@/lib/utils";
+import { slugify } from "@/lib/shared/utils";
 
 export interface CategoryOption {
   id: string;

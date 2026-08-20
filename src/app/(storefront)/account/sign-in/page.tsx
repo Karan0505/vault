@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { signIn, auth } from "@/lib/auth";
-import { getOrCreateCart, mergeGuestCartIntoUser } from "@/lib/cart.server";
+import { signIn, auth } from "@/lib/auth/auth";
+import { getOrCreateCart, mergeGuestCartIntoUser } from "@/lib/cart/cart.server";
 
 export default function CustomerSignInPage() {
   async function signInAction(formData: FormData) {

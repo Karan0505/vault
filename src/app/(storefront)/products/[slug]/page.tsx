@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Star, ChevronRight } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { getProductBySlugForStorefront } from "@/lib/products.server";
+import { prisma } from "@/lib/db/prisma";
+import { getProductBySlugForStorefront } from "@/lib/catalogue/products.server";
 import {
   ImageGallery,
   VariantSelector,
@@ -13,7 +13,7 @@ import {
   RecommendationsRail,
   RecommendationsRailSkeleton,
 } from "@/components/product";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;

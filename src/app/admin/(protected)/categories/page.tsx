@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { CategoryCreateForm } from "@/components/admin/CategoryCreateForm";
 import { Card } from "@/components/ui/Field";
 

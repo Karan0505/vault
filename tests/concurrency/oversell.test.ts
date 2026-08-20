@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { reserveStock, InsufficientStockError } from "@/lib/inventory.server";
+import { prisma } from "@/lib/db/prisma";
+import { reserveStock, InsufficientStockError } from "@/lib/inventory/inventory.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { UploadButton } from "@/lib/uploadthing-components";
+import { UploadButton } from "@/lib/uploads/uploadthing-components";
 import { GripVertical, X } from "lucide-react";
 
 export interface MediaDraft {

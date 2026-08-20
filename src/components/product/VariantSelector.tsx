@@ -11,7 +11,7 @@ import {
   isSelectionComplete,
   type OptionSelection,
   type VariantLike,
-} from "@/lib/variants";
+} from "@/lib/catalogue/variants";
 
 export interface SelectableVariant extends VariantLike {
   sku: string;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { AuditActor } from "@/lib/audit.server";
+import type { AuditActor } from "@/lib/auth/audit.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 
@@ -9,11 +9,11 @@ const hasDb = Boolean(process.env.DATABASE_URL);
 // construction) without needing a real authenticated session or a
 // database, since a 401/403 response is returned before the route ever
 // touches Prisma.
-vi.mock("@/lib/session", () => ({
+vi.mock("@/lib/auth/session", () => ({
   getStaffActor: vi.fn(),
 }));
 
-import { getStaffActor } from "@/lib/session";
+import { getStaffActor } from "@/lib/auth/session";
 import { POST as refundRoute } from "@/app/api/admin/orders/[id]/refund/route";
 import { POST as adjustRoute } from "@/app/api/admin/inventory/[variantId]/adjust/route";
 import { PATCH as productPatchRoute } from "@/app/api/admin/products/[id]/route";

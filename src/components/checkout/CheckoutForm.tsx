@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ShieldCheck, Check } from "lucide-react";
-import { getStripeClient } from "@/lib/stripe-client";
+import { getStripeClient } from "@/lib/payments/stripe-client";
 import { PaymentStep } from "./PaymentStep";
-import { notifyCartUpdated } from "@/lib/cart-events";
+import { notifyCartUpdated } from "@/lib/cart/cart-events";
 
 interface CheckoutResult {
   orderId: string;

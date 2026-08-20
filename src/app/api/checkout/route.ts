@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart } from "@/lib/cart.server";
-import { createCheckoutSession, EmptyCartError, CartLineUnavailableError } from "@/lib/orders.server";
-import { InsufficientStockError } from "@/lib/inventory.server";
-import { checkoutInputSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart } from "@/lib/cart/cart.server";
+import { createCheckoutSession, EmptyCartError, CartLineUnavailableError } from "@/lib/orders/orders.server";
+import { InsufficientStockError } from "@/lib/inventory/inventory.server";
+import { checkoutInputSchema } from "@/lib/validation/validation";
 
 export async function POST(request: Request) {
   const parsed = checkoutInputSchema.safeParse(await request.json());

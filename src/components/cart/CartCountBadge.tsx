@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CART_UPDATED_EVENT } from "@/lib/cart-events";
+import { CART_UPDATED_EVENT } from "@/lib/cart/cart-events";
 import { useCartDrawer } from "./CartDrawerContext";
 
 interface CartApiLine {

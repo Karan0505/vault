@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
-import type { Facets } from "@/lib/search.server";
+import { cn } from "@/lib/shared/utils";
+import { buildSearchHref, type ParsedSearchState } from "@/lib/search/search-params";
+import type { Facets } from "@/lib/search/search.server";
 
 function FacetRow({
   label,

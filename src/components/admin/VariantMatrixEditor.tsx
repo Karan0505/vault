@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { reconcileVariantMatrix, type OptionSelection } from "@/lib/variants";
+import { cn } from "@/lib/shared/utils";
+import { reconcileVariantMatrix, type OptionSelection } from "@/lib/catalogue/variants";
 
 export interface VariantDraft {
   id?: string;

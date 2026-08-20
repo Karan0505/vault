@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
 
 export const alt = "Product from VAULT";
 export const size = { width: 1200, height: 630 };

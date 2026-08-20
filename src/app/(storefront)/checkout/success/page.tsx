@@ -2,12 +2,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
-import { ORDER_STATUS_LABEL } from "@/lib/orders";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
+import { ORDER_STATUS_LABEL } from "@/lib/orders/orders";
 import { Check, Clock, AlertCircle, ShoppingBag, ArrowRight } from "lucide-react";
 import { PaymentStatusPoller } from "@/components/checkout/PaymentStatusPoller";
-import { syncOrderPaymentStatusWithStripe } from "@/lib/orders.server";
+import { syncOrderPaymentStatusWithStripe } from "@/lib/orders/orders.server";
 
 export const metadata: Metadata = { title: "Order Confirmed" };
 

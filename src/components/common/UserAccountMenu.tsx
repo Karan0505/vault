@@ -15,7 +15,7 @@ import {
   LayoutDashboard,
   Settings,
 } from "lucide-react";
-import type { UserRole } from "@/lib/roles";
+import type { UserRole } from "@/lib/auth/roles";
 
 interface AuthUserData {
   id: string;

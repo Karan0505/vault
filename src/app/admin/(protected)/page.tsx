@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Calendar, ArrowUpRight } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
 import { DashboardKpis } from "@/components/admin/DashboardKpis";
 import { RevenueChart } from "@/components/admin/RevenueChart";
 import { InventoryDonut } from "@/components/admin/InventoryDonut";

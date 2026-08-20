@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { generateVariantMatrix } from "../src/lib/variants";
+import { generateVariantMatrix } from "../src/lib/catalogue/variants";
 
 const prisma = new PrismaClient();
 

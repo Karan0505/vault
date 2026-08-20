@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { User, MapPin, CreditCard, Heart, Settings } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
-import { requireCustomer } from "@/lib/rbac";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
+import { requireCustomer } from "@/lib/auth/rbac";
 
 export const metadata: Metadata = { title: "My Account" };
 

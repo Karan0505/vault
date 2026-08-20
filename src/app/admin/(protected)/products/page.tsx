@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { Card } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 
 async function getProducts() {
   return prisma.product.findMany({

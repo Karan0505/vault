@@ -3,9 +3,11 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { Check, ChevronRight, Package, Truck, CreditCard, ShoppingBag } from "lucide-react";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
-import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/orders";
+import { auth, verifyOrderAccess } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
+import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/orders/orders";
+import { OrderLiveTracker } from "@/components/storefront/OrderLiveTracker";
 
 export const metadata: Metadata = { title: "Order Details" };
 
@@ -14,17 +16,22 @@ interface OrderPageProps {
 }
 
 const TIMELINE_STEPS = [
-  { key: "pending", label: "Order Placed", icon: ShoppingBag, date: "May 18" },
-  { key: "paid", label: "Paid", icon: CreditCard, date: "May 18" },
-  { key: "fulfilled", label: "Shipped", icon: Truck, date: "May 19" },
-  { key: "delivered", label: "Delivered", icon: Package, date: "May 21" },
+  { key: "pending", label: "Order Placed", icon: ShoppingBag },
+  { key: "paid", label: "Paid", icon: CreditCard },
+  { key: "fulfilled", label: "Shipped", icon: Truck },
+  { key: "delivered", label: "Delivered", icon: Package },
 ];
 
 export default async function OrderPage({ params }: OrderPageProps) {
   const { id } = await params;
+  const session = await auth();
+
   const order = await prisma.order.findFirst({
     where: { OR: [{ id }, { number: id }] },
     include: {
+      fulfillments: {
+        orderBy: { createdAt: "desc" },
+      },
       items: {
         include: {
           variant: {
@@ -40,13 +47,23 @@ export default async function OrderPage({ params }: OrderPageProps) {
       },
     },
   });
+
   if (!order) notFound();
+
+  // Strict Customer Isolation: Verify ownership or staff privileges
+  const hasAccess = verifyOrderAccess(order, session, null);
+  if (!hasAccess) {
+    notFound();
+  }
 
   const stepOrder: OrderStatus[] = ["pending", "paid", "fulfilled", "delivered"];
   const currentStepIndex = stepOrder.indexOf(order.status as OrderStatus);
+  const latestFulfillment = order.fulfillments[0] ?? null;
 
   return (
     <div className="mx-auto max-w-4xl py-6 flex flex-col gap-8">
+      <OrderLiveTracker orderId={order.id} initialStatus={order.status} />
+
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-gray-500">
         <Link href="/" className="hover:text-black transition-colors">
@@ -119,6 +136,31 @@ export default async function OrderPage({ params }: OrderPageProps) {
           })}
         </div>
       </div>
+
+      {/* Shipment & Tracking Details (when fulfilled/shipped) */}
+      {latestFulfillment && (
+        <div className="rounded-3xl border border-blue-200/80 bg-blue-50/50 p-6 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 border border-blue-500/20">
+                <Truck size={20} />
+              </span>
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">Shipment on the Way</h3>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Carrier: <span className="font-semibold text-gray-800">{latestFulfillment.carrier || "VAULT Express"}</span>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:items-end">
+              <span className="text-[11px] text-gray-500 uppercase tracking-wider font-mono">Tracking Number</span>
+              <span className="font-mono text-sm font-bold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg border border-blue-200 mt-0.5">
+                {latestFulfillment.trackingNumber}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Grid for Items & Details */}
       <div className="grid gap-8 sm:grid-cols-12">

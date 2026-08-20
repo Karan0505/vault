@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { OrderStatus } from "@prisma/client";
 import { Filter, Download, Plus, ChevronRight, Search } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 
 interface OrdersPageProps {
   searchParams: Promise<{ q?: string; status?: string }>;

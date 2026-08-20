@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { buildSearchHref, type ParsedSearchState } from "@/lib/search-params";
-import type { SortOption } from "@/lib/search.server";
+import { cn } from "@/lib/shared/utils";
+import { buildSearchHref, type ParsedSearchState } from "@/lib/search/search-params";
+import type { SortOption } from "@/lib/search/search.server";
 
 const SORT_LABEL: Record<SortOption, string> = {
   relevance: "Relevance",

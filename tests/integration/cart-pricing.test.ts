@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { getCartView } from "@/lib/cart.server";
+import { prisma } from "@/lib/db/prisma";
+import { getCartView } from "@/lib/cart/cart.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

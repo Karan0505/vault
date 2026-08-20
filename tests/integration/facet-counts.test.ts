@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { getFacets } from "@/lib/search.server";
+import { prisma } from "@/lib/db/prisma";
+import { getFacets } from "@/lib/search/search.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

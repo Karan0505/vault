@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
-import { processStripeEvent } from "@/lib/webhooks.server";
+import { stripe } from "@/lib/payments/stripe";
+import { processStripeEvent } from "@/lib/integrations/webhooks.server";
 
 // Stripe signs the raw request body — Next's App Router does not parse
 // the body for us by default, so request.text() below gives us exactly

@@ -4,10 +4,10 @@ import Image from "next/image";
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/payments/money";
 import { Badge } from "@/components/ui/Badge";
-import { notifyCartUpdated } from "@/lib/cart-events";
-import type { CartLineView } from "@/lib/cart.server";
+import { notifyCartUpdated } from "@/lib/cart/cart-events";
+import type { CartLineView } from "@/lib/cart/cart.server";
 
 export function CartLineItem({ line, onChanged }: { line: CartLineView; onChanged: () => void }) {
   const [isPending, startTransition] = useTransition();

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
-import { getCategoryWithProducts } from "@/lib/products.server";
+import { prisma } from "@/lib/db/prisma";
+import { getCategoryWithProducts } from "@/lib/catalogue/products.server";
 import { CatalogBrowser, type CategoryItem, type CatalogProduct } from "@/components/product";
 
 interface CategoryPageProps {
@@ -28,6 +28,18 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     description: category.description ?? undefined,
     alternates: { canonical: `/categories/${slug}` },
   };
+}
+
+function extractStringOption(options: unknown, keys: string[]): string | undefined {
+  if (!options || typeof options !== "object" || Array.isArray(options)) return undefined;
+  const record = options as Record<string, unknown>;
+  for (const key of keys) {
+    const val = record[key];
+    if (typeof val === "string" && val.trim().length > 0) {
+      return val.trim();
+    }
+  }
+  return undefined;
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
@@ -63,6 +75,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     const minPrice = prices.length ? Math.min(...prices) : 0;
     const maxPrice = prices.length ? Math.max(...prices) : 0;
 
+    const variants = p.variants.map((v) => ({
+      size: extractStringOption(v.options, ["Size", "size"]),
+      color: extractStringOption(v.options, ["Color", "Colour", "color", "colour"]),
+    }));
+
+    const sizes = Array.from(
+      new Set(variants.map((v) => v.size).filter((s): s is string => Boolean(s)))
+    );
+    const colors = Array.from(
+      new Set(variants.map((v) => v.color).filter((c): c is string => Boolean(c)))
+    );
+
     return {
       slug: p.slug,
       title: p.title,
@@ -74,6 +98,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       totalOnHand: 10,
       categorySlug: p.category?.slug,
       categoryName: p.category?.name,
+      sizes,
+      colors,
+      variants,
     };
   });
 

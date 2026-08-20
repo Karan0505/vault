@@ -1,6 +1,6 @@
 import type { OrderStatus } from "@prisma/client";
 import { Badge } from "@/components/ui/Badge";
-import { ORDER_STATUS_LABEL } from "@/lib/orders";
+import { ORDER_STATUS_LABEL } from "@/lib/orders/orders";
 
 const STATUS_TONE: Record<OrderStatus, "green" | "amber" | "red" | "neutral" | "blue"> = {
   pending: "amber",

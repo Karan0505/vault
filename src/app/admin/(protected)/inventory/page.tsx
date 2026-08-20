@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { auth } from "@/lib/auth";
-import { hasPermission } from "@/lib/permissions";
-import { listInventory } from "@/lib/inventory-admin.server";
+import { auth } from "@/lib/auth/auth";
+import { hasPermission } from "@/lib/auth/permissions";
+import { listInventory } from "@/lib/inventory/inventory-admin.server";
 import { Card } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
 import { AdjustStockForm } from "@/components/admin/AdjustStockForm";

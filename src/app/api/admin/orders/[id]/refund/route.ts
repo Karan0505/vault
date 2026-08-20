@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { prisma } from "@/lib/prisma";
-import { getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
-import { createItemizedRefund, createGoodwillRefund, OverRefundError } from "@/lib/refunds.server";
-import { refundInputSchema } from "@/lib/validation";
-import { sendRefundNoticeEmail } from "@/lib/email.server";
-import { logger } from "@/lib/logger";
+import { prisma } from "@/lib/db/prisma";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
+import { createItemizedRefund, createGoodwillRefund, OverRefundError } from "@/lib/orders/refunds.server";
+import { refundInputSchema } from "@/lib/validation/validation";
+import { sendRefundNoticeEmail } from "@/lib/integrations/email.server";
+import { logger } from "@/lib/shared/logger";
 
 interface RouteParams {
   params: Promise<{ id: string }>;

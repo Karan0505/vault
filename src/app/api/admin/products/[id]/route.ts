@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { productInputSchema } from "@/lib/validation";
-import { updateProduct, deleteProduct, DuplicateVariantError } from "@/lib/products.server";
-import { hasPermission } from "@/lib/permissions";
-import { getStaffActor } from "@/lib/session";
+import { auth, requireStaff } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { productInputSchema } from "@/lib/validation/validation";
+import { updateProduct, deleteProduct, DuplicateVariantError } from "@/lib/catalogue/products.server";
+import { hasPermission } from "@/lib/auth/permissions";
+import { getStaffActor } from "@/lib/auth/session";
 
 interface RouteParams {
   params: Promise<{ id: string }>;

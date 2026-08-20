@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { getStaffActor } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
+import { prisma } from "@/lib/db/prisma";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
 import type { OrderStatus } from "@prisma/client";
 
 const VALID_STATUSES: readonly OrderStatus[] = ["pending", "paid", "fulfilled", "delivered", "cancelled", "refunded"];

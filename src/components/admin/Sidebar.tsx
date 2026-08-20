@@ -14,8 +14,8 @@ import {
   Store,
 } from "lucide-react";
 import type { StaffRole } from "@prisma/client";
-import type { Permission } from "@/lib/permissions";
-import { hasPermission } from "@/lib/permissions";
+import type { Permission } from "@/lib/auth/permissions";
+import { hasPermission } from "@/lib/auth/permissions";
 
 interface NavItem {
   href: string;

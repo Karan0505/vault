@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://vault.example.com";
 
