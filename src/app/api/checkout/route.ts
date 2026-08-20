@@ -3,6 +3,7 @@ import { getCurrentUserId } from "@/lib/auth/session";
 import { getOrCreateCart } from "@/lib/cart/cart.server";
 import { createCheckoutSession, EmptyCartError, CartLineUnavailableError } from "@/lib/orders/orders.server";
 import { InsufficientStockError } from "@/lib/inventory/inventory.server";
+import { AddressNotFoundError, type AddressSnapshot } from "@/lib/account/addresses.server";
 import { checkoutInputSchema } from "@/lib/validation/validation";
 
 export async function POST(request: Request) {
@@ -24,10 +25,15 @@ export async function POST(request: Request) {
       userId,
       email: parsed.data.email,
       discountCode: parsed.data.discountCode,
+      selectedAddressId: parsed.data.selectedAddressId,
+      shippingAddress: parsed.data.shippingAddress as AddressSnapshot | undefined,
     });
 
     return NextResponse.json({ orderId, clientSecret });
   } catch (error) {
+    if (error instanceof AddressNotFoundError) {
+      return NextResponse.json({ error: "Selected address not found or unauthorized" }, { status: 404 });
+    }
     if (error instanceof EmptyCartError) {
       return NextResponse.json({ error: "Your cart is empty" }, { status: 400 });
     }
@@ -38,8 +44,6 @@ export async function POST(request: Request) {
       );
     }
     if (error instanceof InsufficientStockError) {
-      // The exact "clean, specific error" the brief asks for — which
-      // variant, how many were wanted, how many are actually available.
       return NextResponse.json(
         {
           error: "Not enough stock for one of the items in your cart",

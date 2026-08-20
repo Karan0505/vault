@@ -9,6 +9,7 @@ import { assertTransition, type OrderStatus } from "@/lib/orders/orders";
 import { splitProportionally } from "@/lib/payments/money";
 import { sendOrderConfirmationEmail } from "@/lib/integrations/email.server";
 import { logger } from "@/lib/shared/logger";
+import { getValidatedCustomerAddress, type AddressSnapshot } from "@/lib/account/addresses.server";
 
 /** Flat placeholder shipping rate — a real rates engine (carrier rates, free thresholds) is Phase 3+/stretch scope, not this phase's problem. */
 const FLAT_SHIPPING_AMOUNT = 599;
@@ -46,12 +47,41 @@ export async function createCheckoutSession(params: {
   userId: string | null;
   email: string;
   discountCode?: string;
+  selectedAddressId?: string;
+  shippingAddress?: AddressSnapshot;
 }): Promise<{ orderId: string; clientSecret: string }> {
   const cart = await getCartView(params.cartId);
   if (cart.lines.length === 0) throw new EmptyCartError();
 
   for (const line of cart.lines) {
     if (!line.isEnabled) throw new CartLineUnavailableError(line.variantId);
+  }
+
+  // Address Snapshot Resolution:
+  // If selectedAddressId is provided, server re-verifies ownership and fetches
+  // authoritative saved address. Client-supplied shippingAddress never overrides it.
+  let shippingAddressSnapshot: AddressSnapshot | null = null;
+
+  if (params.selectedAddressId) {
+    if (!params.userId) {
+      throw new Error("Authentication required to use saved address");
+    }
+    shippingAddressSnapshot = await getValidatedCustomerAddress(
+      params.userId,
+      params.selectedAddressId
+    );
+  } else if (params.shippingAddress) {
+    shippingAddressSnapshot = {
+      label: params.shippingAddress.label ?? "Home",
+      fullName: params.shippingAddress.fullName,
+      address: params.shippingAddress.address,
+      apartment: params.shippingAddress.apartment,
+      city: params.shippingAddress.city,
+      state: params.shippingAddress.state,
+      zip: params.shippingAddress.zip,
+      country: params.shippingAddress.country ?? "United States",
+      phone: params.shippingAddress.phone,
+    };
   }
 
   const currency = cart.currency ?? "USD";
@@ -109,6 +139,7 @@ export async function createCheckoutSession(params: {
           shippingAmount,
           taxAmount,
           totalAmount,
+          shippingAddress: (shippingAddressSnapshot as unknown as Prisma.InputJsonValue) ?? undefined,
           discountId,
           stripePaymentIntentId: paymentIntent.id,
           reservationExpiresAt: expiresAt,

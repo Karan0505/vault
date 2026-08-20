@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, ShieldCheck, Check } from "lucide-react";
+import { ShieldCheck, Check } from "lucide-react";
 import { getStripeClient } from "@/lib/payments/stripe-client";
 import { PaymentStep } from "./PaymentStep";
+import { SavedAddressSelector } from "./SavedAddressSelector";
+import type { AddressItem } from "@/components/account/AddressManager";
 import { notifyCartUpdated } from "@/lib/cart/cart-events";
 
 interface CheckoutResult {
@@ -17,6 +19,9 @@ interface CheckoutResult {
 export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: string }) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [savedAddressesCount, setSavedAddressesCount] = useState<number | null>(null);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
@@ -25,6 +30,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
   const [state, setState] = useState("CA");
   const [zip, setZip] = useState("");
   const [country, setCountry] = useState("United States");
+  const [phone, setPhone] = useState("");
 
   const [session, setSession] = useState<CheckoutResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,16 +56,64 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
     loadUser();
   }, [email, fullName]);
 
+  const handleSelectSavedAddress = (addr: AddressItem) => {
+    setSelectedAddressId(addr.id);
+    setFullName(addr.fullName);
+    setAddress(addr.address);
+    setApartment(addr.apartment || "");
+    setCity(addr.city);
+    setState(addr.state);
+    setZip(addr.zip);
+    setCountry(addr.country || "United States");
+    if (addr.phone) {
+      setPhone(addr.phone);
+    }
+  };
+
   async function handleStartPayment(e: React.FormEvent) {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
     try {
+      const payload: {
+        email: string;
+        discountCode?: string;
+        selectedAddressId?: string;
+        shippingAddress?: {
+          fullName: string;
+          address: string;
+          apartment?: string;
+          city: string;
+          state: string;
+          zip: string;
+          country: string;
+          phone?: string;
+        };
+      } = {
+        email,
+        discountCode: initialDiscountCode || undefined,
+      };
+
+      if (selectedAddressId) {
+        payload.selectedAddressId = selectedAddressId;
+      } else {
+        payload.shippingAddress = {
+          fullName,
+          address,
+          apartment: apartment || undefined,
+          city,
+          state,
+          zip,
+          country,
+          phone: phone || undefined,
+        };
+      }
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, discountCode: initialDiscountCode || undefined }),
+        body: JSON.stringify(payload),
       });
 
       const body = await res.json();
@@ -134,103 +188,138 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
             </h3>
 
             {currentStep === 1 ? (
-              <div className="grid gap-3.5 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-700">Full Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Jane Doe"
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  />
-                </div>
+              <div className="space-y-4">
+                {/* Saved Address Selector (Flipkart Style) */}
+                <SavedAddressSelector
+                  selectedAddressId={selectedAddressId}
+                  onSelectAddress={handleSelectSavedAddress}
+                  onAddressListLoaded={(list) => setSavedAddressesCount(list.length)}
+                />
 
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-700">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="jane@example.com"
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  />
-                </div>
+                {/* Only render manual inputs if customer has NO saved addresses */}
+                {savedAddressesCount === 0 && (
+                  <div className="grid gap-3.5 sm:grid-cols-2 pt-2">
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={fullName}
+                        onChange={(e) => {
+                          setSelectedAddressId(null);
+                          setFullName(e.target.value);
+                        }}
+                        placeholder="Jane Doe"
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      />
+                    </div>
 
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-700">Address</label>
-                  <input
-                    type="text"
-                    required
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="123 Main Street"
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  />
-                </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="jane@example.com"
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      />
+                    </div>
 
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-700">Apartment, suite, etc. (optional)</label>
-                  <input
-                    type="text"
-                    value={apartment}
-                    onChange={(e) => setApartment(e.target.value)}
-                    placeholder="Apt 4B"
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  />
-                </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Street Address</label>
+                      <input
+                        type="text"
+                        required
+                        value={address}
+                        onChange={(e) => {
+                          setSelectedAddressId(null);
+                          setAddress(e.target.value);
+                        }}
+                        placeholder="123 Main Street"
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      />
+                    </div>
 
-                <div>
-                  <label className="text-xs font-semibold text-gray-700">City</label>
-                  <input
-                    type="text"
-                    required
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="San Francisco"
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  />
-                </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Apartment, suite, etc. (optional)</label>
+                      <input
+                        type="text"
+                        value={apartment}
+                        onChange={(e) => {
+                          setSelectedAddressId(null);
+                          setApartment(e.target.value);
+                        }}
+                        placeholder="Apt 4B"
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">State</label>
-                    <input
-                      type="text"
-                      required
-                      value={state}
-                      onChange={(e) => setState(e.target.value)}
-                      placeholder="CA"
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                    />
+                    <div>
+                      <label className="text-xs font-semibold text-gray-700">City</label>
+                      <input
+                        type="text"
+                        required
+                        value={city}
+                        onChange={(e) => {
+                          setSelectedAddressId(null);
+                          setCity(e.target.value);
+                        }}
+                        placeholder="San Francisco"
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700">State</label>
+                        <input
+                          type="text"
+                          required
+                          value={state}
+                          onChange={(e) => {
+                            setSelectedAddressId(null);
+                            setState(e.target.value);
+                          }}
+                          placeholder="CA"
+                          className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700">ZIP Code</label>
+                        <input
+                          type="text"
+                          required
+                          value={zip}
+                          onChange={(e) => {
+                            setSelectedAddressId(null);
+                            setZip(e.target.value);
+                          }}
+                          placeholder="94103"
+                          className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-700">Country</label>
+                      <select
+                        value={country}
+                        onChange={(e) => {
+                          setSelectedAddressId(null);
+                          setCountry(e.target.value);
+                        }}
+                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      >
+                        <option value="United States">United States</option>
+                        <option value="Canada">Canada</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="India">India</option>
+                        <option value="Australia">Australia</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-700">ZIP Code</label>
-                    <input
-                      type="text"
-                      required
-                      value={zip}
-                      onChange={(e) => setZip(e.target.value)}
-                      placeholder="94103"
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-semibold text-gray-700">Country</label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                  >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                  </select>
-                </div>
+                )}
               </div>
             ) : (
               <div className="rounded-2xl border border-gray-200 p-4">
@@ -263,8 +352,13 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
               <button
                 type="button"
                 onClick={() => {
-                  if (!email || !fullName) {
-                    setError("Please enter your name and email.");
+                  if (selectedAddressId) {
+                    setError(null);
+                    setCurrentStep(2);
+                    return;
+                  }
+                  if (!email || !fullName || !address || !city || !state || !zip) {
+                    setError("Please select a delivery address or complete all required fields.");
                     return;
                   }
                   setError(null);

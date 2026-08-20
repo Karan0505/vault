@@ -66,9 +66,29 @@ export const applyDiscountSchema = z.object({
   code: z.string().min(1),
 });
 
+export const addressInputSchema = z.object({
+  label: z.string().min(1, "Label is required").max(50).default("Home"),
+  fullName: z.string().min(1, "Full name is required").max(100),
+  address: z.string().min(1, "Street address is required").max(200),
+  apartment: z.string().max(100).optional().nullable(),
+  city: z.string().min(1, "City is required").max(100),
+  state: z.string().min(1, "State is required").max(100),
+  zip: z.string().min(1, "ZIP/Postal code is required").max(20),
+  country: z.string().min(1, "Country is required").max(100).default("United States"),
+  phone: z.string().max(30).optional().nullable(),
+  isDefault: z.boolean().default(false),
+});
+
+export const addressUpdateSchema = addressInputSchema.partial();
+
+export type AddressInput = z.infer<typeof addressInputSchema>;
+export type AddressUpdateInput = z.infer<typeof addressUpdateSchema>;
+
 export const checkoutInputSchema = z.object({
   email: z.string().email(),
   discountCode: z.string().optional(),
+  selectedAddressId: z.string().optional(),
+  shippingAddress: addressInputSchema.partial().optional(),
 });
 
 export type CheckoutInput = z.infer<typeof checkoutInputSchema>;

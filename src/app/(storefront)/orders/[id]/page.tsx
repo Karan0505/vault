@@ -216,10 +216,33 @@ export default async function OrderPage({ params }: OrderPageProps) {
           <div className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-xs">
             <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-900">Shipping Address</h3>
             <div className="mt-3 text-xs text-gray-600 space-y-1">
-              <p className="font-semibold text-gray-900">{order.email}</p>
-              <p>123 Main Street</p>
-              <p>San Francisco, CA 94103</p>
-              <p>United States</p>
+              {(() => {
+                const shippingAddr = (order as any).shippingAddress;
+                if (shippingAddr && typeof shippingAddr === "object") {
+                  return (
+                    <>
+                      <p className="font-semibold text-gray-900">{shippingAddr.fullName || order.email}</p>
+                      <p>
+                        {shippingAddr.address}
+                        {shippingAddr.apartment ? `, ${shippingAddr.apartment}` : ""}
+                      </p>
+                      <p>
+                        {shippingAddr.city}, {shippingAddr.state} {shippingAddr.zip}
+                      </p>
+                      <p>{shippingAddr.country}</p>
+                      {shippingAddr.phone && (
+                        <p className="text-[11px] text-gray-400 font-mono">Phone: {shippingAddr.phone}</p>
+                      )}
+                    </>
+                  );
+                }
+                return (
+                  <>
+                    <p className="font-semibold text-gray-900">{order.email}</p>
+                    <p className="text-gray-500">Standard Delivery</p>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
