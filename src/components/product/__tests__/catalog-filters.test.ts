@@ -8,6 +8,7 @@ import {
 describe("Catalog Size & Color Variant-Aware Filtering", () => {
   const sampleProducts: CatalogProduct[] = [
     {
+      id: "prod-1",
       slug: "product-1-tshirt",
       title: "Classic Heavyweight Tee",
       minPriceAmount: 4500,
@@ -27,6 +28,7 @@ describe("Catalog Size & Color Variant-Aware Filtering", () => {
       ],
     },
     {
+      id: "prod-2",
       slug: "product-2-hoodie",
       title: "Loopback Fleece Hoodie",
       minPriceAmount: 12000,
@@ -45,6 +47,7 @@ describe("Catalog Size & Color Variant-Aware Filtering", () => {
       ],
     },
     {
+      id: "prod-3",
       slug: "product-3-belt",
       title: "Waxed Canvas Belt",
       minPriceAmount: 5400,
@@ -63,6 +66,7 @@ describe("Catalog Size & Color Variant-Aware Filtering", () => {
       ],
     },
     {
+      id: "prod-4",
       slug: "product-4-no-variants",
       title: "Archived Product Without Variants",
       minPriceAmount: 3000,
@@ -78,6 +82,7 @@ describe("Catalog Size & Color Variant-Aware Filtering", () => {
       variants: [],
     },
     {
+      id: "prod-5",
       slug: "product-5-cross-test",
       title: "Split Variant Product",
       minPriceAmount: 8000,

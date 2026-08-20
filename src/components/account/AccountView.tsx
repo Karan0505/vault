@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { User, MapPin, CreditCard, Heart, Settings } from "lucide-react";
 import { formatMoney } from "@/lib/payments/money";
 import { AddressManager, type AddressItem } from "@/lib/../components/account/AddressManager";
+import { WishlistView } from "@/components/wishlist/WishlistView";
 
 interface OrderItemSummary {
   id: string;
@@ -26,7 +28,19 @@ interface AccountViewProps {
 }
 
 export function AccountView({ userProfile, orders, initialAddresses }: AccountViewProps) {
-  const [activeTab, setActiveTab] = useState<"overview" | "addresses" | "payments" | "wishlist" | "settings">("overview");
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get("tab") as "overview" | "addresses" | "payments" | "wishlist" | "settings" | null;
+  const [activeTab, setActiveTab] = useState<"overview" | "addresses" | "payments" | "wishlist" | "settings">(
+    requestedTab && ["overview", "addresses", "payments", "wishlist", "settings"].includes(requestedTab)
+      ? requestedTab
+      : "overview"
+  );
+
+  useEffect(() => {
+    if (requestedTab && ["overview", "addresses", "payments", "wishlist", "settings"].includes(requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
 
   const statusToneMap: Record<string, string> = {
     delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -215,12 +229,16 @@ export function AccountView({ userProfile, orders, initialAddresses }: AccountVi
         )}
 
         {activeTab === "wishlist" && (
-          <div className="rounded-3xl border border-gray-200/80 bg-white p-8 text-center shadow-xs">
-            <Heart size={28} className="mx-auto text-gray-400" />
-            <h3 className="mt-3 text-sm font-bold text-gray-900">Wishlist</h3>
-            <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
-              Your saved items will appear here.
-            </p>
+          <div>
+            <div className="mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+                Your Saved Wishlist
+              </h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Items you have saved across the store
+              </p>
+            </div>
+            <WishlistView />
           </div>
         )}
 

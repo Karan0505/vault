@@ -1,8 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Heart, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { getBestSellingProducts } from "@/lib/catalogue/best-sellers.server";
 import { formatMoney } from "@/lib/payments/money";
+import { WishlistButton } from "@/components/product/WishlistButton";
 
 export async function BestSellers() {
   const products = await getBestSellingProducts(6);
@@ -39,13 +40,21 @@ export async function BestSellers() {
               className="group relative flex flex-col rounded-2xl border border-gray-200/80 bg-white p-2.5 shadow-2xs transition-all duration-300 hover:border-gray-300 hover:shadow-md"
             >
               {/* Wishlist button */}
-              <button
-                type="button"
-                aria-label="Add to wishlist"
-                className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-600 backdrop-blur-sm transition-all hover:bg-white hover:text-rose-600 shadow-xs"
-              >
-                <Heart size={14} />
-              </button>
+              <WishlistButton
+                productId={item.id}
+                product={{
+                  id: item.id,
+                  slug: item.slug,
+                  title: item.title,
+                  imageUrl: item.imageUrl,
+                  imageAlt: item.imageAlt,
+                  minPriceAmount: item.minPriceAmount,
+                  maxPriceAmount: item.maxPriceAmount,
+                  currency: item.currency,
+                  totalOnHand: item.totalOnHand,
+                }}
+                className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-600 backdrop-blur-xs transition-all hover:bg-white hover:text-rose-600 shadow-xs"
+              />
 
               {/* Product Image */}
               <Link

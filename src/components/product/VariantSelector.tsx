@@ -1,39 +1,49 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Heart, Minus, Plus } from "lucide-react";
+import { formatMoney } from "@/lib/payments/money";
 import { AddToCartButton } from "./AddToCartButton";
-import { VariantOptionGroup } from "./VariantOptionGroup";
-import {
-  findVariant,
-  getSelectableValues,
-  isSelectionComplete,
-  type OptionSelection,
-  type VariantLike,
-} from "@/lib/catalogue/variants";
+import { useWishlist } from "@/context/WishlistContext";
+import type { WishlistProduct } from "@/lib/wishlist/wishlist.server";
 
-export interface SelectableVariant extends VariantLike {
+export interface SelectableVariant {
+  id: string;
   sku: string;
+  options: Record<string, string>;
+  isEnabled: boolean;
   priceAmount: number;
   priceCurrency: string;
-  compareAtAmount: number | null;
+  compareAtAmount?: number | null;
   onHand: number;
   lowStockThreshold: number;
 }
 
 interface VariantSelectorProps {
+  productId?: string;
+  product?: Partial<WishlistProduct>;
   optionNames: string[];
-  optionValues: Record<string, string[]>; // display order per dimension
+  optionValues: Record<string, string[]>;
   variants: SelectableVariant[];
 }
 
-export function VariantSelector({ optionNames, optionValues, variants }: VariantSelectorProps) {
+type OptionSelection = Record<string, string>;
+
+export function VariantSelector({
+  productId,
+  product,
+  optionNames,
+  optionValues,
+  variants,
+}: VariantSelectorProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const wishlisted = productId ? isWishlisted(productId) : false;
 
   const selection: OptionSelection = useMemo(() => {
     const current: OptionSelection = {};
@@ -50,91 +60,91 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
     return current;
   }, [optionNames, optionValues, searchParams]);
 
-  const explicitColorValues: Record<string, string> = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const v of variants) {
-      const opts = v.options as Record<string, unknown>;
-      const colorVal = (opts["Colour"] ?? opts["Color"] ?? opts["colour"] ?? opts["color"]) as
-        | string
-        | undefined;
-      const explicit = (opts["colorValue"] ??
-        opts["hex"] ??
-        opts["swatch"] ??
-        opts["cssColor"]) as string | undefined;
-      if (colorVal && explicit) {
-        map[colorVal] = explicit;
-      }
-    }
-    return map;
-  }, [variants]);
+  const resolvedVariant = useMemo(() => {
+    return (
+      variants.find((v) => {
+        if (!v.isEnabled) return false;
+        return optionNames.every((dim) => {
+          const selected = selection[dim];
+          if (!selected) return false;
+          const variantVal = v.options[dim];
+          return variantVal && variantVal.trim().toLowerCase() === selected.trim().toLowerCase();
+        });
+      }) ?? null
+    );
+  }, [variants, optionNames, selection]);
 
-  const setValue = useCallback(
-    (dimension: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(dimension.toLowerCase(), value);
-      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [pathname, router, searchParams]
-  );
+  const setOption = (dimension: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set(dimension.toLowerCase(), value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
-  const resolvedVariant = isSelectionComplete(optionNames, selection)
-    ? findVariant(optionNames, variants, selection)
-    : undefined;
+  const handleWishlistClick = async () => {
+    if (!productId) return;
+    await toggleWishlist(productId, product);
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Option groups */}
-      {optionNames.map((dimension) => {
-        const values = optionValues[dimension] ?? [];
-        const selectable = getSelectableValues(optionNames, variants, selection, dimension);
-        const chosen = selection[dimension];
+      {/* Option selectors */}
+      {optionNames.map((name) => {
+        const values = optionValues[name] ?? [];
+        const currentSelected = selection[name];
 
         return (
-          <fieldset key={dimension} className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <legend className="font-sans text-xs font-semibold uppercase tracking-wider text-gray-900">
-                {dimension}: <span className="font-normal text-gray-600">{chosen ?? "Select"}</span>
-              </legend>
+          <div key={name} className="flex flex-col gap-2.5">
+            <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
+              <span className="capitalize">{name}</span>
+              {currentSelected && (
+                <span className="text-gray-500 font-normal">{currentSelected}</span>
+              )}
             </div>
-            <VariantOptionGroup
-              dimension={dimension}
-              values={values}
-              selectable={selectable}
-              chosen={chosen}
-              explicitColorValues={explicitColorValues}
-              onSelect={(value) => setValue(dimension, value)}
-            />
-          </fieldset>
+
+            <div className="flex flex-wrap gap-2">
+              {values.map((val) => {
+                const isSelected = currentSelected?.toLowerCase() === val.toLowerCase();
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setOption(name, val)}
+                    className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-xs font-medium transition-all ${
+                      isSelected
+                        ? "border-black bg-black text-white shadow-xs"
+                        : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
+                    }`}
+                  >
+                    {val}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         );
       })}
 
-      {/* Stock status message */}
-      <div className="flex items-center gap-2 text-xs">
-        {resolvedVariant ? (
-          resolvedVariant.onHand > 0 ? (
-            <div className="flex items-center gap-2 font-medium text-emerald-700">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>In stock — Ships in 1-2 business days</span>
-            </div>
+      {/* Stock & pricing status */}
+      {resolvedVariant && (
+        <div className="flex items-center justify-between border-t border-gray-100 pt-4 text-xs font-medium">
+          <span className="text-gray-500 font-mono">SKU: {resolvedVariant.sku}</span>
+          {resolvedVariant.onHand <= 0 ? (
+            <span className="text-rose-600 font-semibold">Out of Stock</span>
+          ) : resolvedVariant.onHand <= resolvedVariant.lowStockThreshold ? (
+            <span className="text-amber-600 font-semibold">
+              Low Stock — Only {resolvedVariant.onHand} left
+            </span>
           ) : (
-            <div className="flex items-center gap-2 font-medium text-rose-600">
-              <span className="h-2 w-2 rounded-full bg-rose-500" />
-              <span>Currently out of stock</span>
-            </div>
-          )
-        ) : (
-          <div className="flex items-center gap-2 text-gray-500">
-            <span className="h-2 w-2 rounded-full bg-gray-400" />
-            <span>Select options to check stock</span>
-          </div>
-        )}
-      </div>
+            <span className="text-emerald-600 font-semibold">In Stock</span>
+          )}
+        </div>
+      )}
 
       {/* Quantity & CTA buttons */}
       <div className="flex flex-col gap-3 pt-2">
         <div className="flex items-center gap-3">
-          {/* Quantity Stepper */}
-          <div className="inline-flex items-center rounded-xl border border-gray-200 bg-white p-1 shadow-xs">
+          {/* Quantity selector */}
+          <div className="flex items-center rounded-xl border border-gray-200 bg-white p-1">
             <button
               type="button"
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -143,7 +153,7 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
             >
               <Minus size={14} />
             </button>
-            <span className="w-9 text-center font-mono text-sm font-semibold text-gray-900">
+            <span className="w-10 text-center font-mono text-xs font-bold text-gray-900">
               {quantity}
             </span>
             <button
@@ -166,17 +176,19 @@ export function VariantSelector({ optionNames, optionValues, variants }: Variant
         </div>
 
         {/* Add to Wishlist button */}
-        <button
-          type="button"
-          onClick={() => setIsWishlisted(!isWishlisted)}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white py-3 text-xs font-semibold text-gray-800 shadow-xs transition-colors hover:bg-gray-50"
-        >
-          <Heart
-            size={16}
-            className={isWishlisted ? "fill-rose-500 text-rose-500" : "text-gray-600"}
-          />
-          <span>{isWishlisted ? "In Your Wishlist" : "Add to Wishlist"}</span>
-        </button>
+        {productId && (
+          <button
+            type="button"
+            onClick={handleWishlistClick}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white py-3 text-xs font-semibold text-gray-800 shadow-xs transition-colors hover:bg-gray-50 cursor-pointer"
+          >
+            <Heart
+              size={16}
+              className={wishlisted ? "fill-rose-500 text-rose-500" : "text-gray-600"}
+            />
+            <span>{wishlisted ? "In Your Wishlist" : "Add to Wishlist"}</span>
+          </button>
+        )}
       </div>
     </div>
   );

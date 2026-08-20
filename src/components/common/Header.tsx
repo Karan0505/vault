@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Heart, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { CartCountBadge } from "@/components/cart/CartCountBadge";
+import { WishlistCountBadge } from "@/components/wishlist/WishlistCountBadge";
 import { HeaderSearch } from "./HeaderSearch";
 import { UserAccountMenu } from "./UserAccountMenu";
 
@@ -52,13 +53,7 @@ export function Header() {
         <div className="flex items-center gap-5 text-gray-700 text-xs font-medium">
           <UserAccountMenu />
 
-          <button
-            type="button"
-            className="flex items-center gap-1.5 hover:text-black transition-colors cursor-pointer"
-          >
-            <Heart size={16} strokeWidth={1.8} />
-            <span className="hidden sm:inline">Wishlist</span>
-          </button>
+          <WishlistCountBadge />
 
           <CartCountBadge />
         </div>

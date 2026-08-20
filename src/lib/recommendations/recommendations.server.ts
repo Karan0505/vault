@@ -22,6 +22,7 @@ function toCardData(rows: RecommendationRow[], mediaByProduct: Map<string, { url
   return rows.map((row) => {
     const image = mediaByProduct.get(row.id);
     return {
+      id: row.id,
       slug: row.slug,
       title: row.title,
       imageUrl: image?.url ?? null,

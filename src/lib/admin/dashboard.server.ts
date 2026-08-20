@@ -211,12 +211,15 @@ export async function getAuthoritativeDashboardData(days = 7): Promise<AdminDash
   const totalInventory = inStock + lowStock + outOfStock;
 
   // Format Top Selling Products
-  const topProducts = bestSellers.map((item) => ({
-    name: item.title,
-    category: "Storefront Best Seller",
-    revenue: formatMoney({ amount: item.minPriceAmount * item.totalSold, currency: item.currency || "USD" }),
-    orders: item.totalSold,
-  }));
+  const topProducts = (bestSellers || []).map((item) => {
+    const itemRevenue = Math.max(0, Math.round(Number(item.minPriceAmount || 0) * Number(item.totalSold || 0)));
+    return {
+      name: item.title || "Product",
+      category: "Storefront Best Seller",
+      revenue: formatMoney({ amount: itemRevenue, currency: item.currency || "USD" }),
+      orders: item.totalSold || 0,
+    };
+  });
 
   // Format Recent Orders
   const recentOrders = recentOrdersList.map((o) => ({

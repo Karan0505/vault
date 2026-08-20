@@ -88,6 +88,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     );
 
     return {
+      id: p.id,
       slug: p.slug,
       title: p.title,
       minPriceAmount: minPrice,

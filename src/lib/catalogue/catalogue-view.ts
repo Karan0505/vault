@@ -12,6 +12,7 @@ interface MediaForCard {
 }
 
 interface ProductForCard {
+  id: string;
   slug: string;
   title: string;
   media: MediaForCard[];
@@ -25,6 +26,7 @@ export function toProductCardData(product: ProductForCard): ProductCardData {
   const firstImage = product.media[0];
 
   return {
+    id: product.id,
     slug: product.slug,
     title: product.title,
     imageUrl: firstImage?.url ?? null,

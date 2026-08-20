@@ -39,6 +39,7 @@ model User {
   orders              Order[]
   addresses           Address[]
   discountRedemptions DiscountRedemption[]
+  wishlistItems       WishlistItem[]
 
   @@map("users")
 }
@@ -155,6 +156,7 @@ model Product {
   variants    ProductVariant[]
   media       Media[]
   collections CollectionProduct[]
+  wishlistItems WishlistItem[]
 
   // Maintained by the app layer on create/update (see
   // lib/products.server.ts syncSearchVector) rather than a Postgres
@@ -680,5 +682,23 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+// ---------------------------------------------------------------------------
+// Customer Wishlist. Enables authenticated customers to save products.
+// ---------------------------------------------------------------------------
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("wishlist_items")
 }
 

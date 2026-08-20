@@ -169,6 +169,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
           <Suspense fallback={<div className="skeleton h-48 rounded-2xl" />}>
             <VariantSelector
+              productId={product.id}
+              product={{
+                id: product.id,
+                slug: product.slug,
+                title: product.title,
+                imageUrl: images[0]?.url ?? null,
+                imageAlt: images[0]?.alt || product.title,
+                minPriceAmount: cheapestForSchema?.priceAmount ?? 0,
+                maxPriceAmount: cheapestForSchema?.priceAmount ?? 0,
+                currency: cheapestForSchema?.priceCurrency ?? "USD",
+                totalOnHand,
+                categoryName: product.category?.name,
+              }}
               optionNames={product.optionNames}
               optionValues={optionValues}
               variants={selectableVariants}

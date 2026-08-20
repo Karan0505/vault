@@ -78,6 +78,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     );
 
     return {
+      id: p.id,
       slug: p.slug,
       title: p.title,
       minPriceAmount: minPrice,
