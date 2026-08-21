@@ -1,5 +1,6 @@
 import "server-only";
 import { unstable_cache as cache } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { resolveColor } from "@/lib/shared/colors";
 import { cacheTags } from "@/lib/validation/revalidate";
@@ -55,31 +56,31 @@ export function getBestSellingProducts(limit = 6): Promise<BestSellerProduct[]> 
     async () => {
       try {
         // Step 1: Execute parameterized SQL aggregation for ranked product IDs
-        const rankedRows = await prisma.$queryRaw<BestSellerRow[]>`
+        const rankedRows = await prisma.$queryRaw<BestSellerRow[]>(Prisma.sql`
           SELECT 
             pv."productId",
             SUM(
               GREATEST(
                 0,
-                oi."quantity" - oi."refundedQuantity"
+                oi."quantity" - COALESCE(oi."refundedQuantity", 0)
               )
             )::int AS "totalSold"
           FROM "order_items" oi
           JOIN "orders" o ON oi."orderId" = o."id"
           JOIN "product_variants" pv ON oi."variantId" = pv."id"
           JOIN "products" p ON pv."productId" = p."id"
-          WHERE o."status" IN ('paid', 'fulfilled', 'delivered')
-            AND p."status" = 'active'
+          WHERE o."status"::text IN ('paid', 'fulfilled', 'delivered')
+            AND p."status"::text = 'active'
           GROUP BY pv."productId"
           HAVING SUM(
             GREATEST(
               0,
-              oi."quantity" - oi."refundedQuantity"
+              oi."quantity" - COALESCE(oi."refundedQuantity", 0)
             )
           ) > 0
           ORDER BY "totalSold" DESC, MIN(p."createdAt") ASC, pv."productId" ASC
           LIMIT ${limit};
-        `;
+        `);
 
         if (!rankedRows || rankedRows.length === 0) {
           return [];
