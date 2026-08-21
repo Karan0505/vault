@@ -382,6 +382,7 @@ enum OrderStatus {
   delivered
   cancelled
   refunded
+  failed
 }
 
 model Order {
@@ -408,6 +409,10 @@ model Order {
 
   stripePaymentIntentId String?  @unique
   reservationExpiresAt  DateTime // checkout-entry TTL; once paid, reservations convert to real stock decrement
+
+  failureDetectedAt DateTime?
+  refundInitiatedAt DateTime?
+  failureReason    String?
 
   items        OrderItem[]
   reservations Reservation[]

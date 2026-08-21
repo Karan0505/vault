@@ -9,6 +9,7 @@ const STATUS_TONE: Record<OrderStatus, "green" | "amber" | "red" | "neutral" | "
   delivered: "green",
   cancelled: "neutral",
   refunded: "red",
+  failed: "red",
 };
 
 export function OrderStatusBadge({ status }: { status: OrderStatus }) {

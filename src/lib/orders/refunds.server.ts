@@ -6,7 +6,6 @@ import { splitEvenly } from "@/lib/payments/money";
 import { appendAuditLog, type AuditActor } from "@/lib/auth/audit.server";
 import { adjustStockInTx } from "@/lib/inventory/inventory-admin.server";
 import { revalidateProduct, revalidateBestSellers } from "@/lib/validation/revalidate";
-import { sendRefundNoticeEmail } from "@/lib/integrations/email.server";
 
 export class OverRefundError extends Error {
   constructor(public readonly orderItemId: string, public readonly requested: number, public readonly remaining: number) {
@@ -40,8 +39,9 @@ export async function createItemizedRefund(params: {
   items: RefundRequestItem[];
   reason?: string;
   restock: boolean;
+  targetStatus?: OrderStatus;
 }): Promise<{ refundId: string; amount: number; orderStatus: OrderStatus }> {
-  const { orderId, actor, items, reason, restock } = params;
+  const { orderId, actor, items, reason, restock, targetStatus } = params;
   if (items.length === 0) throw new Error("At least one item is required to refund");
 
   const order = await prisma.order.findUniqueOrThrow({
@@ -76,14 +76,20 @@ export async function createItemizedRefund(params: {
     totalRefundAmount += amount;
   }
 
-  // Stripe call happens outside the transaction — it's the one step
-  // here that can't be rolled back, so it must either fully succeed
+  // Stripe call happens outside the transaction with deterministic idempotencyKey —
+  // it's the one step here that can't be rolled back, so it must either fully succeed
   // before any database state changes, or fail before any does.
-  const stripeRefund = await stripe.refunds.create({
-    payment_intent: order.stripePaymentIntentId,
-    amount: totalRefundAmount,
-    reason: "requested_by_customer",
-  });
+  const itemsKey = items.map((i) => `${i.orderItemId}_${i.quantity}`).join("_");
+  const stripeRefund = await stripe.refunds.create(
+    {
+      payment_intent: order.stripePaymentIntentId,
+      amount: totalRefundAmount,
+      reason: "requested_by_customer",
+    },
+    {
+      idempotencyKey: `vault_refund_${orderId}_${itemsKey}_${totalRefundAmount}`,
+    }
+  );
 
   const revalidatedProducts: { slug: string; categorySlug?: string | null }[] = [];
 
@@ -112,12 +118,6 @@ export async function createItemizedRefund(params: {
       for (const request of items) {
         const orderItem = orderItemsById.get(request.orderItemId);
         if (!orderItem) continue;
-        // adjustStockInTx takes its own row lock and writes its own
-        // audit entry, but runs inside THIS transaction — so if
-        // anything later in this block fails, the restock rolls back
-        // along with the refund record, instead of being an
-        // independently-committed side effect. See the note on
-        // adjustStockInTx in inventory-admin.server.ts.
         const adjustment = await adjustStockInTx(tx, {
           variantId: orderItem.variantId,
           delta: request.quantity,
@@ -133,7 +133,11 @@ export async function createItemizedRefund(params: {
     const isFullRefund = priorRefundedTotal + totalRefundAmount >= order.totalAmount;
 
     let orderStatus: OrderStatus = order.status;
-    if (isFullRefund) {
+    if (targetStatus) {
+      assertTransition(order.status, targetStatus);
+      await tx.order.update({ where: { id: orderId }, data: { status: targetStatus } });
+      orderStatus = targetStatus;
+    } else if (isFullRefund) {
       assertTransition(order.status, "refunded");
       await tx.order.update({ where: { id: orderId }, data: { status: "refunded" } });
       orderStatus = "refunded";
@@ -144,9 +148,8 @@ export async function createItemizedRefund(params: {
       entityType: "Refund",
       entityId: refund.id,
       action: "refund",
-      after: { orderId, amount: totalRefundAmount, restock, items: items as any, isFullRefund },
+      after: { orderId, amount: totalRefundAmount, restock, items: items as any, isFullRefund, orderStatus },
     });
-
 
     return { refundId: refund.id, orderStatus };
   });
@@ -193,11 +196,16 @@ export async function createGoodwillRefund(params: {
     throw new Error(`Total refunds cannot exceed the order total (${order.totalAmount})`);
   }
 
-  const stripeRefund = await stripe.refunds.create({
-    payment_intent: order.stripePaymentIntentId,
-    amount,
-    reason: "requested_by_customer",
-  });
+  const stripeRefund = await stripe.refunds.create(
+    {
+      payment_intent: order.stripePaymentIntentId,
+      amount,
+      reason: "requested_by_customer",
+    },
+    {
+      idempotencyKey: `vault_goodwill_${orderId}_${amount}_${priorRefundedTotal}`,
+    }
+  );
 
   const result = await prisma.$transaction(async (tx) => {
     const refund = await tx.refund.create({

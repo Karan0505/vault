@@ -1,4 +1,4 @@
-export type OrderStatus = "pending" | "paid" | "fulfilled" | "delivered" | "cancelled" | "refunded";
+export type OrderStatus = "pending" | "paid" | "fulfilled" | "delivered" | "cancelled" | "refunded" | "failed";
 
 /**
  * The full legal-transition table. Anything not listed here is illegal —
@@ -7,12 +7,13 @@ export type OrderStatus = "pending" | "paid" | "fulfilled" | "delivered" | "canc
  * inferred from whatever the UI happens to allow.
  */
 const ALLOWED_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["fulfilled", "cancelled", "refunded"],
+  pending: ["paid", "cancelled", "failed"],
+  paid: ["fulfilled", "cancelled", "refunded", "failed"],
   fulfilled: ["delivered", "refunded"],
   delivered: ["refunded"],
   cancelled: [],
   refunded: [],
+  failed: ["refunded"],
 };
 
 export class IllegalOrderTransitionError extends Error {
@@ -45,4 +46,5 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   delivered: "Delivered",
   cancelled: "Cancelled",
   refunded: "Refunded",
+  failed: "Failed",
 };

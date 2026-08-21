@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db/prisma";
 import { formatMoney } from "@/lib/payments/money";
 import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/orders/orders";
 import { OrderLiveTracker } from "@/components/storefront/OrderLiveTracker";
+import { OrderActions } from "@/components/storefront/OrderActions";
 
 export const metadata: Metadata = { title: "Order Details" };
 
@@ -32,6 +33,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
       fulfillments: {
         orderBy: { createdAt: "desc" },
       },
+      refunds: true,
       items: {
         include: {
           variant: {
@@ -59,6 +61,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const stepOrder: OrderStatus[] = ["pending", "paid", "fulfilled", "delivered"];
   const currentStepIndex = stepOrder.indexOf(order.status as OrderStatus);
   const latestFulfillment = order.fulfillments[0] ?? null;
+
+  const isFailed = order.status === "failed";
+  const isCancelled = order.status === "cancelled";
 
   return (
     <div className="mx-auto max-w-4xl py-6 flex flex-col gap-8">
@@ -89,53 +94,67 @@ export default async function OrderPage({ params }: OrderPageProps) {
         </div>
 
         <div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 font-mono text-xs font-semibold text-emerald-700 border border-emerald-200">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            {ORDER_STATUS_LABEL[order.status]}
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-semibold border ${
+              isFailed
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : isCancelled
+                ? "bg-gray-100 text-gray-700 border-gray-300"
+                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                isFailed ? "bg-rose-500" : isCancelled ? "bg-gray-400" : "bg-emerald-500"
+              }`}
+            />
+            {order.status === "fulfilled" ? "Shipped" : ORDER_STATUS_LABEL[order.status]}
           </span>
         </div>
       </div>
 
       {/* Visual 4-Step Progress Tracker */}
-      <div className="rounded-3xl border border-gray-200/80 bg-gray-50/50 p-6 sm:p-8">
-        <div className="relative flex items-center justify-between">
-          {/* Connector line */}
-          <div className="absolute top-4 left-6 right-6 h-0.5 bg-gray-200 -z-0" />
-          <div
-            className="absolute top-4 left-6 h-0.5 bg-emerald-500 transition-all duration-500 -z-0"
-            style={{
-              width: `${Math.max(0, Math.min(100, (currentStepIndex / (stepOrder.length - 1)) * 100))}%`,
-            }}
-          />
+      {!isFailed && !isCancelled && (
+        <div className="rounded-3xl border border-gray-200/80 bg-gray-50/50 p-6 sm:p-8">
+          <div className="relative flex items-center justify-between">
+            {/* Connector line */}
+            <div className="absolute top-4 left-6 right-6 h-0.5 bg-gray-200 -z-0" />
+            <div
+              className="absolute top-4 left-6 h-0.5 bg-emerald-500 transition-all duration-500 -z-0"
+              style={{
+                width: `${Math.max(0, Math.min(100, (currentStepIndex / (stepOrder.length - 1)) * 100))}%`,
+              }}
+            />
 
-          {TIMELINE_STEPS.map((step, idx) => {
-            const isCompleted = currentStepIndex >= idx || order.status === "delivered";
-            const isCurrent = currentStepIndex === idx;
+            {TIMELINE_STEPS.map((step, idx) => {
+              const isCompleted = currentStepIndex >= idx || order.status === "delivered";
+              const isCurrent = currentStepIndex === idx;
 
-            return (
-              <div key={step.key} className="relative z-10 flex flex-col items-center gap-2">
-                <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
-                    isCompleted
-                      ? "border-emerald-500 bg-emerald-500 text-white shadow-xs"
-                      : "border-gray-300 bg-white text-gray-400"
-                  }`}
-                >
-                  {isCompleted ? <Check size={14} strokeWidth={3} /> : <span className="text-xs">{idx + 1}</span>}
+              return (
+                <div key={step.key} className="relative z-10 flex flex-col items-center gap-2">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
+                      isCompleted
+                        ? "border-emerald-500 bg-emerald-500 text-white shadow-xs"
+                        : "border-gray-300 bg-white text-gray-400"
+                    }`}
+                  >
+                    {isCompleted ? <Check size={14} strokeWidth={3} /> : <span className="text-xs">{idx + 1}</span>}
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-xs font-bold ${isCurrent || isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                      {step.label}
+                    </p>
+                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                      {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-center">
-                  <p className={`text-xs font-bold ${isCurrent || isCompleted ? "text-gray-900" : "text-gray-400"}`}>
-                    {step.label}
-                  </p>
-                  <p className="text-[10px] text-gray-400 font-mono mt-0.5">
-                    {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Shipment & Tracking Details (when fulfilled/shipped) */}
       {latestFulfillment && (
@@ -161,6 +180,17 @@ export default async function OrderPage({ params }: OrderPageProps) {
           </div>
         </div>
       )}
+
+      {/* Customer Cancellation, Return & Failure Recovery Action Controls */}
+      <OrderActions
+        orderId={order.id}
+        orderNumber={order.number}
+        status={order.status}
+        trackingNumber={latestFulfillment?.trackingNumber}
+        failureReason={order.failureReason}
+        refundInitiatedAt={order.refundInitiatedAt}
+        hasRefunds={order.refunds.length > 0}
+      />
 
       {/* Grid for Items & Details */}
       <div className="grid gap-8 sm:grid-cols-12">

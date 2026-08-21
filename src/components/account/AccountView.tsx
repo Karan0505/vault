@@ -51,6 +51,15 @@ export function AccountView({ userProfile, orders, initialAddresses }: AccountVi
     refunded: "bg-rose-50 text-rose-700 border-rose-200",
   };
 
+  const statusLabelMap: Record<string, string> = {
+    delivered: "Delivered",
+    fulfilled: "Shipped",
+    paid: "Paid",
+    pending: "Pending",
+    cancelled: "Cancelled",
+    refunded: "Refunded",
+  };
+
   return (
     <div className="mt-8 grid gap-8 md:grid-cols-[220px_1fr]">
       {/* Left Sidebar Navigation */}
@@ -172,7 +181,7 @@ export function AccountView({ userProfile, orders, initialAddresses }: AccountVi
                             statusToneMap[order.status] ?? "bg-gray-100 text-gray-700"
                           }`}
                         >
-                          {order.status}
+                          {statusLabelMap[order.status] ?? order.status}
                         </span>
                         <Link
                           href={`/orders/${order.id}`}

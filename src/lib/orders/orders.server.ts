@@ -1,4 +1,5 @@
 import "server-only";
+import type Stripe from "stripe";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/payments/stripe";
@@ -10,6 +11,8 @@ import { splitProportionally } from "@/lib/payments/money";
 import { sendOrderConfirmationEmail } from "@/lib/integrations/email.server";
 import { logger } from "@/lib/shared/logger";
 import { getValidatedCustomerAddress, type AddressSnapshot } from "@/lib/account/addresses.server";
+import { appendAuditLog, type AuditActor } from "@/lib/auth/audit.server";
+import { createItemizedRefund } from "@/lib/orders/refunds.server";
 
 /** Flat placeholder shipping rate — a real rates engine (carrier rates, free thresholds) is Phase 3+/stretch scope, not this phase's problem. */
 const FLAT_SHIPPING_AMOUNT = 599;
@@ -316,4 +319,426 @@ export async function syncOrderPaymentStatusWithStripe(orderId: string): Promise
   return order.status;
 }
 
-export { InsufficientStockError, splitProportionally };
+/**
+ * Cancels an order requested by the customer.
+ * Enforces pre-shipment rule: allowed ONLY when status is "pending" or "paid".
+ * Strictly rejects when status is "fulfilled" (Shipped) or "delivered".
+ */
+export async function customerCancelOrder(params: {
+  orderId: string;
+  userId: string;
+  email?: string;
+  reason?: string;
+}): Promise<{ orderId: string; status: OrderStatus; isIdempotentNoOp?: boolean }> {
+  const { orderId, userId, email, reason } = params;
+
+  const order = await prisma.order.findFirst({
+    where: { OR: [{ id: orderId }, { number: orderId }] },
+    include: {
+      items: true,
+      reservations: true,
+      refunds: true,
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const isOwner = order.userId === userId || (order.email && email && order.email.toLowerCase() === email.toLowerCase() && !order.userId);
+  if (!isOwner) {
+    throw new Error("Unauthorized to cancel this order");
+  }
+
+  // Idempotency: If already cancelled, return cleanly without duplicate operations
+  if (order.status === "cancelled") {
+    return { orderId: order.id, status: "cancelled", isIdempotentNoOp: true };
+  }
+
+  if (order.status === "fulfilled" || order.status === "delivered") {
+    throw new Error("Cannot cancel an order that has already been shipped or delivered. You may request a return once delivered.");
+  }
+
+  if (order.status === "refunded") {
+    throw new Error("Cannot cancel an order that has already been refunded.");
+  }
+
+  if (order.status === "pending") {
+    assertTransition("pending", "cancelled");
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({ where: { id: order.id }, data: { status: "cancelled" } });
+      await releaseReservations(
+        tx,
+        order.reservations.map((r) => r.id)
+      );
+      await appendAuditLog(tx, {
+        actor: { userId, email: email ?? order.email ?? "", role: null },
+        entityType: "Order",
+        entityId: order.id,
+        action: "transition",
+        before: { status: "pending" },
+        after: { status: "cancelled", reason: reason ?? "Customer cancellation" },
+      });
+    });
+    return { orderId: order.id, status: "cancelled" };
+  }
+
+  if (order.status === "paid") {
+    const unrefundedItems = order.items
+      .filter((item) => item.quantity - item.refundedQuantity > 0)
+      .map((item) => ({
+        orderItemId: item.id,
+        quantity: item.quantity - item.refundedQuantity,
+      }));
+
+    if (unrefundedItems.length > 0) {
+      await createItemizedRefund({
+        orderId: order.id,
+        actor: { userId, email: email ?? order.email ?? "", role: null },
+        items: unrefundedItems,
+        reason: reason ?? "Customer cancellation before shipment",
+        restock: true,
+        targetStatus: "cancelled",
+      });
+    } else {
+      assertTransition(order.status, "cancelled");
+      await prisma.order.update({ where: { id: order.id }, data: { status: "cancelled" } });
+    }
+
+    return { orderId: order.id, status: "cancelled" };
+  }
+
+  throw new Error(`Cannot cancel order with status "${order.status}"`);
+}
+
+/**
+ * Requests a return for a delivered order.
+ * Strictly enforced: allowed ONLY when status is "delivered".
+ * Automatically processes itemized refund & restocks returned items.
+ */
+export async function customerRequestReturn(params: {
+  orderId: string;
+  userId: string;
+  email?: string;
+  reason?: string;
+  items?: { orderItemId: string; quantity: number }[];
+}): Promise<{ orderId: string; status: OrderStatus; refundId: string; amount: number }> {
+  const { orderId, userId, email, reason, items } = params;
+
+  const order = await prisma.order.findFirst({
+    where: { OR: [{ id: orderId }, { number: orderId }] },
+    include: {
+      items: true,
+      refunds: true,
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  const isOwner = order.userId === userId || (order.email && email && order.email.toLowerCase() === email.toLowerCase() && !order.userId);
+  if (!isOwner) {
+    throw new Error("Unauthorized to return this order");
+  }
+
+  if (order.status !== "delivered") {
+    throw new Error("Return requests are only available for delivered orders.");
+  }
+
+  const unrefundedItems = order.items
+    .filter((item) => item.quantity - item.refundedQuantity > 0)
+    .map((item) => ({
+      orderItemId: item.id,
+      quantity: item.quantity - item.refundedQuantity,
+    }));
+
+  const targetItems = items && items.length > 0 ? items : unrefundedItems;
+  if (targetItems.length === 0) {
+    throw new Error("All items in this order have already been returned or refunded.");
+  }
+
+  const refundResult = await createItemizedRefund({
+    orderId: order.id,
+    actor: { userId, email: email ?? order.email ?? "", role: null },
+    items: targetItems,
+    reason: reason ?? "Customer return request",
+    restock: true,
+    targetStatus: "refunded",
+  });
+
+  return {
+    orderId: order.id,
+    status: refundResult.orderStatus,
+    refundId: refundResult.refundId,
+    amount: refundResult.amount,
+  };
+}
+
+/**
+ * Case A: Handles genuine uncaptured payment failures triggered by Stripe webhooks
+ * or frontend payment failure callbacks.
+ * Authoritatively verifies with Stripe that no funds were captured.
+ * Inside a single atomic transaction: records first-write-wins failure tracking,
+ * transitions order status to "failed", releases reservations, and writes audit log.
+ * Never attempts a refund.
+ */
+export async function handlePaymentFailure(
+  params: {
+    paymentIntentId: string;
+    failureReason?: string;
+    failureDetectedAt?: Date;
+    paymentIntent?: Stripe.PaymentIntent;
+  },
+  txParam?: Prisma.TransactionClient
+): Promise<{ orderId?: string; status?: OrderStatus; refundRequired: boolean; isIdempotentNoOp?: boolean } | null> {
+  const { paymentIntentId, failureReason, failureDetectedAt } = params;
+
+  let paymentIntent = params.paymentIntent;
+  if (!paymentIntent) {
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    } catch (error) {
+      logger.error("stripe.retrieve_payment_intent_failed", { paymentIntentId, error });
+      throw error;
+    }
+  }
+
+  const db = txParam ?? prisma;
+  const order = await db.order.findUnique({
+    where: { stripePaymentIntentId: paymentIntentId },
+    include: {
+      reservations: true,
+      refunds: true,
+    },
+  });
+
+  if (!order) {
+    logger.warn("orders.failure_order_not_found", { paymentIntentId });
+    return null;
+  }
+
+  // If Stripe reports funds were actually captured, DO NOT execute uncaptured flow or blind workflow recovery
+  if (paymentIntent.amount_received > 0) {
+    logger.warn("orders.unexpected_capture_on_payment_failed", {
+      orderId: order.id,
+      paymentIntentId,
+      amountReceived: paymentIntent.amount_received,
+    });
+    return {
+      orderId: order.id,
+      status: order.status,
+      refundRequired: true,
+    };
+  }
+
+  // Idempotency check: if order is already failed and reservations released
+  if (order.status === "failed") {
+    return {
+      orderId: order.id,
+      status: "failed",
+      refundRequired: false,
+      isIdempotentNoOp: true,
+    };
+  }
+
+  // Validate state transition
+  assertTransition(order.status, "failed");
+
+  const detectedAt = order.failureDetectedAt ?? failureDetectedAt ?? new Date();
+  const reason = order.failureReason ?? failureReason ?? "Payment processing failed before capture";
+
+  const executeUpdate = async (tx: Prisma.TransactionClient) => {
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        status: "failed",
+        failureDetectedAt: detectedAt,
+        failureReason: reason,
+      },
+    });
+
+    if (order.reservations.length > 0) {
+      await releaseReservations(
+        tx,
+        order.reservations.map((r) => r.id)
+      );
+    }
+
+    await appendAuditLog(tx, {
+      actor: { userId: order.userId ?? "system", email: order.email, role: null },
+      entityType: "Order",
+      entityId: order.id,
+      action: "transition",
+      before: { status: order.status },
+      after: {
+        status: "failed",
+        refundRequired: false,
+        failureDetectedAt: detectedAt.toISOString(),
+        failureReason: reason,
+      },
+    });
+  };
+
+  if (txParam) {
+    await executeUpdate(txParam);
+  } else {
+    await prisma.$transaction(executeUpdate);
+  }
+
+  return {
+    orderId: order.id,
+    status: "failed",
+    refundRequired: false,
+  };
+}
+
+/**
+ * Case B: Handles captured payment + internal VAULT workflow/fulfillment fatal failures.
+ * Authoritatively verifies captured funds in Stripe.
+ * First-write-wins records failureDetectedAt and failureReason.
+ * Transitions order from recoverable state to "failed".
+ * Idempotently initiates refund using verified createItemizedRefund contract with deterministic key.
+ * Measures target SLA (<= 5 minutes). If SLA is breached, logs breach but NEVER cancels/aborts refund.
+ */
+export async function handleCapturedWorkflowFailure(params: {
+  orderId: string;
+  failureReason?: string;
+  failureDetectedAt?: Date;
+  actor?: AuditActor;
+}): Promise<{
+  orderId: string;
+  status: OrderStatus;
+  refundId: string;
+  amount: number;
+  elapsedMs: number;
+  slaCompliant: boolean;
+  isIdempotentNoOp?: boolean;
+}> {
+  const { orderId, failureReason, failureDetectedAt, actor } = params;
+
+  const order = await prisma.order.findFirst({
+    where: { OR: [{ id: orderId }, { number: orderId }] },
+    include: {
+      items: true,
+      refunds: true,
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (!order.stripePaymentIntentId) {
+    throw new Error("Order has no associated Stripe PaymentIntent");
+  }
+
+  // Authoritatively check Stripe capture status
+  const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+  if (paymentIntent.amount_received === 0) {
+    throw new Error("Cannot execute captured-workflow recovery for uncaptured PaymentIntent");
+  }
+
+  const detectedAt = order.failureDetectedAt ?? failureDetectedAt ?? new Date();
+  const reason = order.failureReason ?? failureReason ?? "Internal workflow processing failure post-capture";
+
+  // If order is not failed yet, validate transition and update status + failure metadata
+  if (order.status !== "failed") {
+    assertTransition(order.status, "failed");
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        status: "failed",
+        failureDetectedAt: detectedAt,
+        failureReason: reason,
+      },
+    });
+  } else if (!order.failureDetectedAt || !order.failureReason) {
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        failureDetectedAt: detectedAt,
+        failureReason: reason,
+      },
+    });
+  }
+
+  // Check remaining unrefunded items
+  const unrefundedItems = order.items
+    .filter((item) => item.quantity - item.refundedQuantity > 0)
+    .map((item) => ({
+      orderItemId: item.id,
+      quantity: item.quantity - item.refundedQuantity,
+    }));
+
+  if (unrefundedItems.length === 0) {
+    const existingRefund = order.refunds[0];
+    return {
+      orderId: order.id,
+      status: "failed",
+      refundId: existingRefund?.id ?? "",
+      amount: existingRefund?.amount ?? 0,
+      elapsedMs: 0,
+      slaCompliant: true,
+      isIdempotentNoOp: true,
+    };
+  }
+
+  const effectiveActor: AuditActor = actor ?? {
+    userId: order.userId ?? "system",
+    email: order.email,
+    role: null,
+  };
+
+  const refundResult = await createItemizedRefund({
+    orderId: order.id,
+    actor: effectiveActor,
+    items: unrefundedItems,
+    reason: `Automatic recovery: ${reason}`,
+    restock: true,
+    targetStatus: "failed",
+  });
+
+  const initiatedAt = new Date();
+  const elapsedMs = initiatedAt.getTime() - detectedAt.getTime();
+  const slaCompliant = elapsedMs <= 300000;
+
+  await prisma.order.update({
+    where: { id: order.id },
+    data: {
+      refundInitiatedAt: initiatedAt,
+    },
+  });
+
+  await prisma.$transaction(async (tx) => {
+    await appendAuditLog(tx, {
+      actor: effectiveActor,
+      entityType: "Order",
+      entityId: order.id,
+      action: "refund",
+      after: {
+        status: "failed",
+        refundRequired: true,
+        refundId: refundResult.refundId,
+        refundAmount: refundResult.amount,
+        failureDetectedAt: detectedAt.toISOString(),
+        refundInitiatedAt: initiatedAt.toISOString(),
+        elapsedMs,
+        slaCompliant,
+        slaBreached: !slaCompliant,
+      },
+    });
+  });
+
+  return {
+    orderId: order.id,
+    status: "failed",
+    refundId: refundResult.refundId,
+    amount: refundResult.amount,
+    elapsedMs,
+    slaCompliant,
+  };
+}
+
+export { InsufficientStockError, splitProportionally, releaseReservations };
+

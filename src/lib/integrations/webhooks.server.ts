@@ -2,7 +2,7 @@ import "server-only";
 import type Stripe from "stripe";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
-import { markOrderPaidByPaymentIntent, cancelOrderByPaymentIntent } from "@/lib/orders/orders.server";
+import { markOrderPaidByPaymentIntent, handlePaymentFailure } from "@/lib/orders/orders.server";
 import { sendOrderConfirmationEmail } from "@/lib/integrations/email.server";
 import { revalidateBestSellers } from "@/lib/validation/revalidate";
 import { logger } from "@/lib/shared/logger";
@@ -67,7 +67,14 @@ export async function processStripeEvent(event: Stripe.Event): Promise<WebhookOu
         }
         case "payment_intent.payment_failed": {
           const paymentIntent = event.data.object as Stripe.PaymentIntent;
-          await cancelOrderByPaymentIntent(tx, paymentIntent.id);
+          await handlePaymentFailure(
+            {
+              paymentIntentId: paymentIntent.id,
+              failureReason: paymentIntent.last_payment_error?.message,
+              paymentIntent,
+            },
+            tx
+          );
           logger.info("webhook.payment_intent_failed", {
             paymentIntentId: paymentIntent.id,
           });
