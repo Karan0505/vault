@@ -51,6 +51,7 @@ export async function createCheckoutSession(params: {
   email: string;
   discountCode?: string;
   selectedAddressId?: string;
+  checkoutAttemptId?: string;
   shippingAddress?: AddressSnapshot;
 }): Promise<{ orderId: string; clientSecret: string }> {
   const cart = await getCartView(params.cartId);
@@ -112,22 +113,30 @@ export async function createCheckoutSession(params: {
   const taxAmount = 0; // out of scope this phase — see README
   const totalAmount = cart.subtotal - discountAmount + shippingAmount + taxAmount;
 
-  // Reserve stock for the whole cart atomically before we ever talk to
-  // Stripe or create an order row — a checkout that can't be fulfilled
-  // never gets a PaymentIntent.
+  // Reserve stock for the whole cart atomically before we talk to Stripe
   const { reservationIds, expiresAt } = await reserveCartLines(
     cart.lines.map((l) => ({ variantId: l.variantId, quantity: l.quantity })),
     params.cartId
   );
 
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: totalAmount,
-      currency: currency.toLowerCase(),
-      automatic_payment_methods: { enabled: true },
-      receipt_email: params.email,
-      metadata: { cartId: params.cartId },
-    });
+    // External Stripe network call outside Prisma transaction with canonical idempotency key
+    const stripeIdempotencyKey = params.checkoutAttemptId
+      ? `checkout_${params.cartId}_${params.checkoutAttemptId}`
+      : `checkout_${params.cartId}_${Date.now()}`;
+
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: totalAmount,
+        currency: currency.toLowerCase(),
+        automatic_payment_methods: { enabled: true },
+        receipt_email: params.email,
+        metadata: { cartId: params.cartId },
+      },
+      {
+        idempotencyKey: stripeIdempotencyKey,
+      }
+    );
 
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({

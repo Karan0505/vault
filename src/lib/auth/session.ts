@@ -8,6 +8,16 @@ export async function getCurrentUserId(): Promise<string | null> {
   return session?.user?.id ?? null;
 }
 
+export async function getCurrentUser(): Promise<{ id: string; email?: string | null; name?: string | null } | null> {
+  const session = await auth();
+  if (!session?.user?.id) return null;
+  return {
+    id: session.user.id,
+    email: session.user.email,
+    name: session.user.name,
+  };
+}
+
 /**
  * Staff-side session lookup for admin API routes. Returns null for
  * anyone without a session at all; a signed-in customer with no

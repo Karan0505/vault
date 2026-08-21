@@ -88,6 +88,7 @@ export const checkoutInputSchema = z.object({
   email: z.string().email(),
   discountCode: z.string().optional(),
   selectedAddressId: z.string().optional(),
+  checkoutAttemptId: z.string().optional(),
   shippingAddress: addressInputSchema.partial().optional(),
 });
 

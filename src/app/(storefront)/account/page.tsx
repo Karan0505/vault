@@ -10,19 +10,34 @@ export default async function AccountPage() {
   // Server-side RBAC Guard: Requires authenticated CUSTOMER
   const { session } = await requireCustomer({ redirectTo: "/account" });
 
-  // STRICT Customer Data Isolation: Query strictly scoped by session.user.id
+  // Resolve user in DB by id or email to protect against stale JWT session cookies
+  let effectiveUserId = session.user.id;
+  const dbUser = await prisma.user.findFirst({
+    where: {
+      OR: [
+        { id: session.user.id },
+        ...(session.user.email ? [{ email: session.user.email.toLowerCase().trim() }] : []),
+      ],
+    },
+  });
+
+  if (dbUser) {
+    effectiveUserId = dbUser.id;
+  }
+
+  // STRICT Customer Data Isolation: Query strictly scoped by effectiveUserId
   const [orders, userProfile, addresses] = await Promise.all([
     prisma.order.findMany({
-      where: { userId: session.user.id },
+      where: { userId: effectiveUserId },
       take: 10,
       orderBy: { createdAt: "desc" },
       include: { items: true },
     }),
     prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: effectiveUserId },
       select: { name: true, email: true, createdAt: true },
     }),
-    getCustomerAddresses(session.user.id!),
+    getCustomerAddresses(effectiveUserId!),
   ]);
 
   return (

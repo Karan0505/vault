@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       discountCode: parsed.data.discountCode,
       selectedAddressId: parsed.data.selectedAddressId,
+      checkoutAttemptId: parsed.data.checkoutAttemptId,
       shippingAddress: parsed.data.shippingAddress as AddressSnapshot | undefined,
     });
 

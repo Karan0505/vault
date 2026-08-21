@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { Heart, Minus, Plus } from "lucide-react";
+import { Heart } from "lucide-react";
 import { formatMoney } from "@/lib/payments/money";
 import { AddToCartButton } from "./AddToCartButton";
 import { useWishlist } from "@/context/WishlistContext";
@@ -40,7 +40,6 @@ export function VariantSelector({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [quantity, setQuantity] = useState(1);
 
   const { isWishlisted, toggleWishlist } = useWishlist();
   const wishlisted = productId ? isWishlisted(productId) : false;
@@ -140,40 +139,12 @@ export function VariantSelector({
         </div>
       )}
 
-      {/* Quantity & CTA buttons */}
+      {/* CTA buttons */}
       <div className="flex flex-col gap-3 pt-2">
-        <div className="flex items-center gap-3">
-          {/* Quantity selector */}
-          <div className="flex items-center rounded-xl border border-gray-200 bg-white p-1">
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-              disabled={quantity <= 1}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              <Minus size={14} />
-            </button>
-            <span className="w-10 text-center font-mono text-xs font-bold text-gray-900">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              onClick={() => setQuantity((q) => q + 1)}
-              disabled={Boolean(resolvedVariant && quantity >= resolvedVariant.onHand)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-            >
-              <Plus size={14} />
-            </button>
-          </div>
-
-          {/* Add to Cart button */}
-          <div className="flex-1">
-            <AddToCartButton
-              variantId={resolvedVariant?.id ?? null}
-              disabled={!resolvedVariant || resolvedVariant.onHand <= 0}
-            />
-          </div>
-        </div>
+        <AddToCartButton
+          variantId={resolvedVariant?.id ?? null}
+          disabled={!resolvedVariant || resolvedVariant.onHand <= 0}
+        />
 
         {/* Add to Wishlist button */}
         {productId && (

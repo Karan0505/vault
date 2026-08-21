@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { CartLineItem } from "./CartLineItem";
 import { DiscountCodeForm } from "./DiscountCodeForm";
+import { useCartDrawer } from "./CartDrawerContext";
 import { formatMoney } from "@/lib/payments/money";
 import type { CartView } from "@/lib/cart/cart.server";
 
@@ -19,6 +20,7 @@ const FLAT_SHIPPING_AMOUNT = 0; // matching reference where shipping is $0.00 / 
 
 export function CartPageBody() {
   const router = useRouter();
+  const { close } = useCartDrawer();
   const [cart, setCart] = useState<CartView | null>(null);
   const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -42,6 +44,7 @@ export function CartPageBody() {
     const targetUrl = `/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`;
 
     try {
+      close();
       const res = await fetch("/api/auth/session", { cache: "no-store" });
       if (!res.ok) {
         router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
@@ -54,7 +57,10 @@ export function CartPageBody() {
         router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
       }
     } catch {
+      close();
       router.push(`/login?redirect=${encodeURIComponent(targetUrl)}`);
+    } finally {
+      setIsRedirecting(false);
     }
   }
 

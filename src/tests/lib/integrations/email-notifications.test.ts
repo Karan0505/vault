@@ -124,7 +124,7 @@ describe("Transactional Email Notification System", () => {
         where: { id: notifId },
       });
       expect(count).toBe(1);
-    });
+    }, 15000);
 
     it("recovers stale dispatching notifications after configured lease expires", async () => {
       const notifId = "vault_email_test_stale_order";

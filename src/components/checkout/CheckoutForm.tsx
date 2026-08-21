@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Elements } from "@stripe/react-stripe-js";
 import { motion, AnimatePresence } from "framer-motion";
@@ -21,15 +21,16 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [savedAddressesCount, setSavedAddressesCount] = useState<number | null>(null);
+  const hasUserExplicitlySelectedRef = useRef<boolean>(false);
 
+  // Canonical checkout attempt identity per session/attempt
+  const [checkoutAttemptId] = useState<string>(() =>
+    Math.random().toString(36).substring(2, 11) + "_" + Date.now().toString(36)
+  );
+
+  // Contact Information (Cleanly separated from delivery address selection)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [apartment, setApartment] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("CA");
-  const [zip, setZip] = useState("");
-  const [country, setCountry] = useState("United States");
   const [phone, setPhone] = useState("");
 
   const [session, setSession] = useState<CheckoutResult | null>(null);
@@ -56,59 +57,72 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
     loadUser();
   }, [email, fullName]);
 
+  // Address Selection Handler (User explicitly clicked a radio card)
   const handleSelectSavedAddress = (addr: AddressItem) => {
+    hasUserExplicitlySelectedRef.current = true;
     setSelectedAddressId(addr.id);
-    setFullName(addr.fullName);
-    setAddress(addr.address);
-    setApartment(addr.apartment || "");
-    setCity(addr.city);
-    setState(addr.state);
-    setZip(addr.zip);
-    setCountry(addr.country || "United States");
-    if (addr.phone) {
-      setPhone(addr.phone);
-    }
+    setError(null);
   };
+
+  // Reconcile selectedAddressId against fresh address list from backend
+  const handleAddressListLoaded = useCallback((list: AddressItem[]) => {
+    setSavedAddressesCount(list.length);
+
+    if (list.length === 0) {
+      setSelectedAddressId(null);
+      hasUserExplicitlySelectedRef.current = false;
+      return;
+    }
+
+    // Rule A: If selectedAddressId exists in the fresh list, preserve it
+    setSelectedAddressId((currentId) => {
+      if (currentId) {
+        const exists = list.some((a) => a.id === currentId);
+        if (exists) {
+          return currentId;
+        }
+        // Rule B: If previously selected address was deleted/missing, clear it
+        return null;
+      }
+
+      // Rule D: Initial load preselection (only if no explicit selection has occurred)
+      if (!hasUserExplicitlySelectedRef.current) {
+        const defaultAddr = list.find((a) => a.isDefault);
+        return defaultAddr ? defaultAddr.id : list[0]?.id || null;
+      }
+
+      return null;
+    });
+  }, []);
 
   async function handleStartPayment(e: React.FormEvent) {
     e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!selectedAddressId) {
+      if (savedAddressesCount === 0) {
+        setError("No delivery address saved yet. Please add an address to continue.");
+      } else {
+        setError("Please select a delivery address to continue.");
+      }
+      return;
+    }
+
+    if (!email) {
+      setError("Please enter your email address.");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const payload: {
-        email: string;
-        discountCode?: string;
-        selectedAddressId?: string;
-        shippingAddress?: {
-          fullName: string;
-          address: string;
-          apartment?: string;
-          city: string;
-          state: string;
-          zip: string;
-          country: string;
-          phone?: string;
-        };
-      } = {
+      const payload = {
         email,
         discountCode: initialDiscountCode || undefined,
+        selectedAddressId,
+        checkoutAttemptId,
       };
-
-      if (selectedAddressId) {
-        payload.selectedAddressId = selectedAddressId;
-      } else {
-        payload.shippingAddress = {
-          fullName,
-          address,
-          apartment: apartment || undefined,
-          city,
-          state,
-          zip,
-          country,
-          phone: phone || undefined,
-        };
-      }
 
       const res = await fetch("/api/checkout", {
         method: "POST",
@@ -136,7 +150,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
       }
 
       setSession(body);
-      setCurrentStep(3);
+      setCurrentStep(2);
       notifyCartUpdated();
     } catch {
       setError("Something went wrong — try again.");
@@ -146,14 +160,13 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
 
   const STEPS = [
     { num: 1, label: "Information" },
-    { num: 2, label: "Shipping" },
-    { num: 3, label: "Payment" },
-    { num: 4, label: "Review" },
+    { num: 2, label: "Payment" },
+    { num: 3, label: "Review" },
   ];
 
   return (
     <div className="flex flex-col gap-8">
-      {/* 4-Step Progress Indicator */}
+      {/* 3-Step Progress Indicator */}
       <div className="flex items-center justify-between border-b border-gray-200 pb-4 text-xs font-medium">
         {STEPS.map((s, idx) => {
           const isActive = currentStep === s.num;
@@ -180,213 +193,93 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
         })}
       </div>
 
-      {currentStep < 3 && (
-        <form onSubmit={(e) => { e.preventDefault(); setCurrentStep(2); }} className="flex flex-col gap-6">
+      {currentStep === 1 && (
+        <form onSubmit={handleStartPayment} className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <h3 className="font-sans text-base font-bold text-gray-900">
-              {currentStep === 1 ? "1. Shipping & Contact Information" : "2. Shipping Method"}
+              1. Delivery & Contact Information
             </h3>
 
-            {currentStep === 1 ? (
-              <div className="space-y-4">
-                {/* Saved Address Selector (Flipkart Style) */}
-                <SavedAddressSelector
-                  selectedAddressId={selectedAddressId}
-                  onSelectAddress={handleSelectSavedAddress}
-                  onAddressListLoaded={(list) => setSavedAddressesCount(list.length)}
-                />
+            <div className="space-y-6">
+              {/* Contact Information */}
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-3 text-xs">
+                <h4 className="font-bold uppercase tracking-wider text-gray-900">
+                  Contact Information
+                </h4>
 
-                {/* Only render manual inputs if customer has NO saved addresses */}
-                {savedAddressesCount === 0 && (
-                  <div className="grid gap-3.5 sm:grid-cols-2 pt-2">
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-700">Full Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={fullName}
-                        onChange={(e) => {
-                          setSelectedAddressId(null);
-                          setFullName(e.target.value);
-                        }}
-                        placeholder="Jane Doe"
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-700">Email Address</label>
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="jane@example.com"
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-700">Street Address</label>
-                      <input
-                        type="text"
-                        required
-                        value={address}
-                        onChange={(e) => {
-                          setSelectedAddressId(null);
-                          setAddress(e.target.value);
-                        }}
-                        placeholder="123 Main Street"
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-700">Apartment, suite, etc. (optional)</label>
-                      <input
-                        type="text"
-                        value={apartment}
-                        onChange={(e) => {
-                          setSelectedAddressId(null);
-                          setApartment(e.target.value);
-                        }}
-                        placeholder="Apt 4B"
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-semibold text-gray-700">City</label>
-                      <input
-                        type="text"
-                        required
-                        value={city}
-                        onChange={(e) => {
-                          setSelectedAddressId(null);
-                          setCity(e.target.value);
-                        }}
-                        placeholder="San Francisco"
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-xs font-semibold text-gray-700">State</label>
-                        <input
-                          type="text"
-                          required
-                          value={state}
-                          onChange={(e) => {
-                            setSelectedAddressId(null);
-                            setState(e.target.value);
-                          }}
-                          placeholder="CA"
-                          className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-gray-700">ZIP Code</label>
-                        <input
-                          type="text"
-                          required
-                          value={zip}
-                          onChange={(e) => {
-                            setSelectedAddressId(null);
-                            setZip(e.target.value);
-                          }}
-                          placeholder="94103"
-                          className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-700">Country</label>
-                      <select
-                        value={country}
-                        onChange={(e) => {
-                          setSelectedAddressId(null);
-                          setCountry(e.target.value);
-                        }}
-                        className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
-                      >
-                        <option value="United States">United States</option>
-                        <option value="Canada">Canada</option>
-                        <option value="United Kingdom">United Kingdom</option>
-                        <option value="India">India</option>
-                        <option value="Australia">Australia</option>
-                      </select>
-                    </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Jane Doe"
+                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                    />
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-gray-200 p-4">
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input type="radio" defaultChecked name="shipping" className="text-black" />
-                    <div>
-                      <p className="text-xs font-bold text-gray-900">Standard Shipping (3-5 business days)</p>
-                      <p className="text-[11px] text-gray-500">Delivered via UPS Ground</p>
-                    </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="jane@example.com"
+                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                    />
                   </div>
-                  <span className="font-mono text-xs font-bold text-emerald-700">FREE</span>
-                </label>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-xs font-semibold text-gray-700">Phone Number (Optional)</label>
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="+1 (555) 000-0000"
+                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
-            )}
+
+              {/* Saved Address Selector (Clean Radio Cards or 0-Address Empty State) */}
+              <SavedAddressSelector
+                selectedAddressId={selectedAddressId}
+                onSelectAddress={handleSelectSavedAddress}
+                onAddressListLoaded={handleAddressListLoaded}
+              />
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            {currentStep === 2 && (
-              <button
-                type="button"
-                onClick={() => setCurrentStep(1)}
-                className="text-xs font-medium text-gray-600 hover:text-black"
-              >
-                ← Return to Information
-              </button>
-            )}
-
-            {currentStep === 1 ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (selectedAddressId) {
-                    setError(null);
-                    setCurrentStep(2);
-                    return;
-                  }
-                  if (!email || !fullName || !address || !city || !state || !zip) {
-                    setError("Please select a delivery address or complete all required fields.");
-                    return;
-                  }
-                  setError(null);
-                  setCurrentStep(2);
-                }}
-                className="ml-auto inline-flex items-center rounded-full bg-black px-7 py-3 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800"
-              >
-                Continue to Shipping
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleStartPayment}
-                disabled={isSubmitting}
-                className="ml-auto inline-flex items-center rounded-full bg-black px-7 py-3 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50"
-              >
-                {isSubmitting ? "Reserving Items…" : "Continue to Payment"}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={isSubmitting || savedAddressesCount === 0 || !selectedAddressId}
+              className="ml-auto inline-flex items-center rounded-full bg-black px-7 py-3 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+            >
+              {isSubmitting ? "Reserving Items…" : "Continue to Payment"}
+            </button>
           </div>
         </form>
       )}
 
-      {currentStep === 3 && session && (
+      {currentStep === 2 && session && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <ShieldCheck size={16} className="text-emerald-600" />
-            <span>All transactions are secure and encrypted.</span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <ShieldCheck size={16} className="text-emerald-600" />
+              <span>All transactions are secure and encrypted.</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className="text-xs font-medium text-gray-600 hover:text-black"
+            >
+              ← Edit Information
+            </button>
           </div>
 
           <Elements
@@ -413,4 +306,3 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
     </div>
   );
 }
-

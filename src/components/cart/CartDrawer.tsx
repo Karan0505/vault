@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { useCartDrawer } from "./CartDrawerContext";
@@ -11,9 +12,15 @@ const FOCUSABLE_SELECTOR =
 
 export function CartDrawer() {
   const { isOpen, close } = useCartDrawer();
+  const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
+
+  // Automatically close cart drawer whenever route changes (e.g. navigating to /checkout)
+  useEffect(() => {
+    close();
+  }, [pathname, close]);
 
   useEffect(() => {
     if (isOpen) {

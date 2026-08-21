@@ -40,15 +40,31 @@ export async function getOrCreateCart(userId: string | null): Promise<{ id: stri
   const token = cookieStore.get(CART_COOKIE)?.value;
 
   if (userId) {
-    if (token) {
-      const guestCart = await prisma.cart.findUnique({ where: { sessionToken: token } });
-      if (guestCart) {
-        await mergeGuestCartIntoUser(guestCart.id, userId);
+    // Verify user exists in the database to avoid foreign key violations from stale sessions
+    const userExists = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+
+    if (userExists) {
+      if (token) {
+        const guestCart = await prisma.cart.findUnique({ where: { sessionToken: token } });
+        if (guestCart) {
+          await mergeGuestCartIntoUser(guestCart.id, userId);
+        }
+      }
+      const existing = await prisma.cart.findFirst({ where: { userId } });
+      if (existing) return existing;
+
+      try {
+        return await prisma.cart.create({ data: { userId } });
+      } catch (err: any) {
+        if (err?.code !== "P2003") {
+          throw err;
+        }
+        // Stale or deleted user during race condition: fallback to guest cart
       }
     }
-    const existing = await prisma.cart.findFirst({ where: { userId } });
-    if (existing) return existing;
-    return prisma.cart.create({ data: { userId } });
   }
 
   if (token) {
@@ -79,7 +95,9 @@ export async function peekCartItemCount(userId: string | null): Promise<number> 
   if (userId) {
     const cart = await prisma.cart.findFirst({ where: { userId }, select: { id: true } });
     cartId = cart?.id ?? null;
-  } else {
+  }
+
+  if (!cartId) {
     const cookieStore = await cookies();
     const token = cookieStore.get(CART_COOKIE)?.value;
     if (token) {

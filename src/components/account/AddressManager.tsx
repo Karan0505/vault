@@ -78,7 +78,10 @@ export function AddressManager({
   }, []);
 
   useEffect(() => {
-    if (!initialAddresses) {
+    if (initialAddresses !== undefined) {
+      setAddresses(initialAddresses);
+      setLoading(false);
+    } else {
       fetchAddresses();
     }
   }, [initialAddresses, fetchAddresses]);

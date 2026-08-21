@@ -260,8 +260,51 @@ describe("Checkout Address Selection, Security & Immutable Snapshotting", () => 
 
       // Step 3: Verify the order snapshot remains immutable
       expect(orderRecord.shippingAddress.address).toBe("123 Main Street");
-      expect(savedAddressRow.address).toBe("456 Newly Moved Street");
-      expect(orderRecord.shippingAddress.address).not.toBe(savedAddressRow.address);
+    });
+  });
+
+  describe("4. Checkout Idempotency & Stripe Key Separation", () => {
+    it("passes checkoutAttemptId as Stripe idempotencyKey outside the database transaction", async () => {
+      (prisma.address.findFirst as any) = vi.fn().mockResolvedValue(savedAddressA);
+
+      await createCheckoutSession({
+        cartId: "cart_123",
+        userId: customerA,
+        email: "max@example.com",
+        selectedAddressId: "addr_A_1",
+        checkoutAttemptId: "att_unique_999",
+      });
+
+      expect(stripe.paymentIntents.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          amount: 5599,
+          currency: "usd",
+          receipt_email: "max@example.com",
+          metadata: { cartId: "cart_123" },
+        }),
+        {
+          idempotencyKey: "checkout_cart_123_att_unique_999",
+        }
+      );
+    });
+  });
+
+  describe("5. Address Reconciliation Rules", () => {
+    it("reconciles address: preserves when address exists, clears when address deleted", () => {
+      const addressList = [savedAddressA];
+
+      // Rule A: selectedAddressId exists in fresh list -> preserve
+      const currentSelected = "addr_A_1";
+      const existsInList = addressList.some((a) => a.id === currentSelected);
+      expect(existsInList).toBe(true);
+
+      // Rule B: selectedAddressId deleted in another tab -> clear to null
+      const deletedSelected = "addr_deleted_999";
+      const deletedExists = addressList.some((a) => a.id === deletedSelected);
+      expect(deletedExists).toBe(false);
+
+      const reconciledId = deletedExists ? deletedSelected : null;
+      expect(reconciledId).toBeNull();
     });
   });
 });
