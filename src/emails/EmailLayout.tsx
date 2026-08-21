@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Body, Container, Head, Html, Preview, Section, Text, Hr, Font } from "@react-email/components";
 import type { ReactNode } from "react";
 

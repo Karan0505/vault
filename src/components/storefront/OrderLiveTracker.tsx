@@ -7,7 +7,7 @@ interface OrderLiveTrackerProps {
   orderId: string;
   initialStatus: string;
 }
-l 
+ 
 const TERMINAL_STATUSES = new Set(["fulfilled", "delivered", "cancelled", "refunded"]);
 
 export function OrderLiveTracker({ orderId, initialStatus }: OrderLiveTrackerProps) {

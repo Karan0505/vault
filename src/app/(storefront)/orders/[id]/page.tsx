@@ -62,8 +62,8 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const currentStepIndex = stepOrder.indexOf(order.status as OrderStatus);
   const latestFulfillment = order.fulfillments[0] ?? null;
 
-  const isFailed = order.status === "failed";
-  const isCancelled = order.status === "cancelled";
+  const isFailed = (order.status as OrderStatus) === "failed";
+  const isCancelled = (order.status as OrderStatus) === "cancelled";
 
   return (
     <div className="mx-auto max-w-4xl py-6 flex flex-col gap-8">
@@ -187,8 +187,8 @@ export default async function OrderPage({ params }: OrderPageProps) {
         orderNumber={order.number}
         status={order.status}
         trackingNumber={latestFulfillment?.trackingNumber}
-        failureReason={order.failureReason}
-        refundInitiatedAt={order.refundInitiatedAt}
+        failureReason={(order as { failureReason?: string | null }).failureReason}
+        refundInitiatedAt={(order as { refundInitiatedAt?: Date | string | null }).refundInitiatedAt}
         hasRefunds={order.refunds.length > 0}
       />
 

@@ -132,13 +132,13 @@ export async function createItemizedRefund(params: {
     const priorRefundedTotal = order.refunds.reduce((sum, r) => sum + r.amount, 0);
     const isFullRefund = priorRefundedTotal + totalRefundAmount >= order.totalAmount;
 
-    let orderStatus: OrderStatus = order.status;
+    let orderStatus: OrderStatus = order.status as OrderStatus;
     if (targetStatus) {
-      assertTransition(order.status, targetStatus);
-      await tx.order.update({ where: { id: orderId }, data: { status: targetStatus } });
+      assertTransition(order.status as OrderStatus, targetStatus);
+      await tx.order.update({ where: { id: orderId }, data: { status: targetStatus as any } });
       orderStatus = targetStatus;
     } else if (isFullRefund) {
-      assertTransition(order.status, "refunded");
+      assertTransition(order.status as OrderStatus, "refunded");
       await tx.order.update({ where: { id: orderId }, data: { status: "refunded" } });
       orderStatus = "refunded";
     }

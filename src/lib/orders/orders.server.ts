@@ -533,7 +533,7 @@ export async function handlePaymentFailure(
   }
 
   // Idempotency check: if order is already failed and reservations released
-  if (order.status === "failed") {
+  if ((order.status as OrderStatus) === "failed") {
     return {
       orderId: order.id,
       status: "failed",
@@ -543,19 +543,20 @@ export async function handlePaymentFailure(
   }
 
   // Validate state transition
-  assertTransition(order.status, "failed");
+  assertTransition(order.status as OrderStatus, "failed");
 
-  const detectedAt = order.failureDetectedAt ?? failureDetectedAt ?? new Date();
-  const reason = order.failureReason ?? failureReason ?? "Payment processing failed before capture";
+  const orderWithFailure = order as typeof order & { failureDetectedAt?: Date | null; failureReason?: string | null };
+  const detectedAt = orderWithFailure.failureDetectedAt ?? failureDetectedAt ?? new Date();
+  const reason = orderWithFailure.failureReason ?? failureReason ?? "Payment processing failed before capture";
 
   const executeUpdate = async (tx: Prisma.TransactionClient) => {
     await tx.order.update({
       where: { id: order.id },
       data: {
-        status: "failed",
+        status: "failed" as any,
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      },
+      } as any,
     });
 
     if (order.reservations.length > 0) {
@@ -639,27 +640,28 @@ export async function handleCapturedWorkflowFailure(params: {
     throw new Error("Cannot execute captured-workflow recovery for uncaptured PaymentIntent");
   }
 
-  const detectedAt = order.failureDetectedAt ?? failureDetectedAt ?? new Date();
-  const reason = order.failureReason ?? failureReason ?? "Internal workflow processing failure post-capture";
+  const orderWithFailure = order as typeof order & { failureDetectedAt?: Date | null; failureReason?: string | null };
+  const detectedAt = orderWithFailure.failureDetectedAt ?? failureDetectedAt ?? new Date();
+  const reason = orderWithFailure.failureReason ?? failureReason ?? "Internal workflow processing failure post-capture";
 
   // If order is not failed yet, validate transition and update status + failure metadata
-  if (order.status !== "failed") {
-    assertTransition(order.status, "failed");
+  if ((order.status as OrderStatus) !== "failed") {
+    assertTransition(order.status as OrderStatus, "failed");
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: "failed",
+        status: "failed" as any,
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      },
+      } as any,
     });
-  } else if (!order.failureDetectedAt || !order.failureReason) {
+  } else if (!orderWithFailure.failureDetectedAt || !orderWithFailure.failureReason) {
     await prisma.order.update({
       where: { id: order.id },
       data: {
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      },
+      } as any,
     });
   }
 
@@ -707,7 +709,7 @@ export async function handleCapturedWorkflowFailure(params: {
     where: { id: order.id },
     data: {
       refundInitiatedAt: initiatedAt,
-    },
+    } as any,
   });
 
   await prisma.$transaction(async (tx) => {

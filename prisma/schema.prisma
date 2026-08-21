@@ -707,3 +707,35 @@ model WishlistItem {
   @@map("wishlist_items")
 }
 
+// ---------------------------------------------------------------------------
+// Transactional Notification Records. Provides persistent, concurrency-safe
+// deduplication, atomic lease claims, and crash recovery for transactional emails.
+// ---------------------------------------------------------------------------
+
+enum NotificationStatus {
+  pending
+  dispatching
+  sent
+  failed
+}
+
+model NotificationRecord {
+  id            String             @id // e.g. "vault_email_${orderId}_${kind}"
+  orderId       String
+  kind          String             // "paid" | "fulfillment" | "refund"
+  recipient     String
+  status        NotificationStatus @default(pending)
+  attempts      Int                @default(0)
+  lastAttemptAt DateTime?
+  lastError     String?
+  payload       Json?              // Immutable event snapshot
+  sentAt        DateTime?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@index([orderId])
+  @@index([status])
+  @@map("notification_records")
+}
+
+
