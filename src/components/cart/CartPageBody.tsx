@@ -3,13 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { Route } from "next";
 import { motion, AnimatePresence } from "framer-motion";
 import { CartLineItem } from "./CartLineItem";
 import { DiscountCodeForm } from "./DiscountCodeForm";
-import { Button } from "@/components/ui/Button";
-import { formatMoney } from "@/lib/money";
-import type { CartView } from "@/lib/cart.server";
+import { useCartDrawer } from "./CartDrawerContext";
+import { formatMoney } from "@/lib/payments/money";
+import type { CartView } from "@/lib/cart/cart.server";
 
 interface AppliedDiscount {
   code: string;
@@ -17,21 +16,14 @@ interface AppliedDiscount {
   freeShipping: boolean;
 }
 
-const FLAT_SHIPPING_AMOUNT = 599;
+const FLAT_SHIPPING_AMOUNT = 599; // $5.99 standard flat rate matching orders.server.ts
 
-import { cn } from "@/lib/utils";
-
-import { useCartDrawer } from "./CartDrawerContext";
-
-interface CartPageBodyProps {
-  isDrawer?: boolean;
-}
-
-export function CartPageBody({ isDrawer }: CartPageBodyProps) {
+export function CartPageBody() {
   const router = useRouter();
-  const { close: closeCartDrawer } = useCartDrawer();
+  const { close } = useCartDrawer();
   const [cart, setCart] = useState<CartView | null>(null);
   const [discount, setDiscount] = useState<AppliedDiscount | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/cart", { cache: "no-store" });
@@ -45,21 +37,52 @@ export function CartPageBody({ isDrawer }: CartPageBodyProps) {
     refresh();
   }, [refresh]);
 
+  async function handleCheckout() {
+    if (isRedirecting) return;
+    setIsRedirecting(true);
+
+    const targetUrl = `/checkout${discount ? `?discount=${encodeURIComponent(discount.code)}` : ""}`;
+
+    try {
+      close();
+      const res = await fetch("/api/auth/session", { cache: "no-store" });
+      if (!res.ok) {
+        router.push(`/login?redirect=${encodeURIComponent(targetUrl)}` as any);
+        return;
+      }
+      const data = await res.json();
+      if (data?.user?.id) {
+        router.push(targetUrl as any);
+      } else {
+        router.push(`/login?redirect=${encodeURIComponent(targetUrl)}` as any);
+      }
+    } catch {
+      close();
+      router.push(`/login?redirect=${encodeURIComponent(targetUrl)}` as any);
+    } finally {
+      setIsRedirecting(false);
+    }
+  }
+
   if (!cart) {
     return (
       <div className="flex flex-col gap-4">
-        <div className="skeleton h-20 rounded-xl" />
-        <div className="skeleton h-20 rounded-xl" />
+        <div className="skeleton h-20 rounded-2xl" />
+        <div className="skeleton h-20 rounded-2xl" />
       </div>
     );
   }
 
   if (cart.lines.length === 0) {
     return (
-      <div className="ledger-rule flex flex-col items-center gap-3 py-24 text-center">
-        <p className="font-display text-xl text-ink-200">Your cart is empty</p>
-        <Link href="/" className="text-sm text-brass-300 hover:text-brass-200">
-          Continue browsing →
+      <div className="flex flex-col items-center gap-3 py-16 text-center">
+        <p className="font-sans text-lg font-semibold text-gray-800">Your cart is empty</p>
+        <p className="text-xs text-gray-500">Looks like you haven&apos;t added anything yet.</p>
+        <Link
+          href="/"
+          className="mt-3 inline-flex items-center rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 transition-colors"
+        >
+          Explore Catalog →
         </Link>
       </div>
     );
@@ -67,76 +90,92 @@ export function CartPageBody({ isDrawer }: CartPageBodyProps) {
 
   const shippingAmount = discount?.freeShipping ? 0 : FLAT_SHIPPING_AMOUNT;
   const discountAmount = discount?.totalDiscount ?? 0;
-  const total = cart.subtotal - discountAmount + shippingAmount;
+  const total = Math.max(0, cart.subtotal - discountAmount + shippingAmount);
   const currency = cart.currency ?? "USD";
-  const canCheckout = cart.lines.every((line) => line.isEnabled && line.quantity <= line.onHand) && cart.lines.length > 0;
+  const canCheckout = cart.lines.every((line) => line.isEnabled) && cart.lines.length > 0;
 
   return (
-    <div className={isDrawer ? "flex flex-col gap-6" : "grid gap-10 lg:grid-cols-[1fr_360px]"}>
-      <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Cart Lines */}
+      <div className="flex flex-col divide-y divide-gray-100">
         {cart.lines.map((line) => (
           <CartLineItem key={line.itemId} line={line} onChanged={refresh} />
         ))}
       </div>
 
-      <div className={cn(
-        "flex flex-col gap-6 rounded-2xl border border-ink-700 bg-ink-900/50 p-6 shadow-panel",
-        !isDrawer && "lg:sticky lg:top-24 lg:self-start"
-      )}>
+      {/* Discount form */}
+      <div className="border-t border-gray-100 pt-4">
         <DiscountCodeForm
           onApplied={(code, preview) =>
-            setDiscount({ code, totalDiscount: preview.totalDiscount ?? 0, freeShipping: Boolean(preview.freeShipping) })
+            setDiscount({
+              code,
+              totalDiscount: preview.totalDiscount ?? 0,
+              freeShipping: Boolean(preview.freeShipping),
+            })
           }
         />
-
-        <div className="ledger-rule flex flex-col gap-2.5 pt-4 font-mono text-sm">
-          <div className="flex justify-between text-ink-400">
-            <span>Subtotal</span>
-            <span>{formatMoney({ amount: cart.subtotal, currency })}</span>
-          </div>
-          <AnimatePresence>
-            {discount && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="flex justify-between text-signal-green"
-              >
-                <span>{discount.code}</span>
-                <span>
-                  {discount.freeShipping ? "Free shipping" : `−${formatMoney({ amount: discount.totalDiscount, currency })}`}
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <div className="flex justify-between text-ink-400">
-            <span>Shipping</span>
-            <span>{shippingAmount === 0 ? "Free" : formatMoney({ amount: shippingAmount, currency })}</span>
-          </div>
-          <div className="ledger-rule flex justify-between pt-2.5 text-base text-ink-50">
-            <span>Total</span>
-            <span>{formatMoney({ amount: total, currency })}</span>
-          </div>
-        </div>
-
-        <Button
-          size="lg"
-          disabled={!canCheckout}
-          onClick={() => {
-            const checkoutUrl = discount ? `/checkout?discount=${encodeURIComponent(discount.code)}` : "/checkout";
-            router.push(checkoutUrl as Route);
-          }}
-        >
-          Checkout
-        </Button>
-        {!canCheckout && (
-          <p className="text-center text-xs text-signal-red">
-            {cart.lines.some((line) => line.quantity > line.onHand)
-              ? "Adjust quantities for items exceeding available stock before checking out."
-              : "Remove unavailable items before checking out."}
-          </p>
-        )}
       </div>
+
+      {/* Price breakdown */}
+      <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 p-4 font-sans text-xs text-gray-600">
+        <div className="flex justify-between">
+          <span>Subtotal</span>
+          <span className="font-semibold text-gray-900">{formatMoney({ amount: cart.subtotal, currency })}</span>
+        </div>
+        <AnimatePresence>
+          {discount && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="flex justify-between text-emerald-600 font-medium"
+            >
+              <span>Discount ({discount.code})</span>
+              <span>
+                {discount.freeShipping ? "Free" : `−${formatMoney({ amount: discount.totalDiscount, currency })}`}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        <div className="flex justify-between">
+          <span>Shipping</span>
+          <span className="font-semibold text-gray-900">
+            {shippingAmount === 0 ? "$0.00" : formatMoney({ amount: shippingAmount, currency })}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Tax</span>
+          <span className="font-semibold text-gray-900">$0.00</span>
+        </div>
+        <div className="flex justify-between border-t border-gray-200 pt-2.5 font-sans text-sm font-bold text-gray-900">
+          <span>Total</span>
+          <span>{formatMoney({ amount: total, currency })}</span>
+        </div>
+      </div>
+
+      {/* Checkout CTA */}
+      <button
+        type="button"
+        disabled={!canCheckout || isRedirecting}
+        onClick={handleCheckout}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] cursor-pointer"
+      >
+        {isRedirecting ? (
+          <>
+            <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <span>Checking authentication...</span>
+          </>
+        ) : (
+          <span>Checkout</span>
+        )}
+      </button>
+
+      {!canCheckout && (
+        <p className="text-center text-xs text-rose-600 font-medium">
+          Please remove unavailable items before checking out.
+        </p>
+      )}
     </div>
   );
 }
+

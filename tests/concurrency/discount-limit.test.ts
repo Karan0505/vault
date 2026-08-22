@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
-import { createCheckoutSession } from "@/lib/orders.server";
-import { DiscountUsageLimitError } from "@/lib/discounts.server";
+import { prisma } from "@/lib/db/prisma";
+import { stripe } from "@/lib/payments/stripe";
+import { createCheckoutSession } from "@/lib/orders/orders.server";
+import { DiscountUsageLimitError } from "@/lib/checkout/discounts.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

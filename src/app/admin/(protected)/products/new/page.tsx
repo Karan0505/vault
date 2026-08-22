@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { ProductForm, type ProductFormValue } from "@/components/admin/ProductForm";
 
 export default async function NewProductPage() {

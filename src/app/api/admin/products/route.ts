@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { productInputSchema } from "@/lib/validation";
-import { createProduct, DuplicateVariantError } from "@/lib/products.server";
+import { auth, requireStaff } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { productInputSchema } from "@/lib/validation/validation";
+import { createProduct, DuplicateVariantError } from "@/lib/catalogue/products.server";
+import { hasPermission } from "@/lib/auth/permissions";
+import { getStaffActor } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -30,10 +32,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  const role = session?.user.staffRole ?? null;
-  if (!requireStaff(role) || role === "support" || role === "fulfilment") {
-    // Pricing and catalogue edits are admin-only — support/fulfilment are read-mostly here.
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const product = await createProduct(parsed.data, session?.user.id);
+    const product = await createProduct(parsed.data, actor);
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
     if (error instanceof DuplicateVariantError) {

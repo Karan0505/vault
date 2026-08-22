@@ -1,5 +1,5 @@
 import { forwardRef, type SelectHTMLAttributes, type TextareaHTMLAttributes, type ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;

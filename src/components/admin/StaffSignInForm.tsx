@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { validatePassword } from "@/lib/password";
+import { validatePassword } from "@/lib/auth/password";
 
 interface StaffSignInFormProps {
   action: (formData: FormData) => Promise<void>;

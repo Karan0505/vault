@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart, updateCartItemQuantity, removeCartItem, getCartView } from "@/lib/cart.server";
-import { updateCartItemSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart, updateCartItemQuantity, removeCartItem, getCartView } from "@/lib/cart/cart.server";
+import { updateCartItemSchema } from "@/lib/validation/validation";
 
 interface RouteParams {
   params: Promise<{ itemId: string }>;
 }
-
-import { InsufficientStockError } from "@/lib/inventory.server";
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   const { itemId } = await params;
@@ -19,14 +17,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const userId = await getCurrentUserId();
   const cart = await getOrCreateCart(userId);
 
-  try {
-    await updateCartItemQuantity(cart.id, itemId, parsed.data.quantity);
-  } catch (error) {
-    if (error instanceof InsufficientStockError) {
-      return NextResponse.json({ error: "Insufficient stock" }, { status: 400 });
-    }
-    throw error;
-  }
+  await updateCartItemQuantity(cart.id, itemId, parsed.data.quantity);
 
   const view = await getCartView(cart.id);
   return NextResponse.json({ cart: view });

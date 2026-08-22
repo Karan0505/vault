@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { prisma } from "@/lib/prisma";
-import { formatMoney } from "@/lib/money";
+import { prisma } from "@/lib/db/prisma";
+import { formatMoney } from "@/lib/payments/money";
 
 export const alt = "Product from VAULT";
 export const size = { width: 1200, height: 630 };
@@ -8,10 +8,15 @@ export const contentType = "image/png";
 
 export default async function OpengraphImage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await prisma.product.findFirst({
-    where: { slug, status: "active" },
-    include: { variants: { orderBy: { priceAmount: "asc" }, take: 1 } },
-  });
+  let product: { title: string; variants: { priceAmount: number; priceCurrency: string }[] } | null = null;
+  try {
+    product = await prisma.product.findFirst({
+      where: { slug, status: "active" },
+      include: { variants: { orderBy: { priceAmount: "asc" }, take: 1 } },
+    });
+  } catch {
+    // Graceful fallback for build-time rendering when DB is not reachable
+  }
 
   const price = product?.variants[0];
 

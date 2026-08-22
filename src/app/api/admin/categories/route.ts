@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { categoryInputSchema } from "@/lib/validation";
-import { revalidateCategory } from "@/lib/revalidate";
+import { auth, requireStaff } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { categoryInputSchema } from "@/lib/validation/validation";
+import { revalidateCategory } from "@/lib/validation/revalidate";
 
 export async function GET() {
   const session = await auth();

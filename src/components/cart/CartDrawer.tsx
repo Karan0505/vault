@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useCartDrawer } from "./CartDrawerContext";
 import { CartPageBody } from "./CartPageBody";
 
@@ -17,18 +17,11 @@ export function CartDrawer() {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
+  // Automatically close cart drawer whenever route changes (e.g. navigating to /checkout)
   useEffect(() => {
-    if (isOpen) {
-      close();
-    }
-  }, [pathname, isOpen, close]);
+    close();
+  }, [pathname, close]);
 
-  // Focus management on open/close — this is the "focus management when
-  // the drawer opens and closes" the brief asks for, not just a visual
-  // slide animation. On open: remember what had focus, then move focus
-  // into the panel. On close: give focus back to exactly that element,
-  // so a keyboard user ends up back where they were, not at the top of
-  // the page.
   useEffect(() => {
     if (isOpen) {
       previouslyFocused.current = document.activeElement as HTMLElement | null;
@@ -56,9 +49,6 @@ export function CartDrawer() {
       const last = focusable[focusable.length - 1];
       const active = document.activeElement;
 
-      // Trap Tab within the panel — wrap from last back to first, and
-      // from first back to last on Shift+Tab, instead of letting focus
-      // escape into the page behind the overlay.
       if (e.shiftKey && active === first) {
         e.preventDefault();
         last?.focus();
@@ -81,7 +71,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={close}
-            className="fixed inset-0 z-50 bg-ink-950/70 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
             aria-hidden
           />
           <motion.div
@@ -93,24 +83,25 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-ink-700 bg-ink-950 p-6 shadow-vault"
+            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-gray-200 bg-white p-6 shadow-2xl"
           >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="font-display text-xl italic text-ink-50">Your cart</h2>
+            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
+              <h2 className="font-sans text-lg font-bold text-gray-900">Your Cart</h2>
               <button
                 ref={closeButtonRef}
                 type="button"
                 onClick={close}
                 aria-label="Close cart"
-                className="rounded-full p-1.5 text-ink-400 transition-colors hover:bg-ink-800 hover:text-ink-50"
+                className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-black"
               >
                 <X size={18} />
               </button>
             </div>
-            <CartPageBody isDrawer />
+            <CartPageBody />
           </motion.div>
         </>
       )}
     </AnimatePresence>
   );
 }
+

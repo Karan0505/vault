@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { prisma } from "@/lib/prisma";
-import { searchProducts } from "@/lib/search.server";
-import { syncProductSearchVector, reindexAllProducts } from "@/lib/search-index.server";
+import { prisma } from "@/lib/db/prisma";
+import { searchProducts } from "@/lib/search/search.server";
+import { syncProductSearchVector, reindexAllProducts } from "@/lib/search/search-index.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

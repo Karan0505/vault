@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/db/prisma";
 import { ProductForm, type ProductFormValue } from "@/components/admin/ProductForm";
 import type { VariantDraft } from "@/components/admin/VariantMatrixEditor";
 

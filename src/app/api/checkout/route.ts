@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCurrentUserId } from "@/lib/session";
-import { getOrCreateCart } from "@/lib/cart.server";
-import { createCheckoutSession, EmptyCartError, CartLineUnavailableError } from "@/lib/orders.server";
-import { InsufficientStockError } from "@/lib/inventory.server";
-import { checkoutInputSchema } from "@/lib/validation";
+import { getCurrentUserId } from "@/lib/auth/session";
+import { getOrCreateCart } from "@/lib/cart/cart.server";
+import { createCheckoutSession, EmptyCartError, CartLineUnavailableError } from "@/lib/orders/orders.server";
+import { InsufficientStockError } from "@/lib/inventory/inventory.server";
+import { AddressNotFoundError, type AddressSnapshot } from "@/lib/account/addresses.server";
+import { checkoutInputSchema } from "@/lib/validation/validation";
 
 export async function POST(request: Request) {
   const parsed = checkoutInputSchema.safeParse(await request.json());
@@ -12,6 +13,10 @@ export async function POST(request: Request) {
   }
 
   const userId = await getCurrentUserId();
+  if (!userId) {
+    return NextResponse.json({ error: "Authentication required to checkout" }, { status: 401 });
+  }
+
   const cart = await getOrCreateCart(userId);
 
   try {
@@ -20,10 +25,16 @@ export async function POST(request: Request) {
       userId,
       email: parsed.data.email,
       discountCode: parsed.data.discountCode,
+      selectedAddressId: parsed.data.selectedAddressId,
+      checkoutAttemptId: parsed.data.checkoutAttemptId,
+      shippingAddress: parsed.data.shippingAddress as AddressSnapshot | undefined,
     });
 
     return NextResponse.json({ orderId, clientSecret });
   } catch (error) {
+    if (error instanceof AddressNotFoundError) {
+      return NextResponse.json({ error: "Selected address not found or unauthorized" }, { status: 404 });
+    }
     if (error instanceof EmptyCartError) {
       return NextResponse.json({ error: "Your cart is empty" }, { status: 400 });
     }
@@ -34,8 +45,6 @@ export async function POST(request: Request) {
       );
     }
     if (error instanceof InsufficientStockError) {
-      // The exact "clean, specific error" the brief asks for — which
-      // variant, how many were wanted, how many are actually available.
       return NextResponse.json(
         {
           error: "Not enough stock for one of the items in your cart",
@@ -46,6 +55,7 @@ export async function POST(request: Request) {
         { status: 409 }
       );
     }
-    throw error;
+    const message = error instanceof Error ? error.message : "Couldn't create checkout session";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

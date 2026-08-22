@@ -16,7 +16,7 @@ answer.
 `getSelectableValues()` in `src/lib/variants.ts` computes, for each
 option dimension not yet chosen, which values still lead to at least
 one enabled variant given the rest of the current selection. The
-`VariantSelector` component (`src/components/storefront/VariantSelector.tsx`)
+`VariantSelector` component (`src/components/product/VariantSelector.tsx`)
 uses this to render every value in every dimension, but visually
 disables (with `disabled` + a strike-through style, not `display:
 none`, so the shopper can see what doesn't exist and why) any value

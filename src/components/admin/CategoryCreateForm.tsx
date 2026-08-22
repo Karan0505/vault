@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
-import { slugify } from "@/lib/utils";
+import { slugify } from "@/lib/shared/utils";
 
 export function CategoryCreateForm({ categories }: { categories: { id: string; name: string }[] }) {
   const router = useRouter();

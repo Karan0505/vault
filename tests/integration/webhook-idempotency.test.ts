@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type Stripe from "stripe";
-import { prisma } from "@/lib/prisma";
-import { processStripeEvent } from "@/lib/webhooks.server";
+import { prisma } from "@/lib/db/prisma";
+import { processStripeEvent } from "@/lib/integrations/webhooks.server";
 
 const hasDb = Boolean(process.env.DATABASE_URL);
 if (!hasDb) {

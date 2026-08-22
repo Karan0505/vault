@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { productInputSchema } from "@/lib/validation";
-import { updateProduct, deleteProduct, DuplicateVariantError } from "@/lib/products.server";
+import { auth, requireStaff } from "@/lib/auth/auth";
+import { prisma } from "@/lib/db/prisma";
+import { productInputSchema } from "@/lib/validation/validation";
+import { updateProduct, deleteProduct, DuplicateVariantError } from "@/lib/catalogue/products.server";
+import { hasPermission } from "@/lib/auth/permissions";
+import { getStaffActor } from "@/lib/auth/session";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -29,9 +31,9 @@ export async function GET(_request: Request, { params }: RouteParams) {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const session = await auth();
-  const role = session?.user.staffRole ?? null;
-  if (!requireStaff(role) || role === "support" || role === "fulfilment") {
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -43,7 +45,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   try {
-    await updateProduct(id, parsed.data);
+    await updateProduct(id, parsed.data, actor);
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof DuplicateVariantError) {
@@ -54,13 +56,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const session = await auth();
-  const role = session?.user.staffRole ?? null;
-  if (role !== "admin") {
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { id } = await params;
-  await deleteProduct(id);
+  await deleteProduct(id, actor);
   return NextResponse.json({ ok: true });
 }

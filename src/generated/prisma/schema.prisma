@@ -1,0 +1,501 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+enum StaffRole {
+  admin
+  fulfilment
+  support
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  name         String?
+  passwordHash String?
+  staffRole    StaffRole?
+  createdAt    DateTime   @default(now())
+
+  uploadedMedia       Media[]
+  carts               Cart[]
+  orders              Order[]
+  discountRedemptions DiscountRedemption[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String     @id @default(cuid())
+  name        String
+  slug        String     @unique
+  description String?
+  position    Int        @default(0)
+  parentId    String?
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryToCategory")
+
+  products Product[]
+
+  createdAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
+
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Collection {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  isAutomatic Boolean @default(false)
+  rules       Json?
+
+  products CollectionProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("collections")
+}
+
+model CollectionProduct {
+  collectionId String
+  productId    String
+  position     Int    @default(0)
+
+  collection Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  product    Product    @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, productId])
+  @@map("collection_products")
+}
+
+enum ProductStatus {
+  draft
+  active
+  archived
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  description String?
+  status      ProductStatus @default(draft)
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  optionNames String[]
+
+  variants    ProductVariant[]
+  media       Media[]
+  collections CollectionProduct[]
+
+  searchVector Unsupported("tsvector")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([status])
+  @@index([searchVector], type: Gin)
+  @@map("products")
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku     String @unique
+  options Json
+
+  priceAmount   Int
+  priceCurrency String @default("USD")
+
+  compareAtAmount Int?
+
+  isEnabled Boolean @default(true)
+  position  Int     @default(0)
+
+  weightGrams Int?
+
+  inventoryItem    InventoryItem?
+  priceListEntries PriceListEntry[]
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_variants")
+}
+
+model InventoryItem {
+  id        String         @id @default(cuid())
+  variantId String         @unique
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  onHand   Int @default(0)
+  reserved Int @default(0)
+  version  Int @default(0)
+
+  lowStockThreshold Int @default(5)
+
+  reservations Reservation[]
+
+  updatedAt DateTime @updatedAt
+
+  @@map("inventory_items")
+}
+
+enum MediaKind {
+  image
+  video
+}
+
+model Media {
+  id       String    @id @default(cuid())
+  kind     MediaKind @default(image)
+  url      String
+  alt      String    @default("")
+  width    Int?
+  height   Int?
+  position Int       @default(0)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  uploadedById String?
+  uploadedBy   User?   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@map("media")
+}
+
+model PriceList {
+  id       String  @id @default(cuid())
+  name     String
+  currency String
+  isActive Boolean @default(true)
+
+  entries PriceListEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("price_lists")
+}
+
+model PriceListEntry {
+  id          String    @id @default(cuid())
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  amount Int
+
+  @@unique([priceListId, variantId])
+  @@map("price_list_entries")
+}
+
+model Cart {
+  id           String  @id @default(cuid())
+  sessionToken String? @unique
+  userId       String?
+  user         User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  items        CartItem[]
+  reservations Reservation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String         @id @default(cuid())
+  cartId    String
+  cart      Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, variantId])
+  @@map("cart_items")
+}
+
+model Reservation {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  cartId          String?
+  cart            Cart?         @relation(fields: [cartId], references: [id], onDelete: SetNull)
+  orderId         String?
+  order           Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  quantity  Int
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([expiresAt])
+  @@map("reservations")
+}
+
+enum OrderStatus {
+  pending
+  paid
+  fulfilled
+  delivered
+  cancelled
+  refunded
+}
+
+model Order {
+  id     String      @id @default(cuid())
+  number String      @unique
+  status OrderStatus @default(pending)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email  String
+
+  currency String
+
+  subtotalAmount Int
+  discountAmount Int @default(0)
+  shippingAmount Int @default(0)
+  taxAmount      Int @default(0)
+  totalAmount    Int
+
+  discountId String?
+  discount   Discount? @relation(fields: [discountId], references: [id], onDelete: SetNull)
+
+  stripePaymentIntentId String?  @unique
+  reservationExpiresAt  DateTime
+
+  items        OrderItem[]
+  reservations Reservation[]
+  refunds      Refund[]
+  fulfillments Fulfillment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String         @id @default(cuid())
+  orderId   String
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  titleSnapshot   String
+  skuSnapshot     String
+  optionsSnapshot Json
+
+  unitAmount Int
+  quantity   Int
+  lineTotal  Int
+
+  fulfilledQuantity Int @default(0)
+  refundedQuantity  Int @default(0)
+
+  fulfillmentItems FulfillmentItem[]
+  refundItems      RefundLineItem[]
+
+  @@map("order_items")
+}
+
+model Refund {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  amount         Int
+  reason         String?
+  stripeRefundId String? @unique
+  restocked      Boolean @default(false)
+
+  items RefundLineItem[]
+
+  createdAt DateTime @default(now())
+
+  @@map("refunds")
+}
+
+model RefundLineItem {
+  id          String    @id @default(cuid())
+  refundId    String
+  refund      Refund    @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity    Int
+
+  @@map("refund_line_items")
+}
+
+enum DiscountType {
+  percentage
+  fixed_amount
+  free_shipping
+}
+
+model Discount {
+  id   String @id @default(cuid())
+  code String @unique
+
+  type  DiscountType
+  value Int
+
+  currency String?
+
+  usageLimit       Int?
+  perCustomerLimit Int? @default(1)
+  minimumSpend     Int?
+
+  startsAt  DateTime?
+  expiresAt DateTime?
+  isActive  Boolean   @default(true)
+
+  redemptions DiscountRedemption[]
+  orders      Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("discounts")
+}
+
+model DiscountRedemption {
+  id         String   @id @default(cuid())
+  discountId String
+  discount   Discount @relation(fields: [discountId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  orderId    String   @unique
+  createdAt  DateTime @default(now())
+
+  @@map("discount_redemptions")
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("stripe_events")
+}
+
+model Fulfillment {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  trackingNumber String
+  carrier        String?
+
+  items FulfillmentItem[]
+
+  createdAt DateTime @default(now())
+
+  @@map("fulfillments")
+}
+
+model FulfillmentItem {
+  id            String      @id @default(cuid())
+  fulfillmentId String
+  fulfillment   Fulfillment @relation(fields: [fulfillmentId], references: [id], onDelete: Cascade)
+  orderItemId   String
+  orderItem     OrderItem   @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  quantity      Int
+
+  @@map("fulfillment_items")
+}
+
+enum InventoryAdjustmentReason {
+  received
+  damaged
+  lost
+  returned
+  correction
+  other
+}
+
+model InventoryAdjustment {
+  id              String @id @default(cuid())
+  inventoryItemId String
+  variantId       String
+
+  delta           Int
+  resultingOnHand Int
+
+  reason InventoryAdjustmentReason
+  note   String?
+
+  actorUserId String
+  actorEmail  String
+
+  createdAt DateTime @default(now())
+
+  @@index([inventoryItemId])
+  @@index([variantId])
+  @@map("inventory_adjustments")
+}
+
+enum AuditAction {
+  create
+  update
+  delete
+  transition
+  refund
+  adjustment
+}
+
+model AuditLogEntry {
+  id String @id @default(cuid())
+
+  actorUserId String
+  actorEmail  String
+  actorRole   StaffRole?
+
+  entityType String
+  entityId   String
+  action     AuditAction
+
+  before Json?
+  after  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorUserId])
+  @@index([createdAt])
+  @@map("audit_log_entries")
+}

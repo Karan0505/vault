@@ -1,20 +1,19 @@
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 import type { Metadata } from "next";
-import { prisma } from "@/lib/prisma";
-import { getProductBySlugForStorefront } from "@/lib/products.server";
-import { ImageGallery } from "@/components/storefront/ImageGallery";
-import { VariantSelector, type SelectableVariant } from "@/components/storefront/VariantSelector";
-import { ProductJsonLd } from "@/components/storefront/ProductJsonLd";
-import { RecommendationsRail, RecommendationsRailSkeleton } from "@/components/storefront/RecommendationsRail";
-import { Badge } from "@/components/ui/Badge";
-
-// Opts this route into Partial Prerendering: everything above the
-// Suspense boundary below is prerendered and served from the ISR cache
-// like every other Phase 1 catalogue page; the recommendations rail
-// inside it is a genuinely per-request dynamic island, so co-purchase
-// data can be fresh without invalidating the rest of the page's cache.
-export const experimental_ppr = true;
+import { Star, ChevronRight } from "lucide-react";
+import { prisma } from "@/lib/db/prisma";
+import { getProductBySlugForStorefront } from "@/lib/catalogue/products.server";
+import {
+  ImageGallery,
+  VariantSelector,
+  type SelectableVariant,
+  ProductJsonLd,
+  RecommendationsRail,
+  RecommendationsRailSkeleton,
+} from "@/components/product";
+import { formatMoney } from "@/lib/payments/money";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -23,11 +22,15 @@ interface ProductPageProps {
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  const products = await prisma.product.findMany({
-    where: { status: "active" },
-    select: { slug: true },
-  });
-  return products.map((p) => ({ slug: p.slug }));
+  try {
+    const products = await prisma.product.findMany({
+      where: { status: "active" },
+      select: { slug: true },
+    });
+    return products.map((p) => ({ slug: p.slug }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
@@ -61,13 +64,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   const optionValues: Record<string, string[]> = {};
   for (const name of product.optionNames) {
-    const values = new Set<string>();
+    const seenLower = new Set<string>();
+    const values: string[] = [];
     for (const variant of product.variants) {
       const options = variant.options as Record<string, string>;
-      const value = options[name];
-      if (value) values.add(value);
+      const rawValue = options[name];
+      if (typeof rawValue === "string") {
+        const trimmed = rawValue.trim();
+        const lower = trimmed.toLowerCase();
+        if (trimmed && !seenLower.has(lower)) {
+          seenLower.add(lower);
+          values.push(trimmed);
+        }
+      }
     }
-    optionValues[name] = Array.from(values);
+    optionValues[name] = values;
   }
 
   const selectableVariants: SelectableVariant[] = product.variants.map((v) => ({
@@ -86,8 +97,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   const cheapestForSchema = [...product.variants].sort((a, b) => a.priceAmount - b.priceAmount)[0];
   const totalOnHand = product.variants.reduce((sum, v) => sum + (v.inventoryItem?.onHand ?? 0), 0);
 
+  const priceLabel = cheapestForSchema
+    ? formatMoney({ amount: cheapestForSchema.priceAmount, currency: cheapestForSchema.priceCurrency })
+    : "";
+
   return (
-    <div>
+    <div className="flex flex-col gap-16">
       {cheapestForSchema && (
         <ProductJsonLd
           name={product.title}
@@ -102,21 +117,71 @@ export default async function ProductPage({ params }: ProductPageProps) {
         />
       )}
 
-      <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <ImageGallery images={images} productTitle={product.title} />
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center gap-2 text-xs text-gray-500">
+        <Link href="/" className="hover:text-black transition-colors">
+          Home
+        </Link>
+        <ChevronRight size={12} className="text-gray-400" />
+        <Link
+          href={product.category ? `/categories/${product.category.slug}` : "/"}
+          className="hover:text-black transition-colors"
+        >
+          {product.category?.name ?? "Clothing"}
+        </Link>
+        <ChevronRight size={12} className="text-gray-400" />
+        <span className="font-medium text-gray-900">{product.title}</span>
+      </nav>
 
-        <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+      <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        {/* Left: Gallery */}
+        <div className="lg:col-span-7">
+          <ImageGallery images={images} productTitle={product.title} />
+        </div>
+
+        {/* Right: Product Details & Purchase Form */}
+        <div className="flex flex-col gap-6 lg:col-span-5 lg:sticky lg:top-24 lg:self-start">
           <div>
-            {product.category && <Badge tone="brass">{product.category.name}</Badge>}
-            <h1 className="mt-3 font-display text-4xl italic text-ink-50">{product.title}</h1>
+            <h1 className="font-sans text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              {product.title}
+            </h1>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="font-sans text-2xl font-bold text-gray-900">
+                {priceLabel}
+              </span>
+              {/* Reviews Stars */}
+              <div className="flex items-center gap-1.5">
+                <div className="flex text-amber-400">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={14} className="fill-amber-400" />
+                  ))}
+                </div>
+                <span className="font-sans text-xs font-semibold text-gray-500">(128)</span>
+              </div>
+            </div>
           </div>
 
           {product.description && (
-            <p className="max-w-md text-sm leading-relaxed text-ink-400">{product.description}</p>
+            <p className="text-sm leading-relaxed text-gray-600">{product.description}</p>
           )}
 
-          <Suspense fallback={<div className="skeleton h-40 rounded-xl" />}>
+          <div className="h-px bg-gray-200" />
+
+          <Suspense fallback={<div className="skeleton h-48 rounded-2xl" />}>
             <VariantSelector
+              productId={product.id}
+              product={{
+                id: product.id,
+                slug: product.slug,
+                title: product.title,
+                imageUrl: images[0]?.url ?? null,
+                imageAlt: images[0]?.alt || product.title,
+                minPriceAmount: cheapestForSchema?.priceAmount ?? 0,
+                maxPriceAmount: cheapestForSchema?.priceAmount ?? 0,
+                currency: cheapestForSchema?.priceCurrency ?? "USD",
+                totalOnHand,
+                categoryName: product.category?.name,
+              }}
               optionNames={product.optionNames}
               optionValues={optionValues}
               variants={selectableVariants}

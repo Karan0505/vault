@@ -1,29 +1,27 @@
 "use client";
 
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Minus, Plus, X } from "lucide-react";
-import { formatMoney } from "@/lib/money";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { formatMoney } from "@/lib/payments/money";
 import { Badge } from "@/components/ui/Badge";
-import { notifyCartUpdated } from "@/lib/cart-events";
-import type { CartLineView } from "@/lib/cart.server";
+import { notifyCartUpdated } from "@/lib/cart/cart-events";
+import type { CartLineView } from "@/lib/cart/cart.server";
 
 export function CartLineItem({ line, onChanged }: { line: CartLineView; onChanged: () => void }) {
   const [isPending, startTransition] = useTransition();
   const [localQuantity, setLocalQuantity] = useState(line.quantity);
 
   function updateQuantity(next: number) {
-    if (next < 0 || (next > localQuantity && next > line.onHand)) return;
+    if (next < 0) return;
     setLocalQuantity(next);
     startTransition(async () => {
-      const res = await fetch(`/api/cart/${line.itemId}`, {
+      await fetch(`/api/cart/${line.itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity: next }),
       });
-      if (!res.ok) {
-        setLocalQuantity(line.quantity);
-      }
       notifyCartUpdated();
       onChanged();
     });
@@ -40,64 +38,89 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
   const overStock = localQuantity > line.onHand;
 
   return (
-    <div className="flex items-start gap-4 border-b border-ink-800 py-5 last:border-0">
+    <div className="flex items-start gap-4 border-b border-gray-100 py-4.5 last:border-0">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200/70">
+        {line.imageUrl ? (
+          <Image
+            src={line.imageUrl}
+            alt={line.productTitle}
+            fill
+            sizes="64px"
+            className="object-cover object-center"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-500">
+            📦
+          </div>
+        )}
+      </div>
+
       <div className="min-w-0 flex-1">
-        <Link
-          href={`/products/${line.productSlug}`}
-          className="font-display text-base text-ink-100 transition-colors hover:text-brass-300"
-        >
-          {line.productTitle}
-        </Link>
-        <p className="mt-1 font-mono text-xs text-ink-500">
-          {Object.values(line.options).join(" / ")} · {line.sku}
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            href={`/products/${line.productSlug}`}
+            className="font-sans text-sm font-semibold text-gray-900 transition-colors hover:underline"
+          >
+            {line.productTitle}
+          </Link>
+          <span className="font-sans text-sm font-bold text-gray-900">
+            {formatMoney({ amount: line.lineTotal, currency: line.currency })}
+          </span>
+        </div>
+
+        <p className="mt-0.5 font-sans text-xs text-gray-500">
+          {Object.values(line.options).join(" / ")}
         </p>
+
         {!line.isEnabled && (
-          <Badge tone="red" className="mt-2">
+          <Badge tone="red" className="mt-1.5">
             No longer available
           </Badge>
         )}
         {line.isEnabled && overStock && (
-          <Badge tone="amber" className="mt-2">
-            Only {line.onHand} left — reduce quantity before checkout
+          <Badge tone="amber" className="mt-1.5">
+            Only {line.onHand} left
           </Badge>
         )}
 
-        <div className="mt-3 flex items-center gap-3">
-          <div className="flex items-center rounded-full border border-ink-600">
+        <div className="mt-3 flex items-center justify-between">
+          {/* Stepper */}
+          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-0.5 shadow-xs">
             <button
               type="button"
               onClick={() => updateQuantity(localQuantity - 1)}
-              disabled={isPending || localQuantity <= 1}
+              disabled={isPending}
               aria-label="Decrease quantity"
-              className="p-2 text-ink-300 hover:text-brass-300 disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30"
             >
-              <Minus size={13} />
+              <Minus size={12} />
             </button>
-            <span className="w-6 text-center font-mono text-sm text-ink-100">{localQuantity}</span>
+            <span className="w-7 text-center font-mono text-xs font-semibold text-gray-900">
+              {localQuantity}
+            </span>
             <button
               type="button"
               onClick={() => updateQuantity(localQuantity + 1)}
-              disabled={isPending || localQuantity >= line.onHand}
+              disabled={isPending}
               aria-label="Increase quantity"
-              className="p-2 text-ink-300 hover:text-brass-300 disabled:opacity-40"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30"
             >
-              <Plus size={13} />
+              <Plus size={12} />
             </button>
           </div>
+
           <button
             type="button"
             onClick={remove}
             disabled={isPending}
-            className="flex items-center gap-1 text-xs text-ink-500 transition-colors hover:text-signal-red"
+            className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-rose-600"
           >
-            <X size={12} /> Remove
+            <Trash2 size={13} />
+            <span>Remove</span>
           </button>
         </div>
       </div>
-
-      <span className="whitespace-nowrap font-mono text-sm text-ink-200">
-        {formatMoney({ amount: line.lineTotal, currency: line.currency })}
-      </span>
     </div>
   );
 }
+
