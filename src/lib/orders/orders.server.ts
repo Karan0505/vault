@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db/prisma";
 import { stripe } from "@/lib/payments/stripe";
 import { getCartView } from "@/lib/cart/cart.server";
 import { reserveCartLines, releaseReservations, commitReservations, InsufficientStockError } from "@/lib/inventory/inventory.server";
-import { applyDiscountCode } from "@/lib/checkout/discounts.server";
+import { applyDiscountCode, verifyAndLockDiscount } from "@/lib/checkout/discounts.server";
 import { assertTransition, type OrderStatus } from "@/lib/orders/orders";
 import { splitProportionally } from "@/lib/payments/money";
 import { sendOrderConfirmationEmail } from "@/lib/integrations/email.server";
@@ -139,6 +139,10 @@ export async function createCheckoutSession(params: {
     );
 
     const order = await prisma.$transaction(async (tx) => {
+      if (discountId) {
+        await verifyAndLockDiscount(tx, discountId, params.userId);
+      }
+
       const created = await tx.order.create({
         data: {
           number: generateOrderNumber(),
