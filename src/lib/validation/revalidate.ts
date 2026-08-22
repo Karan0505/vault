@@ -21,8 +21,8 @@ export const cacheTags = {
  * net units sold. Invalidates the Best Sellers storefront list.
  */
 export function revalidateBestSellers(): void {
-  revalidateTag(cacheTags.bestSellers());
-  revalidateTag(cacheTags.productList());
+  safeRevalidateTag(cacheTags.bestSellers());
+  safeRevalidateTag(cacheTags.productList());
 }
 
 /**

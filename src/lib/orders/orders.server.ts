@@ -190,7 +190,7 @@ export async function createCheckoutSession(params: {
       });
 
       return created;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     if (!paymentIntent.client_secret) {
       throw new Error("Stripe did not return a client secret");

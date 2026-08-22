@@ -117,7 +117,7 @@ export async function claimNotificationForDispatch(params: {
 
 export async function markNotificationSent(id: string): Promise<void> {
   try {
-    await prisma.notificationRecord.update({
+    await prisma.notificationRecord.updateMany({
       where: { id },
       data: {
         status: "sent",
@@ -132,7 +132,7 @@ export async function markNotificationSent(id: string): Promise<void> {
 
 export async function markNotificationFailed(id: string, error: string): Promise<void> {
   try {
-    await prisma.notificationRecord.update({
+    await prisma.notificationRecord.updateMany({
       where: { id },
       data: {
         status: "failed",

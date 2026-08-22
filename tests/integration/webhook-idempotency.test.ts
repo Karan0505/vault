@@ -95,7 +95,9 @@ describe.skipIf(!hasDb)("Stripe webhook idempotency", () => {
 
   afterAll(async () => {
     await prisma.reservation.deleteMany({ where: { id: reservationId } }).catch(() => undefined);
-    await prisma.order.delete({ where: { id: orderId } }).catch(() => undefined);
+    if (orderId) {
+      await prisma.order.delete({ where: { id: orderId } }).catch(() => undefined);
+    }
     await prisma.product.delete({ where: { id: productId } }).catch(() => undefined);
     await prisma.category.delete({ where: { id: categoryId } }).catch(() => undefined);
     await prisma.stripeEvent.deleteMany({ where: { id: eventId } }).catch(() => undefined);

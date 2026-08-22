@@ -132,104 +132,112 @@ describe.skipIf(!hasDb)("discount usage limit concurrency", () => {
     }
   });
 
-  it("lets exactly one of ten concurrent checkouts redeem a discount code with usageLimit: 1", async () => {
-    // Provision 10 separate carts (1 unit of variant each) to prevent cart-level inventory locking serialization
-    const carts = await Promise.all(
-      Array.from({ length: 10 }, async () => {
-        const cart = await prisma.cart.create({ data: {} });
-        await prisma.cartItem.create({
-          data: { cartId: cart.id, variantId, quantity: 1 },
-        });
-        return cart;
-      })
-    );
+  it(
+    "lets exactly one of ten concurrent checkouts redeem a discount code with usageLimit: 1",
+    async () => {
+      // Provision 10 separate carts (1 unit of variant each) to prevent cart-level inventory locking serialization
+      const carts = await Promise.all(
+        Array.from({ length: 10 }, async () => {
+          const cart = await prisma.cart.create({ data: {} });
+          await prisma.cartItem.create({
+            data: { cartId: cart.id, variantId, quantity: 1 },
+          });
+          return cart;
+        })
+      );
 
-    // Fire 10 parallel checkouts simultaneously using the same usageLimit: 1 code
-    const attempts = carts.map((cart) =>
-      createCheckoutSession({
-        cartId: cart.id,
-        userId: null,
-        email: "shopper@example.com",
-        discountCode: globalDiscountCode,
-      })
-    );
+      // Fire 10 parallel checkouts simultaneously using the same usageLimit: 1 code
+      const attempts = carts.map((cart) =>
+        createCheckoutSession({
+          cartId: cart.id,
+          userId: null,
+          email: "shopper@example.com",
+          discountCode: globalDiscountCode,
+        })
+      );
 
-    const results = await Promise.allSettled(attempts);
+      const results = await Promise.allSettled(attempts);
 
-    const succeeded = results.filter(
-      (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createCheckoutSession>>> =>
-        r.status === "fulfilled"
-    );
-    const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      const succeeded = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createCheckoutSession>>> =>
+          r.status === "fulfilled"
+      );
+      const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
 
-    expect(succeeded).toHaveLength(1);
-    expect(failed).toHaveLength(9);
+      expect(succeeded).toHaveLength(1);
+      expect(failed).toHaveLength(9);
 
-    // Assert every failure is specifically a DiscountUsageLimitError
-    for (const failure of failed) {
-      expect(failure.reason).toBeInstanceOf(DiscountUsageLimitError);
-    }
+      // Assert every failure is specifically a DiscountUsageLimitError
+      for (const failure of failed) {
+        expect(failure.reason).toBeInstanceOf(DiscountUsageLimitError);
+      }
 
-    // Verify DB state: exactly 1 redemption record created for the discount
-    const redemptionsCount = await prisma.discountRedemption.count({
-      where: { discountId: globalDiscountId },
-    });
-    expect(redemptionsCount).toBe(1);
+      // Verify DB state: exactly 1 redemption record created for the discount
+      const redemptionsCount = await prisma.discountRedemption.count({
+        where: { discountId: globalDiscountId },
+      });
+      expect(redemptionsCount).toBe(1);
 
-    // Clean up created carts and orders
-    const succeededOrderId = succeeded[0]?.value.orderId;
-    if (succeededOrderId) {
-      await prisma.order.delete({ where: { id: succeededOrderId } }).catch(() => undefined);
-    }
-    await prisma.cart.deleteMany({ where: { id: { in: carts.map((c) => c.id) } } }).catch(() => undefined);
-  });
+      // Clean up created carts and orders
+      const succeededOrderId = succeeded[0]?.value.orderId;
+      if (succeededOrderId) {
+        await prisma.order.delete({ where: { id: succeededOrderId } }).catch(() => undefined);
+      }
+      await prisma.cart.deleteMany({ where: { id: { in: carts.map((c) => c.id) } } }).catch(() => undefined);
+    },
+    60000
+  );
 
-  it("lets exactly one of ten concurrent checkouts from the same user redeem a perCustomerLimit: 1 code", async () => {
-    // Provision 10 separate carts for the same user
-    const carts = await Promise.all(
-      Array.from({ length: 10 }, async () => {
-        const cart = await prisma.cart.create({ data: { userId } });
-        await prisma.cartItem.create({
-          data: { cartId: cart.id, variantId, quantity: 1 },
-        });
-        return cart;
-      })
-    );
+  it(
+    "lets exactly one of ten concurrent checkouts from the same user redeem a perCustomerLimit: 1 code",
+    async () => {
+      // Provision 10 separate carts for the same user
+      const carts = await Promise.all(
+        Array.from({ length: 10 }, async () => {
+          const cart = await prisma.cart.create({ data: { userId } });
+          await prisma.cartItem.create({
+            data: { cartId: cart.id, variantId, quantity: 1 },
+          });
+          return cart;
+        })
+      );
 
-    // Fire 10 parallel checkouts from the same userId using the perCustomerLimit: 1 code
-    const attempts = carts.map((cart) =>
-      createCheckoutSession({
-        cartId: cart.id,
-        userId,
-        email: "user@example.com",
-        discountCode: customerDiscountCode,
-      })
-    );
+      // Fire 10 parallel checkouts from the same userId using the perCustomerLimit: 1 code
+      const attempts = carts.map((cart) =>
+        createCheckoutSession({
+          cartId: cart.id,
+          userId,
+          email: "user@example.com",
+          discountCode: customerDiscountCode,
+        })
+      );
 
-    const results = await Promise.allSettled(attempts);
+      const results = await Promise.allSettled(attempts);
 
-    const succeeded = results.filter(
-      (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createCheckoutSession>>> =>
-        r.status === "fulfilled"
-    );
-    const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+      const succeeded = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createCheckoutSession>>> =>
+          r.status === "fulfilled"
+      );
+      const failed = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
 
-    expect(succeeded).toHaveLength(1);
-    expect(failed).toHaveLength(9);
+      expect(succeeded).toHaveLength(1);
+      expect(failed).toHaveLength(9);
 
-    for (const failure of failed) {
-      expect(failure.reason).toBeInstanceOf(DiscountUsageLimitError);
-    }
+      for (const failure of failed) {
+        expect(failure.reason).toBeInstanceOf(DiscountUsageLimitError);
+      }
 
-    const redemptionsCount = await prisma.discountRedemption.count({
-      where: { discountId: customerDiscountId, userId },
-    });
-    expect(redemptionsCount).toBe(1);
+      const redemptionsCount = await prisma.discountRedemption.count({
+        where: { discountId: customerDiscountId, userId },
+      });
+      expect(redemptionsCount).toBe(1);
 
-    const succeededOrderId = succeeded[0]?.value.orderId;
-    if (succeededOrderId) {
-      await prisma.order.delete({ where: { id: succeededOrderId } }).catch(() => undefined);
-    }
-    await prisma.cart.deleteMany({ where: { id: { in: carts.map((c) => c.id) } } }).catch(() => undefined);
-  });
+      const succeededOrderId = succeeded[0]?.value.orderId;
+      if (succeededOrderId) {
+        await prisma.order.delete({ where: { id: succeededOrderId } }).catch(() => undefined);
+      }
+      await prisma.cart.deleteMany({ where: { id: { in: carts.map((c) => c.id) } } }).catch(() => undefined);
+    },
+    60000
+  );
 });

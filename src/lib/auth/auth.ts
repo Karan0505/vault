@@ -172,15 +172,18 @@ export function requireStaff(role: StaffRole | null): role is StaffRole {
 }
 
 export function verifyOrderAccess(
-  order: { userId: string | null },
+  order: { userId: string | null; guestToken?: string | null },
   session: { user?: { id?: string; staffRole?: StaffRole | null } } | null,
-  _token?: string | null
+  token?: string | null
 ): boolean {
   if (session?.user?.staffRole && requireStaff(session.user.staffRole)) {
     return true;
   }
   if (order.userId) {
     return Boolean(session?.user?.id && session.user.id === order.userId);
+  }
+  if (order.guestToken && token) {
+    return order.guestToken === token;
   }
   return false;
 }

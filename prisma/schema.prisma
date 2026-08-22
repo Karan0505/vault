@@ -408,6 +408,7 @@ model Order {
   discount   Discount? @relation(fields: [discountId], references: [id], onDelete: SetNull)
 
   stripePaymentIntentId String?  @unique
+  guestToken            String?
   reservationExpiresAt  DateTime // checkout-entry TTL; once paid, reservations convert to real stock decrement
 
   failureDetectedAt DateTime?

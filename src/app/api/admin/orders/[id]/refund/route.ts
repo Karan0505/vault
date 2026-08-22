@@ -68,6 +68,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
     logger.error("orders.refund_failed", { orderId: id, error: error instanceof Error ? error.message : String(error) });
     Sentry.captureException(error, { extra: { orderId: id, action: "refund" } });
-    throw error;
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Refund failed" },
+      { status: 500 }
+    );
   }
 }

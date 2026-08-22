@@ -110,7 +110,7 @@ export async function reserveStock(params: {
     });
 
     return { reservationId: reservation.id, expiresAt };
-  });
+  }, { maxWait: 10000, timeout: 20000 });
 }
 
 /**
@@ -160,7 +160,7 @@ export async function reserveCartLines(
     }
 
     return { reservationIds, expiresAt };
-  });
+  }, { maxWait: 10000, timeout: 20000 });
 }
 
 /**

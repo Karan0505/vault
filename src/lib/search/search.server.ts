@@ -88,13 +88,15 @@ function buildConditions(filters: SearchFilters, exclude: ReadonlySet<FilterKey>
   }
 
   if (filters.q && !exclude.has("q")) {
-    // Hybrid match: stemmed full-text OR trigram similarity, so a
-    // misspelled query ("jaket") still finds "Jacket" through the
-    // similarity() fallback even though it fails websearch_to_tsquery
-    // outright. See docs/decisions/0011-search-engine-choice.md.
-    conditions.push(
-      Prisma.sql`(p."searchVector" @@ websearch_to_tsquery('english', ${filters.q}) OR similarity(p.title, ${filters.q}) > 0.25)`
-    );
+    const q = filters.q.trim();
+    if (q.length > 0) {
+      conditions.push(
+        Prisma.sql`(
+          p."searchVector" @@ websearch_to_tsquery('english', ${q})
+          OR (p."searchVector" IS NOT NULL AND similarity(p.title, ${q}) > 0.1)
+        )`
+      );
+    }
   }
 
   return conditions;
