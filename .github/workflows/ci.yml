@@ -57,7 +57,7 @@ jobs:
         run: npx prisma migrate deploy
 
       - name: Install the audit-log append-only trigger
-        run: psql "$DATABASE_URL" -f prisma/manual/audit-log-append-only.sql
+        run: psql "${DATABASE_URL%%\?*}" -f prisma/manual/audit-log-append-only.sql
 
       - name: Typecheck
         run: npm run typecheck
