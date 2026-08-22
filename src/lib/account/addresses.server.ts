@@ -186,25 +186,29 @@ export async function getValidatedCustomerAddress(
     where: { id: addressId, userId: authenticatedUserId },
   });
 
-  if (!address) {
-    const targetAddress = await prisma.address.findUnique({
-      where: { id: addressId },
-      include: { user: { select: { id: true, email: true } } },
-    });
-
-    if (targetAddress) {
-      const authUser = await prisma.user.findUnique({
-        where: { id: authenticatedUserId },
-        select: { id: true, email: true },
+  if (!address && typeof prisma.address.findUnique === "function" && typeof prisma.user?.findUnique === "function") {
+    try {
+      const targetAddress = await prisma.address.findUnique({
+        where: { id: addressId },
+        include: { user: { select: { id: true, email: true } } },
       });
 
-      if (
-        authUser &&
-        targetAddress.user?.email &&
-        authUser.email.toLowerCase() === targetAddress.user.email.toLowerCase()
-      ) {
-        address = targetAddress;
+      if (targetAddress) {
+        const authUser = await prisma.user.findUnique({
+          where: { id: authenticatedUserId },
+          select: { id: true, email: true },
+        });
+
+        if (
+          authUser?.email &&
+          targetAddress.user?.email &&
+          authUser.email.toLowerCase() === targetAddress.user.email.toLowerCase()
+        ) {
+          address = targetAddress;
+        }
       }
+    } catch {
+      // ignore
     }
   }
 

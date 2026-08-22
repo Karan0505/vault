@@ -16,6 +16,7 @@ vi.mock("@/lib/db/prisma", () => {
       address: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        findUnique: vi.fn(),
         findFirstOrThrow: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
@@ -23,16 +24,23 @@ vi.mock("@/lib/db/prisma", () => {
         delete: vi.fn(),
         count: vi.fn(),
       },
+      user: {
+        findUnique: vi.fn(),
+      },
       $transaction: vi.fn((callback) =>
         callback({
           address: {
             findMany: vi.fn(),
             findFirst: vi.fn(),
+            findUnique: vi.fn(),
             create: vi.fn(),
             update: vi.fn(),
             updateMany: vi.fn(),
             delete: vi.fn(),
             count: vi.fn(),
+          },
+          user: {
+            findUnique: vi.fn(),
           },
         })
       ),
