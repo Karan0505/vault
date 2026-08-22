@@ -16,7 +16,7 @@ interface AppliedDiscount {
   freeShipping: boolean;
 }
 
-const FLAT_SHIPPING_AMOUNT = 0; // matching reference where shipping is $0.00 / free threshold
+const FLAT_SHIPPING_AMOUNT = 599; // $5.99 standard flat rate matching orders.server.ts
 
 export function CartPageBody() {
   const router = useRouter();

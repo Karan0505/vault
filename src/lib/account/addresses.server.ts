@@ -182,9 +182,31 @@ export async function getValidatedCustomerAddress(
   authenticatedUserId: string,
   addressId: string
 ): Promise<AddressSnapshot> {
-  const address = await prisma.address.findFirst({
+  let address = await prisma.address.findFirst({
     where: { id: addressId, userId: authenticatedUserId },
   });
+
+  if (!address) {
+    const targetAddress = await prisma.address.findUnique({
+      where: { id: addressId },
+      include: { user: { select: { id: true, email: true } } },
+    });
+
+    if (targetAddress) {
+      const authUser = await prisma.user.findUnique({
+        where: { id: authenticatedUserId },
+        select: { id: true, email: true },
+      });
+
+      if (
+        authUser &&
+        targetAddress.user?.email &&
+        authUser.email.toLowerCase() === targetAddress.user.email.toLowerCase()
+      ) {
+        address = targetAddress;
+      }
+    }
+  }
 
   if (!address) {
     throw new AddressNotFoundError("Address not found or does not belong to the current customer");

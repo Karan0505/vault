@@ -199,9 +199,23 @@ export async function getCartView(cartId: string): Promise<CartView> {
  */
 export async function mergeGuestCartIntoUser(guestCartId: string, userId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
+    const guestCart = await tx.cart.findUnique({ where: { id: guestCartId } });
+    if (!guestCart) return;
+
     const userCart = await tx.cart.findFirst({ where: { userId } });
     if (!userCart) {
-      await tx.cart.update({ where: { id: guestCartId }, data: { userId, sessionToken: null } });
+      await tx.cart.updateMany({
+        where: { id: guestCartId },
+        data: { userId, sessionToken: null },
+      });
+      return;
+    }
+
+    if (userCart.id === guestCartId) {
+      await tx.cart.updateMany({
+        where: { id: guestCartId },
+        data: { sessionToken: null },
+      });
       return;
     }
 
@@ -222,9 +236,14 @@ export async function mergeGuestCartIntoUser(guestCartId: string, userId: string
       }
     }
 
-    await tx.cart.delete({ where: { id: guestCartId } });
+    await tx.cartItem.deleteMany({ where: { cartId: guestCartId } });
+    await tx.cart.deleteMany({ where: { id: guestCartId } });
   });
 
-  const cookieStore = await cookies();
-  cookieStore.delete(CART_COOKIE);
+  try {
+    const cookieStore = await cookies();
+    cookieStore.delete(CART_COOKIE);
+  } catch {
+    // Ignore cookie store errors outside request context
+  }
 }

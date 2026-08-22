@@ -18,6 +18,10 @@ vi.mock("@/lib/db/prisma", () => ({
   prisma: {
     address: {
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    user: {
+      findUnique: vi.fn(),
     },
     order: {
       create: vi.fn(),

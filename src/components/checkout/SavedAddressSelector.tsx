@@ -86,7 +86,7 @@ export function SavedAddressSelector({
           </div>
           <button
             type="button"
-            onClick={fetchAddresses}
+            onClick={() => fetchAddresses(true)}
             className="font-bold underline hover:text-rose-950"
           >
             Retry
