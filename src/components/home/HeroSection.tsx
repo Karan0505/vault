@@ -75,7 +75,7 @@ export function HeroSection() {
         {/* Right Hero Image */}
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-white shadow-md lg:col-span-6 border border-gray-200/60">
           <Image
-            src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=80"
+            src="/images/hero-couch.webp"
             alt="VAULT Scandinavian Interior"
             fill
             priority
