@@ -30,23 +30,23 @@
   }
 
   .store-card {
-    @apply bg-white border border-gray-200/80 rounded-2xl shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300;
+    @apply bg-white border border-gray-200/80 rounded-2xl shadow-sm transition-[box-shadow,border-color] duration-200 hover:shadow-md hover:border-gray-300;
   }
 
   .admin-card {
-    @apply bg-[#111827] border border-[#1E293B] rounded-2xl p-6 shadow-panel transition-all duration-200 hover:border-[#334155];
+    @apply bg-[#111827] border border-[#1E293B] rounded-2xl p-6 shadow-panel transition-[border-color] duration-200 hover:border-[#334155];
   }
 
   .store-pill-btn {
-    @apply inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-all duration-200 hover:bg-gray-800 active:scale-[0.98] shadow-sm;
+    @apply inline-flex items-center justify-center rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-colors duration-200 hover:bg-gray-800 active:scale-[0.98] shadow-sm;
   }
 
   .store-outline-btn {
-    @apply inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-800 transition-all duration-200 hover:bg-gray-50 hover:border-gray-400 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-full border border-gray-300 bg-white px-6 py-3 text-sm font-medium text-gray-800 transition-colors duration-200 hover:bg-gray-50 hover:border-gray-400 active:scale-[0.98];
   }
 
   .admin-btn {
-    @apply inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-indigo-500 active:scale-[0.98];
+    @apply inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-colors duration-200 hover:bg-indigo-500 active:scale-[0.98];
   }
 
   .skeleton {
@@ -61,7 +61,6 @@
       rgba(0, 0, 0, 0.04),
       transparent
     );
-    background-size: 200% 100%;
   }
 
   .admin-skeleton {
@@ -76,7 +75,6 @@
       rgba(255, 255, 255, 0.05),
       transparent
     );
-    background-size: 200% 100%;
   }
 }
 
