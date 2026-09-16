@@ -80,8 +80,9 @@ export function HeroSection() {
             fill
             priority
             fetchPriority="high"
-            className="object-cover transition-transform duration-700 hover:scale-105"
-            sizes="(min-width: 1024px) 50vw, 100vw"
+            className="object-cover transition-transform hover:scale-105"
+            quality={75}
+            sizes="(max-width: 768px) 92vw, (max-width: 1200px) 50vw, 600px"
           />
         </div>
       </div>
