@@ -27,42 +27,47 @@ export async function getCurrentUserId(): Promise<string | null> {
         return userByEmail.id;
       }
     }
+    return null;
   } catch {
-    // Database fallback to raw session id
+    return null;
   }
-
-  return session.user.id;
 }
 
 export async function getCurrentUser(): Promise<{ id: string; email?: string | null; name?: string | null } | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
 
-  let resolvedId = session.user.id;
   try {
     const dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true },
+      select: { id: true, email: true, name: true },
     });
 
-    if (!dbUser && session.user.email) {
+    if (dbUser) {
+      return {
+        id: dbUser.id,
+        email: dbUser.email,
+        name: dbUser.name,
+      };
+    }
+
+    if (session.user.email) {
       const userByEmail = await prisma.user.findUnique({
         where: { email: session.user.email.toLowerCase().trim() },
-        select: { id: true },
+        select: { id: true, email: true, name: true },
       });
       if (userByEmail) {
-        resolvedId = userByEmail.id;
+        return {
+          id: userByEmail.id,
+          email: userByEmail.email,
+          name: userByEmail.name,
+        };
       }
     }
+    return null;
   } catch {
-    // ignore
+    return null;
   }
-
-  return {
-    id: resolvedId,
-    email: session.user.email,
-    name: session.user.name,
-  };
 }
 
 /**

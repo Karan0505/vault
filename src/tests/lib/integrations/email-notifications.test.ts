@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { Prisma } from "@prisma/client";
 import {
   getConfiguredNotificationLeaseSeconds,
   getSenderAddress,
@@ -14,6 +15,80 @@ import { prisma } from "@/lib/db/prisma";
 
 // Mock server-only
 vi.mock("server-only", () => ({}));
+
+// In-memory records store for database isolation in unit tests
+const inMemoryRecords = new Map<string, any>();
+
+vi.mock("@/lib/db/prisma", () => {
+  return {
+    prisma: {
+      notificationRecord: {
+        create: vi.fn(async ({ data }: any) => {
+          if (inMemoryRecords.has(data.id)) {
+            const err = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+              code: "P2002",
+              clientVersion: "5.x",
+            });
+            throw err;
+          }
+          const record = { ...data, createdAt: new Date(), updatedAt: new Date() };
+          inMemoryRecords.set(data.id, record);
+          return record;
+        }),
+        findUnique: vi.fn(async ({ where }: any) => {
+          return inMemoryRecords.get(where.id) || null;
+        }),
+        update: vi.fn(async ({ where, data }: any) => {
+          const existing = inMemoryRecords.get(where.id);
+          if (!existing) throw new Error("Record not found");
+          const updated = { ...existing, ...data, updatedAt: new Date() };
+          inMemoryRecords.set(where.id, updated);
+          return updated;
+        }),
+        updateMany: vi.fn(async ({ where, data }: any) => {
+          const existing = inMemoryRecords.get(where.id);
+          if (!existing) return { count: 0 };
+          let matches = true;
+          if (where.OR) {
+            matches = where.OR.some((condition: any) => {
+              if (condition.status && existing.status === condition.status) {
+                if (condition.lastAttemptAt?.lt) {
+                  return existing.lastAttemptAt < condition.lastAttemptAt.lt;
+                }
+                return true;
+              }
+              return false;
+            });
+          }
+          if (!matches) return { count: 0 };
+          const attempts =
+            typeof data.attempts?.increment === "number"
+              ? (existing.attempts || 0) + data.attempts.increment
+              : existing.attempts;
+          const updated = { ...existing, ...data, attempts, updatedAt: new Date() };
+          inMemoryRecords.set(where.id, updated);
+          return { count: 1 };
+        }),
+        deleteMany: vi.fn(async ({ where }: any) => {
+          if (where?.id?.startsWith) {
+            for (const [key] of inMemoryRecords) {
+              if (key.startsWith(where.id.startsWith)) {
+                inMemoryRecords.delete(key);
+              }
+            }
+          } else {
+            inMemoryRecords.clear();
+          }
+          return { count: 1 };
+        }),
+        count: vi.fn(async ({ where }: any) => {
+          if (where?.id) return inMemoryRecords.has(where.id) ? 1 : 0;
+          return inMemoryRecords.size;
+        }),
+      },
+    },
+  };
+});
 
 // Mock logger
 vi.mock("@/lib/shared/logger", () => ({

@@ -14,7 +14,11 @@ const addToWishlistSchema = z.object({
 export async function GET() {
   const userId = await getCurrentUserId();
   if (!userId) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    return NextResponse.json({
+      items: [],
+      productIds: [],
+      count: 0,
+    });
   }
 
   try {

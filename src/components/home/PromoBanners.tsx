@@ -43,7 +43,7 @@ export function PromoBanners() {
               alt={b.title}
               fill
               className="object-cover object-right opacity-90 transition-transform duration-700 hover:scale-105"
-              sizes="(min-width: 1024px) 33vw, 100vw"
+              sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-100/90 to-transparent" />
           </div>

@@ -79,6 +79,7 @@ export function HeroSection() {
             alt="VAULT Scandinavian Interior"
             fill
             priority
+            fetchPriority="high"
             className="object-cover transition-transform duration-700 hover:scale-105"
             sizes="(min-width: 1024px) 50vw, 100vw"
           />

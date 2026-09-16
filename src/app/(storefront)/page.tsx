@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 60; // Tag-based revalidation
 
+
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-14 sm:gap-20">

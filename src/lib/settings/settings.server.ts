@@ -38,7 +38,7 @@ const SETTINGS_KEY = "store_configuration";
  */
 export async function getStoreSettings(): Promise<StoreSettings> {
   try {
-    const record = await (prisma as any).systemSetting.findUnique({
+    const record = await prisma.systemSetting.findUnique({
       where: { key: SETTINGS_KEY },
     });
 
@@ -65,7 +65,7 @@ export async function getStoreSettings(): Promise<StoreSettings> {
 export async function updateStoreSettings(input: unknown): Promise<StoreSettings> {
   const validated = storeSettingsSchema.parse(input);
 
-  await (prisma as any).systemSetting.upsert({
+  await prisma.systemSetting.upsert({
     where: { key: SETTINGS_KEY },
     create: {
       key: SETTINGS_KEY,

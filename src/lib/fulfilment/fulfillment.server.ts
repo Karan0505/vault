@@ -117,7 +117,11 @@ export async function fulfilOrderItems(params: {
       entityType: "Fulfillment",
       entityId: fulfillment.id,
       action: "create",
-      after: { orderId, trackingNumber, items: items as any },
+      after: {
+        orderId,
+        trackingNumber,
+        items: items.map((i) => ({ orderItemId: i.orderItemId, quantity: i.quantity })),
+      },
     });
 
     return {

@@ -377,7 +377,12 @@ export function UsersClient({ staff, customers }: UsersClientProps) {
                 </label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as any)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "admin" || val === "fulfilment" || val === "support") {
+                      setRole(val);
+                    }
+                  }}
                   className="w-full rounded-xl border border-[#1E293B] bg-[#0B0F19] px-3.5 py-2 font-sans text-xs text-white focus:border-indigo-500 focus:outline-hidden"
                 >
                   <option value="admin">Administrator (Full Access)</option>

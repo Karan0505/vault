@@ -247,7 +247,16 @@ export default async function OrderPage({ params }: OrderPageProps) {
             <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-900">Shipping Address</h3>
             <div className="mt-3 text-xs text-gray-600 space-y-1">
               {(() => {
-                const shippingAddr = (order as any).shippingAddress;
+                const shippingAddr = order.shippingAddress as {
+                  fullName?: string;
+                  address?: string;
+                  apartment?: string;
+                  city?: string;
+                  state?: string;
+                  zip?: string;
+                  country?: string;
+                  phone?: string;
+                } | null;
                 if (shippingAddr && typeof shippingAddr === "object") {
                   return (
                     <>

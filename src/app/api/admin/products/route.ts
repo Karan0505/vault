@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import { productInputSchema } from "@/lib/validation/validation";
 import { createProduct, DuplicateVariantError } from "@/lib/catalogue/products.server";
@@ -7,9 +6,10 @@ import { hasPermission } from "@/lib/auth/permissions";
 import { getStaffActor } from "@/lib/auth/session";
 
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!requireStaff(session?.user.staffRole ?? null)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
