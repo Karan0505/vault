@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ReactDOM from "react-dom";
 import {
   HeroSection,
   TrustBar,
@@ -19,6 +20,8 @@ export const revalidate = 60; // Tag-based revalidation
 
 
 export default function HomePage() {
+  ReactDOM.preconnect("https://images.unsplash.com");
+
   return (
     <div className="flex flex-col gap-14 sm:gap-20">
       {/* 1. Hero Showcase */}
