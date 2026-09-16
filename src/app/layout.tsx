@@ -8,18 +8,21 @@ const display = Fraunces({
   weight: ["400", "500", "600"],
   style: ["normal", "italic"],
   display: "swap",
+  preload: false,
 });
 
 const body = Inter({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
+  preload: true,
 });
 
 const mono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-mono",
   display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = {

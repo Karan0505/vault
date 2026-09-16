@@ -30,7 +30,11 @@ export function CartCountBadge() {
       }
     }
 
-    refresh();
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => refresh());
+    } else {
+      setTimeout(refresh, 100);
+    }
     window.addEventListener(CART_UPDATED_EVENT, refresh);
     return () => {
       cancelled = true;

@@ -53,7 +53,11 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refreshWishlist();
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => refreshWishlist());
+    } else {
+      setTimeout(refreshWishlist, 100);
+    }
   }, [refreshWishlist]);
 
   const isWishlisted = useCallback(
