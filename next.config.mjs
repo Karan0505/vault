@@ -22,6 +22,9 @@ const nextConfig = {
     // Type errors must fail CI. Never ignore build errors.
     ignoreBuildErrors: false,
   },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion", "@stripe/stripe-js"],
+  },
 };
 
 const configWithAnalyzer = withBundleAnalyzer(nextConfig);

@@ -52,7 +52,7 @@ export function HeroSection() {
                   key={i}
                   className="relative h-7 w-7 overflow-hidden rounded-full ring-2 ring-white"
                 >
-                  <Image src={img} alt="Happy customer" fill className="object-cover" />
+                  <Image src={img} alt="Happy customer" fill sizes="28px" className="object-cover" />
                 </div>
               ))}
             </div>
