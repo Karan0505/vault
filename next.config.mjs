@@ -17,7 +17,10 @@ const nextConfig = {
       { protocol: "https", hostname: "*.s3.amazonaws.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
+    minimumCacheTTL: 2592000,
   },
+  compress: true,
+  poweredByHeader: false,
   typescript: {
     // Type errors must fail CI. Never ignore build errors.
     ignoreBuildErrors: false,
