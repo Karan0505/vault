@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useWishlist } from "@/context/WishlistContext";
 
 export function WishlistCountBadge() {
@@ -21,19 +20,14 @@ export function WishlistCountBadge() {
       />
       <span className="hidden sm:inline text-xs font-medium">Wishlist</span>
 
-      <AnimatePresence>
-        {wishlistCount > 0 && (
-          <motion.span
-            key={wishlistCount}
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.6, opacity: 0 }}
-            className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 font-sans text-[10px] font-bold text-white shadow-xs"
-          >
-            {wishlistCount}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {wishlistCount > 0 && (
+        <span
+          key={wishlistCount}
+          className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 font-sans text-[10px] font-bold text-white shadow-xs transition-transform duration-200"
+        >
+          {wishlistCount}
+        </span>
+      )}
     </Link>
   );
 }
