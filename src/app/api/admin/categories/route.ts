@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth/auth";
+import { getStaffActor } from "@/lib/auth/session";
+import { hasPermission } from "@/lib/auth/permissions";
 import { prisma } from "@/lib/db/prisma";
 import { categoryInputSchema } from "@/lib/validation/validation";
 import { revalidateCategory } from "@/lib/validation/revalidate";
 
 export async function GET() {
-  const session = await auth();
-  if (!requireStaff(session?.user.staffRole ?? null)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const categories = await prisma.category.findMany({
@@ -19,8 +21,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (session?.user.staffRole !== "admin") {
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

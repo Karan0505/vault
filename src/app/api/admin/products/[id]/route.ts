@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { auth, requireStaff } from "@/lib/auth/auth";
 import { prisma } from "@/lib/db/prisma";
 import { productInputSchema } from "@/lib/validation/validation";
 import { updateProduct, deleteProduct, DuplicateVariantError } from "@/lib/catalogue/products.server";
@@ -11,9 +10,10 @@ interface RouteParams {
 }
 
 export async function GET(_request: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!requireStaff(session?.user.staffRole ?? null)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const actor = await getStaffActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasPermission(actor.role, "products:write")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const { id } = await params;

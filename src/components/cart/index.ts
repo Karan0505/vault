@@ -1,4 +1,5 @@
 export { CartDrawer } from "./CartDrawer";
+export { ClientCartDrawer } from "./ClientCartDrawer";
 export { CartDrawerProvider, useCartDrawer } from "./CartDrawerContext";
 export { CartLineItem } from "./CartLineItem";
 export { CartPageBody } from "./CartPageBody";

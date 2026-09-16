@@ -566,10 +566,10 @@ export async function handlePaymentFailure(
     await tx.order.update({
       where: { id: order.id },
       data: {
-        status: "failed" as any,
+        status: "failed",
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      } as any,
+      },
     });
 
     if (order.reservations.length > 0) {
@@ -663,10 +663,10 @@ export async function handleCapturedWorkflowFailure(params: {
     await prisma.order.update({
       where: { id: order.id },
       data: {
-        status: "failed" as any,
+        status: "failed",
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      } as any,
+      },
     });
   } else if (!orderWithFailure.failureDetectedAt || !orderWithFailure.failureReason) {
     await prisma.order.update({
@@ -674,7 +674,7 @@ export async function handleCapturedWorkflowFailure(params: {
       data: {
         failureDetectedAt: detectedAt,
         failureReason: reason,
-      } as any,
+      },
     });
   }
 
@@ -722,7 +722,7 @@ export async function handleCapturedWorkflowFailure(params: {
     where: { id: order.id },
     data: {
       refundInitiatedAt: initiatedAt,
-    } as any,
+    },
   });
 
   await prisma.$transaction(async (tx) => {

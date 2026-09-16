@@ -17,22 +17,28 @@ const nextConfig = {
       { protocol: "https", hostname: "*.s3.amazonaws.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
+    minimumCacheTTL: 2592000,
   },
+  compress: true,
+  poweredByHeader: false,
   typescript: {
     // Type errors must fail CI. Never ignore build errors.
     ignoreBuildErrors: false,
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion", "@stripe/stripe-js"],
   },
 };
 
 const configWithAnalyzer = withBundleAnalyzer(nextConfig);
 
-// Sentry's source-map upload only actually does anything with an auth
-// token + org/project configured (CI secrets, not committed) — without
-// them this wrapper is a harmless no-op, consistent with every other
-// optional integration in this project being safe to run unconfigured.
-export default withSentryConfig(configWithAnalyzer, {
-  silent: true,
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  disableLogger: true,
-});
+const isSentryConfigured = Boolean(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN);
+
+export default isSentryConfigured
+  ? withSentryConfig(configWithAnalyzer, {
+      silent: true,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      disableLogger: true,
+    })
+  : configWithAnalyzer;

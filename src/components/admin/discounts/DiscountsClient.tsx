@@ -346,7 +346,12 @@ export function DiscountsClient({ discounts, stats }: DiscountsClientProps) {
                   </label>
                   <select
                     value={type}
-                    onChange={(e) => setType(e.target.value as any)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "percentage" || val === "fixed_amount" || val === "free_shipping") {
+                        setType(val);
+                      }
+                    }}
                     className="w-full rounded-xl border border-[#1E293B] bg-[#0B0F19] px-3.5 py-2 font-sans text-xs text-white focus:border-indigo-500 focus:outline-hidden"
                   >
                     <option value="percentage">Percentage (%)</option>

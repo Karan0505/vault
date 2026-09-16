@@ -3,6 +3,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { formatMoney } from "@/lib/payments/money";
 import { logger } from "@/lib/shared/logger";
@@ -84,12 +85,12 @@ export async function claimNotificationForDispatch(params: {
         status: "dispatching",
         attempts: 1,
         lastAttemptAt: now,
-        payload: params.payload ? (params.payload as any) : undefined,
+        payload: params.payload ? (params.payload as Prisma.InputJsonValue) : undefined,
       },
     });
     return true;
-  } catch (err: any) {
-    if (err?.code === "P2002") {
+  } catch (err: unknown) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       const updated = await prisma.notificationRecord.updateMany({
         where: {
           id: params.id,

@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { Package, Truck, CheckCircle2, Search, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
+export interface FulfillmentAddress {
+  fullName?: string;
+  address?: string;
+  apartment?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  country?: string;
+  phone?: string;
+}
+
 export interface FulfillmentOrder {
   id: string;
   number: string;
@@ -12,7 +23,7 @@ export interface FulfillmentOrder {
   status: string;
   totalAmount: string;
   createdAt: string;
-  shippingAddress: any;
+  shippingAddress?: FulfillmentAddress | null;
   items: Array<{
     id: string;
     titleSnapshot: string;

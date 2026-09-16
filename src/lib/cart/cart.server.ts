@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { randomUUID } from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 
 const CART_COOKIE = "vault_cart_token";
@@ -58,8 +59,12 @@ export async function getOrCreateCart(userId: string | null): Promise<{ id: stri
 
       try {
         return await prisma.cart.create({ data: { userId } });
-      } catch (err: any) {
-        if (err?.code !== "P2003") {
+      } catch (err: unknown) {
+        if (err instanceof Prisma.PrismaClientKnownRequestError) {
+          if (err.code !== "P2003") {
+            throw err;
+          }
+        } else {
           throw err;
         }
         // Stale or deleted user during race condition: fallback to guest cart

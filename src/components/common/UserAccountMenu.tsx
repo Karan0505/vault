@@ -67,7 +67,11 @@ export function UserAccountMenu() {
       }
     }
 
-    checkAuth();
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      window.requestIdleCallback(() => checkAuth());
+    } else {
+      setTimeout(checkAuth, 100);
+    }
 
     // Listen for outside clicks to close dropdown
     function handleClickOutside(e: MouseEvent) {

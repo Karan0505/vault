@@ -18,6 +18,7 @@ vi.mock("@/lib/db/prisma", () => {
         findFirst: vi.fn(),
         findUnique: vi.fn(),
         findFirstOrThrow: vi.fn(),
+        findUnique: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
         updateMany: vi.fn(),
@@ -32,6 +33,8 @@ vi.mock("@/lib/db/prisma", () => {
           address: {
             findMany: vi.fn(),
             findFirst: vi.fn(),
+            findFirstOrThrow: vi.fn(),
+
             findUnique: vi.fn(),
             create: vi.fn(),
             update: vi.fn(),

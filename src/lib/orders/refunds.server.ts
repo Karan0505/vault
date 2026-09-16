@@ -135,7 +135,7 @@ export async function createItemizedRefund(params: {
     let orderStatus: OrderStatus = order.status as OrderStatus;
     if (targetStatus) {
       assertTransition(order.status as OrderStatus, targetStatus);
-      await tx.order.update({ where: { id: orderId }, data: { status: targetStatus as any } });
+      await tx.order.update({ where: { id: orderId }, data: { status: targetStatus } });
       orderStatus = targetStatus;
     } else if (isFullRefund) {
       assertTransition(order.status as OrderStatus, "refunded");
@@ -148,7 +148,14 @@ export async function createItemizedRefund(params: {
       entityType: "Refund",
       entityId: refund.id,
       action: "refund",
-      after: { orderId, amount: totalRefundAmount, restock, items: items as any, isFullRefund, orderStatus },
+      after: {
+        orderId,
+        amount: totalRefundAmount,
+        restock,
+        items: items.map((i) => ({ orderItemId: i.orderItemId, quantity: i.quantity })),
+        isFullRefund,
+        orderStatus,
+      },
     });
 
     return { refundId: refund.id, orderStatus };

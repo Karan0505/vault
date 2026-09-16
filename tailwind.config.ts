@@ -77,13 +77,18 @@ const config: Config = {
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         shimmer: {
-          "0%": { backgroundPosition: "-200% 0" },
-          "100%": { backgroundPosition: "200% 0" },
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        truck: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(3px)" },
         },
       },
       animation: {
         "fade-up": "fade-up 0.5s cubic-bezier(0.16,1,0.3,1) both",
-        shimmer: "shimmer 2.4s linear infinite",
+        shimmer: "shimmer 2s infinite linear",
+        truck: "truck 1.6s ease-in-out infinite",
       },
     },
   },

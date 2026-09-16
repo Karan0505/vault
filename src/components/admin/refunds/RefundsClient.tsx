@@ -97,7 +97,18 @@ export function RefundsClient({ refunds, eligibleOrders, stats }: RefundsClientP
     setActionSuccess(null);
 
     try {
-      let payload: any;
+      let payload:
+        | {
+            kind: "itemized";
+            items: Array<{ orderItemId: string; quantity: number }>;
+            reason?: string;
+            restock: boolean;
+          }
+        | {
+            kind: "goodwill";
+            amount: number;
+            reason?: string;
+          };
       if (refundKind === "itemized") {
         const itemsToRefund = Object.entries(itemQuantities)
           .filter(([_, qty]) => qty > 0)

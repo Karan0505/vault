@@ -1,4 +1,5 @@
 import NextAuth from "next-auth";
+import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import type { StaffRole } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
@@ -25,8 +26,44 @@ declare module "next-auth" {
   }
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: "jwt" },
+export async function authorizeUser(credentials: Record<string, unknown> | undefined) {
+  const email = credentials?.email;
+  const password = credentials?.password;
+
+  if (typeof email !== "string" || !email.includes("@")) {
+    return null;
+  }
+
+  if (typeof password !== "string" || password.length === 0) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
+
+  if (!user || !user.passwordHash) {
+    return null;
+  }
+
+  const isMatch = await verifyPassword(password, user.passwordHash);
+  if (!isMatch) {
+    return null;
+  }
+
+  const effectiveRole = getEffectiveRole(user);
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    staffRole: user.staffRole,
+    role: effectiveRole,
+  };
+}
+
+export const authConfig: NextAuthConfig = {
+  session: { strategy: "jwt" as const },
   pages: {
     signIn: "/login",
   },
@@ -38,111 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
-        const email = credentials?.email;
-        const password = credentials?.password;
-
-        if (typeof email !== "string" || !email.includes("@")) {
-          return null;
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase().trim() },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        // If password is provided, verify against passwordHash
-        if (typeof password === "string" && password.length > 0) {
-          if (!user.passwordHash) {
-            // Nullable password safety: Account has no password configured
-            return null;
-          }
-          const isMatch = await verifyPassword(password, user.passwordHash);
-          if (!isMatch) {
-            return null;
-          }
-        } else if (user.passwordHash) {
-          // If the user has a password set, empty password input is rejected
-          return null;
-        }
-
-        const effectiveRole = getEffectiveRole(user);
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          staffRole: user.staffRole,
-          role: effectiveRole,
-        };
-      },
-    }),
-    // Preserved for backwards compatibility with existing staff sign-in routes
-    Credentials({
-      id: "staff",
-      name: "Staff sign-in",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      authorize: async (credentials) => {
-        const email = credentials?.email;
-        const password = credentials?.password;
-
-        if (typeof email !== "string") return null;
-
-        const user = await prisma.user.findUnique({
-          where: { email: email.toLowerCase().trim() },
-        });
-
-        if (!user || !user.staffRole) return null;
-
-        if (typeof password === "string" && password.length > 0 && user.passwordHash) {
-          const isMatch = await verifyPassword(password, user.passwordHash);
-          if (!isMatch) return null;
-        }
-
-        const effectiveRole = getEffectiveRole(user);
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          staffRole: user.staffRole,
-          role: effectiveRole,
-        };
-      },
-    }),
-    // Preserved for backwards compatibility with guest-cart customer upsert flow
-    Credentials({
-      id: "customer",
-      name: "Customer sign-in",
-      credentials: {
-        email: { label: "Email", type: "email" },
-      },
-      authorize: async (credentials) => {
-        const email = credentials?.email;
-        if (typeof email !== "string" || !email.includes("@")) return null;
-
-        const user = await prisma.user.upsert({
-          where: { email: email.toLowerCase().trim() },
-          update: {},
-          create: { email: email.toLowerCase().trim() },
-        });
-
-        const effectiveRole = getEffectiveRole(user);
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          staffRole: user.staffRole,
-          role: effectiveRole,
-        };
-      },
+      authorize: (credentials) => authorizeUser(credentials),
     }),
   ],
   callbacks: {
@@ -163,7 +96,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
   },
-});
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
 
 export const STAFF_ROLES: readonly StaffRole[] = ["admin", "fulfilment", "support"];
 

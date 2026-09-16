@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { formatMoney } from "@/lib/payments/money";
-import { FulfillmentClient, type FulfillmentOrder } from "@/components/admin/fulfillment/FulfillmentClient";
+import { FulfillmentClient, type FulfillmentOrder, type FulfillmentAddress } from "@/components/admin/fulfillment/FulfillmentClient";
 
 export default async function AdminFulfillmentPage() {
   const orders = await prisma.order.findMany({
@@ -24,7 +24,7 @@ export default async function AdminFulfillmentPage() {
     status: o.status,
     totalAmount: formatMoney({ amount: o.totalAmount, currency: o.currency || "USD" }),
     createdAt: o.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    shippingAddress: o.shippingAddress,
+    shippingAddress: (o.shippingAddress as FulfillmentAddress | null) ?? null,
     items: o.items.map((it) => ({
       id: it.id,
       titleSnapshot: it.titleSnapshot,

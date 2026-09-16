@@ -148,7 +148,12 @@ export function SettingsClient({ initialSettings, stripeStatus }: SettingsClient
               </label>
               <select
                 value={settings.currency}
-                onChange={(e) => setSettings({ ...settings, currency: e.target.value as any })}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "USD" || val === "CAD" || val === "GBP" || val === "EUR" || val === "INR" || val === "AUD") {
+                    setSettings({ ...settings, currency: val });
+                  }
+                }}
                 className="w-full rounded-xl border border-[#1E293B] bg-[#0B0F19] px-3.5 py-2 font-sans text-xs text-white focus:border-indigo-500 focus:outline-hidden"
               >
                 <option value="USD">USD ($) — United States Dollar</option>

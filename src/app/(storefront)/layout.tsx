@@ -1,5 +1,5 @@
 import { TopAnnouncementBar, Header, Footer } from "@/components/common";
-import { CartDrawerProvider, CartDrawer } from "@/components/cart";
+import { CartDrawerProvider, ClientCartDrawer } from "@/components/cart";
 import { WishlistProvider } from "@/context/WishlistContext";
 
 export default function StorefrontLayout({ children }: { children: React.ReactNode }) {
@@ -12,7 +12,7 @@ export default function StorefrontLayout({ children }: { children: React.ReactNo
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-6 sm:py-8">{children}</main>
           <Footer />
         </div>
-        <CartDrawer />
+        <ClientCartDrawer />
       </CartDrawerProvider>
     </WishlistProvider>
   );

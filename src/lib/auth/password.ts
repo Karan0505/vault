@@ -20,6 +20,10 @@ export function validatePassword(password: string): PasswordValidationResult {
     errors.push("Password must be at least 8 characters.");
   }
 
+  if (password && Buffer.byteLength(password, "utf8") > 72) {
+    errors.push("Password must not exceed 72 bytes.");
+  }
+
   if (!/\d/.test(password || "")) {
     errors.push("Password must contain at least one number.");
   }
