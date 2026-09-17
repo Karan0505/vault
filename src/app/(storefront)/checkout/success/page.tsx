@@ -127,28 +127,28 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       <PaymentStatusPoller orderId={order.id} initialStatus={order.status} />
 
       {/* Order Summary Card */}
-      <div className="w-full rounded-3xl border border-gray-200/80 bg-white p-6 sm:p-8 shadow-xs text-left">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div className="w-full rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-6 sm:p-8 shadow-xs text-left">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-ink-800 pb-4">
           <div>
-            <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-500">
+            <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Order Summary
             </h3>
-            <p className="font-sans text-base font-bold text-gray-900">#{order.number}</p>
+            <p className="font-sans text-base font-bold text-gray-900 dark:text-white">#{order.number}</p>
           </div>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 dark:text-gray-400">
             {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
         </div>
 
         {/* Items List */}
-        <div className="flex flex-col divide-y divide-gray-100 py-2">
+        <div className="flex flex-col divide-y divide-gray-100 dark:divide-ink-800 py-2">
           {order.items.map((item) => {
             const imageUrl = item.variant?.product?.media?.[0]?.url ?? null;
 
             return (
               <div key={item.id} className="flex items-center justify-between py-3.5 text-xs">
                 <div className="flex items-center gap-3">
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200">
+                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-ink-800 border border-gray-200 dark:border-ink-700">
                     {imageUrl ? (
                       <Image
                         src={imageUrl}
@@ -158,14 +158,14 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                         className="object-cover object-center"
                       />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-400">
+                      <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-400 dark:text-gray-500">
                         📦
                       </div>
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5">
-                    <span className="font-semibold text-gray-900">{item.titleSnapshot}</span>
-                    <span className="text-gray-500 font-mono text-[11px]">
+                    <span className="font-semibold text-gray-900 dark:text-white">{item.titleSnapshot}</span>
+                    <span className="text-gray-500 dark:text-gray-400 font-mono text-[11px]">
                       {item.optionsSnapshot && typeof item.optionsSnapshot === "object"
                         ? Object.values(item.optionsSnapshot as Record<string, string>).join(" / ") + " · "
                         : ""}
@@ -173,7 +173,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
                     </span>
                   </div>
                 </div>
-                <span className="font-mono font-medium text-gray-900">
+                <span className="font-mono font-medium text-gray-900 dark:text-white">
                   {formatMoney({ amount: item.lineTotal, currency })}
                 </span>
               </div>
@@ -182,32 +182,32 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
         </div>
 
         {/* Pricing Breakdown */}
-        <div className="flex flex-col gap-2 border-t border-gray-100 pt-4 text-xs text-gray-600">
+        <div className="flex flex-col gap-2 border-t border-gray-100 dark:border-ink-800 pt-4 text-xs text-gray-600 dark:text-gray-400">
           <div className="flex justify-between">
             <span>Subtotal</span>
-            <span className="font-mono font-medium text-gray-900">
+            <span className="font-mono font-medium text-gray-900 dark:text-white">
               {formatMoney({ amount: order.subtotalAmount, currency })}
             </span>
           </div>
           {order.discountAmount > 0 && (
-            <div className="flex justify-between text-emerald-600 font-medium">
+            <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium">
               <span>Discount</span>
               <span className="font-mono">−{formatMoney({ amount: order.discountAmount, currency })}</span>
             </div>
           )}
           <div className="flex justify-between">
             <span>Shipping</span>
-            <span className="font-mono font-medium text-gray-900">
+            <span className="font-mono font-medium text-gray-900 dark:text-white">
               {order.shippingAmount === 0 ? "$0.00" : formatMoney({ amount: order.shippingAmount, currency })}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Tax</span>
-            <span className="font-mono font-medium text-gray-900">
+            <span className="font-mono font-medium text-gray-900 dark:text-white">
               {formatMoney({ amount: order.taxAmount, currency })}
             </span>
           </div>
-          <div className="flex justify-between border-t border-gray-200 pt-3 text-sm font-bold text-gray-900">
+          <div className="flex justify-between border-t border-gray-200 dark:border-ink-800 pt-3 text-sm font-bold text-gray-900 dark:text-white">
             <span>Total Paid</span>
             <span className="font-mono text-base">{formatMoney({ amount: order.totalAmount, currency })}</span>
           </div>
@@ -218,14 +218,14 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
       <div className="flex w-full flex-col sm:flex-row items-center justify-center gap-3">
         <Link
           href={`/orders/${order.id}`}
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-semibold text-white shadow-xs transition-all hover:bg-gray-800 active:scale-[0.98]"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-black dark:bg-white px-6 py-3 text-sm font-semibold text-white dark:text-black shadow-xs transition-all hover:bg-gray-800 dark:hover:bg-gray-200 active:scale-[0.98]"
         >
           <span>Track this order</span>
           <ArrowRight size={15} />
         </Link>
         <Link
           href="/"
-          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-xs transition-all hover:bg-gray-50 hover:text-black hover:border-gray-300"
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-xs transition-all hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white hover:border-gray-300 dark:hover:border-ink-600"
         >
           <ShoppingBag size={15} />
           <span>Continue shopping</span>

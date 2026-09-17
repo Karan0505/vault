@@ -114,10 +114,10 @@ export function VariantOptionGroup({
             className={cn(
               "flex h-10 min-w-11 items-center justify-center rounded-xl border px-3.5 text-xs font-semibold transition-all duration-150",
               isChosen
-                ? "border-black bg-black text-white shadow-xs"
-                : "border-gray-200 bg-white text-gray-800 hover:border-gray-400 hover:bg-gray-50",
+                ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-xs"
+                : "border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-gray-800 dark:text-gray-200 hover:border-gray-400 dark:hover:border-ink-500 hover:bg-gray-50 dark:hover:bg-ink-800",
               !isSelectable &&
-                "cursor-not-allowed border-gray-200 bg-gray-50 text-gray-400 line-through"
+                "cursor-not-allowed border-gray-200 dark:border-ink-800 bg-gray-50 dark:bg-ink-800/40 text-gray-400 dark:text-gray-500 line-through"
             )}
           >
             {value}

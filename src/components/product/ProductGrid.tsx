@@ -11,8 +11,8 @@ export function ProductGrid({
   if (products.length === 0) {
     return (
       <div className="ledger-rule flex flex-col items-center gap-2 py-24 text-center">
-        <p className="font-display text-lg text-ink-200">Nothing on the shelf yet</p>
-        <p className="max-w-sm text-sm text-ink-500">
+        <p className="font-display text-lg text-gray-800 dark:text-gray-200">Nothing on the shelf yet</p>
+        <p className="max-w-sm text-sm text-gray-500 dark:text-gray-400">
           Publish a product from the ops console and it will appear here within seconds.
         </p>
       </div>

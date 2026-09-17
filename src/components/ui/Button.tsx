@@ -10,11 +10,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary: "bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-sm",
-  dark: "bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 shadow-sm",
-  secondary: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 border border-neutral-200",
-  outline: "bg-white text-neutral-900 hover:bg-neutral-50 border border-neutral-300",
-  ghost: "bg-transparent text-neutral-700 hover:bg-neutral-100",
+  primary: "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:bg-neutral-900 dark:active:bg-neutral-300 shadow-sm",
+  dark: "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200 active:bg-neutral-900 dark:active:bg-neutral-300 shadow-sm",
+  secondary: "bg-neutral-100 dark:bg-ink-800 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-200 dark:hover:bg-ink-700 border border-neutral-200 dark:border-ink-700",
+  outline: "bg-white dark:bg-ink-900 text-neutral-900 dark:text-neutral-100 hover:bg-neutral-50 dark:hover:bg-ink-800 border border-neutral-300 dark:border-ink-700",
+  ghost: "bg-transparent text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-ink-800 hover:text-neutral-900 dark:hover:text-white",
   danger: "bg-rose-600 text-white hover:bg-rose-500",
   admin: "bg-indigo-600 text-white hover:bg-indigo-500 shadow-sm",
 };

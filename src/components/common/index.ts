@@ -4,3 +4,4 @@ export { TopAnnouncementBar } from "./TopAnnouncementBar";
 export { HeaderSearch } from "./HeaderSearch";
 export { CategoryHero } from "./CategoryHero";
 export { UserAccountMenu } from "./UserAccountMenu";
+export { ThemeToggle } from "./ThemeToggle";

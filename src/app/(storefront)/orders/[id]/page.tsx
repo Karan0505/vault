@@ -70,25 +70,25 @@ export default async function OrderPage({ params }: OrderPageProps) {
       <OrderLiveTracker orderId={order.id} initialStatus={order.status} />
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs text-gray-500">
-        <Link href="/" className="hover:text-black transition-colors">
+      <nav className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <Link href="/" className="hover:text-black dark:hover:text-white transition-colors">
           Home
         </Link>
-        <ChevronRight size={12} className="text-gray-400" />
-        <Link href="/account" className="hover:text-black transition-colors">
+        <ChevronRight size={12} className="text-gray-400 dark:text-gray-500" />
+        <Link href="/account" className="hover:text-black dark:hover:text-white transition-colors">
           Orders
         </Link>
-        <ChevronRight size={12} className="text-gray-400" />
-        <span className="font-medium text-gray-900">#{order.number}</span>
+        <ChevronRight size={12} className="text-gray-400 dark:text-gray-500" />
+        <span className="font-medium text-gray-900 dark:text-white">#{order.number}</span>
       </nav>
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-200 dark:border-ink-800 pb-6">
         <div>
-          <h1 className="font-sans text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h1 className="font-sans text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
             Order #{order.number}
           </h1>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Placed on {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} at {order.createdAt.toLocaleTimeString("en-US", { hour: "numeric", minute: "numeric" })}
           </p>
         </div>
@@ -97,10 +97,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
           <span
             className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-semibold border ${
               isFailed
-                ? "bg-rose-50 text-rose-700 border-rose-200"
+                ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800"
                 : isCancelled
-                ? "bg-gray-100 text-gray-700 border-gray-300"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                ? "bg-gray-100 dark:bg-ink-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-ink-700"
+                : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
             }`}
           >
             <span
@@ -115,10 +115,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
 
       {/* Visual 4-Step Progress Tracker */}
       {!isFailed && !isCancelled && (
-        <div className="rounded-3xl border border-gray-200/80 bg-gray-50/50 p-6 sm:p-8">
+        <div className="rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-gray-50/50 dark:bg-ink-900/50 p-6 sm:p-8">
           <div className="relative flex items-center justify-between">
             {/* Connector line */}
-            <div className="absolute top-4 left-6 right-6 h-0.5 bg-gray-200 -z-0" />
+            <div className="absolute top-4 left-6 right-6 h-0.5 bg-gray-200 dark:bg-ink-800 -z-0" />
             <div
               className="absolute top-4 left-6 h-0.5 bg-emerald-500 transition-all duration-500 -z-0"
               style={{
@@ -136,16 +136,16 @@ export default async function OrderPage({ params }: OrderPageProps) {
                     className={`flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all ${
                       isCompleted
                         ? "border-emerald-500 bg-emerald-500 text-white shadow-xs"
-                        : "border-gray-300 bg-white text-gray-400"
+                        : "border-gray-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-gray-400 dark:text-gray-500"
                     }`}
                   >
                     {isCompleted ? <Check size={14} strokeWidth={3} /> : <span className="text-xs">{idx + 1}</span>}
                   </div>
                   <div className="text-center">
-                    <p className={`text-xs font-bold ${isCurrent || isCompleted ? "text-gray-900" : "text-gray-400"}`}>
+                    <p className={`text-xs font-bold ${isCurrent || isCompleted ? "text-gray-900 dark:text-white" : "text-gray-400 dark:text-gray-500"}`}>
                       {step.label}
                     </p>
-                    <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5">
                       {order.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </p>
                   </div>
@@ -158,22 +158,22 @@ export default async function OrderPage({ params }: OrderPageProps) {
 
       {/* Shipment & Tracking Details (when fulfilled/shipped) */}
       {latestFulfillment && (
-        <div className="rounded-3xl border border-blue-200/80 bg-blue-50/50 p-6 shadow-xs">
+        <div className="rounded-3xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30 p-6 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 border border-blue-500/20">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 dark:border-blue-500/30">
                 <Truck size={20} />
               </span>
               <div>
-                <h3 className="text-sm font-bold text-gray-900">Shipment on the Way</h3>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Carrier: <span className="font-semibold text-gray-800">{latestFulfillment.carrier || "VAULT Express"}</span>
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Shipment on the Way</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
+                  Carrier: <span className="font-semibold text-gray-800 dark:text-gray-200">{latestFulfillment.carrier || "VAULT Express"}</span>
                 </p>
               </div>
             </div>
             <div className="flex flex-col sm:items-end">
-              <span className="text-[11px] text-gray-500 uppercase tracking-wider font-mono">Tracking Number</span>
-              <span className="font-mono text-sm font-bold text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-lg border border-blue-200 mt-0.5">
+              <span className="text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-mono">Tracking Number</span>
+              <span className="font-mono text-sm font-bold text-blue-700 dark:text-blue-300 bg-blue-100/80 dark:bg-blue-900/50 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 mt-0.5">
                 {latestFulfillment.trackingNumber}
               </span>
             </div>
@@ -195,18 +195,18 @@ export default async function OrderPage({ params }: OrderPageProps) {
       {/* Grid for Items & Details */}
       <div className="grid gap-8 sm:grid-cols-12">
         {/* Items List */}
-        <div className="rounded-3xl border border-gray-200/80 bg-white p-6 sm:col-span-7 shadow-xs">
-          <h3 className="font-sans text-sm font-bold uppercase tracking-wider text-gray-900 pb-4 border-b border-gray-100">
+        <div className="rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-6 sm:col-span-7 shadow-xs">
+          <h3 className="font-sans text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white pb-4 border-b border-gray-100 dark:border-ink-800">
             Items
           </h3>
-          <div className="flex flex-col divide-y divide-gray-100">
+          <div className="flex flex-col divide-y divide-gray-100 dark:divide-ink-800">
             {order.items.map((item) => {
               const imageUrl = item.variant?.product?.media?.[0]?.url ?? null;
 
               return (
                 <div key={item.id} className="flex items-center justify-between py-4 text-xs">
                   <div className="flex items-center gap-3">
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200">
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-ink-800 border border-gray-200 dark:border-ink-700">
                       {imageUrl ? (
                         <Image
                           src={imageUrl}
@@ -216,14 +216,14 @@ export default async function OrderPage({ params }: OrderPageProps) {
                           className="object-cover object-center"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-400 dark:text-gray-500">
                           📦
                         </div>
                       )}
                     </div>
                     <div>
-                      <p className="font-semibold text-gray-900">{item.titleSnapshot}</p>
-                      <p className="text-[11px] text-gray-500 font-mono mt-0.5">
+                      <p className="font-semibold text-gray-900 dark:text-white">{item.titleSnapshot}</p>
+                      <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
                         {item.optionsSnapshot && typeof item.optionsSnapshot === "object"
                           ? Object.values(item.optionsSnapshot as Record<string, string>).join(" / ") + " · "
                           : ""}
@@ -231,7 +231,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
                       </p>
                     </div>
                   </div>
-                  <span className="font-mono font-bold text-gray-900">
+                  <span className="font-mono font-bold text-gray-900 dark:text-white">
                     {formatMoney({ amount: item.lineTotal, currency: order.currency })}
                   </span>
                 </div>
@@ -243,9 +243,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
         {/* Shipping Address & Cost summary */}
         <div className="flex flex-col gap-6 sm:col-span-5">
           {/* Address card */}
-          <div className="rounded-3xl border border-gray-200/80 bg-white p-6 shadow-xs">
-            <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-900">Shipping Address</h3>
-            <div className="mt-3 text-xs text-gray-600 space-y-1">
+          <div className="rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-6 shadow-xs">
+            <h3 className="font-sans text-xs font-bold uppercase tracking-wider text-gray-900 dark:text-white">Shipping Address</h3>
+            <div className="mt-3 text-xs text-gray-600 dark:text-gray-300 space-y-1">
               {(() => {
                 const shippingAddr = order.shippingAddress as {
                   fullName?: string;
@@ -260,7 +260,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
                 if (shippingAddr && typeof shippingAddr === "object") {
                   return (
                     <>
-                      <p className="font-semibold text-gray-900">{shippingAddr.fullName || order.email}</p>
+                      <p className="font-semibold text-gray-900 dark:text-white">{shippingAddr.fullName || order.email}</p>
                       <p>
                         {shippingAddr.address}
                         {shippingAddr.apartment ? `, ${shippingAddr.apartment}` : ""}
@@ -270,15 +270,15 @@ export default async function OrderPage({ params }: OrderPageProps) {
                       </p>
                       <p>{shippingAddr.country}</p>
                       {shippingAddr.phone && (
-                        <p className="text-[11px] text-gray-400 font-mono">Phone: {shippingAddr.phone}</p>
+                        <p className="text-[11px] text-gray-400 dark:text-gray-500 font-mono">Phone: {shippingAddr.phone}</p>
                       )}
                     </>
                   );
                 }
                 return (
                   <>
-                    <p className="font-semibold text-gray-900">{order.email}</p>
-                    <p className="text-gray-500">Standard Delivery</p>
+                    <p className="font-semibold text-gray-900 dark:text-white">{order.email}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Standard Delivery</p>
                   </>
                 );
               })()}
@@ -286,26 +286,26 @@ export default async function OrderPage({ params }: OrderPageProps) {
           </div>
 
           {/* Payment summary card */}
-          <div className="rounded-3xl border border-gray-200/80 bg-gray-50 p-6 shadow-xs font-sans text-xs text-gray-600 space-y-2.5">
+          <div className="rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-gray-50 dark:bg-ink-900/50 p-6 shadow-xs font-sans text-xs text-gray-600 dark:text-gray-400 space-y-2.5">
             <div className="flex justify-between">
               <span>Subtotal</span>
-              <span className="font-semibold text-gray-900">{formatMoney({ amount: order.subtotalAmount, currency: order.currency })}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{formatMoney({ amount: order.subtotalAmount, currency: order.currency })}</span>
             </div>
             {order.discountAmount > 0 && (
-              <div className="flex justify-between text-emerald-600 font-semibold">
+              <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
                 <span>Discount</span>
                 <span>−{formatMoney({ amount: order.discountAmount, currency: order.currency })}</span>
               </div>
             )}
             <div className="flex justify-between">
               <span>Shipping</span>
-              <span className="font-semibold text-gray-900">{order.shippingAmount === 0 ? "$0.00" : formatMoney({ amount: order.shippingAmount, currency: order.currency })}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{order.shippingAmount === 0 ? "$0.00" : formatMoney({ amount: order.shippingAmount, currency: order.currency })}</span>
             </div>
             <div className="flex justify-between">
               <span>Tax</span>
-              <span className="font-semibold text-gray-900">{formatMoney({ amount: order.taxAmount, currency: order.currency })}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{formatMoney({ amount: order.taxAmount, currency: order.currency })}</span>
             </div>
-            <div className="flex justify-between border-t border-gray-200 pt-2.5 text-sm font-bold text-gray-900">
+            <div className="flex justify-between border-t border-gray-200 dark:border-ink-800 pt-2.5 text-sm font-bold text-gray-900 dark:text-white">
               <span>Total</span>
               <span>{formatMoney({ amount: order.totalAmount, currency: order.currency })}</span>
             </div>

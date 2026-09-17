@@ -76,11 +76,11 @@ export function CartPageBody() {
   if (cart.lines.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 py-16 text-center">
-        <p className="font-sans text-lg font-semibold text-gray-800">Your cart is empty</p>
-        <p className="text-xs text-gray-500">Looks like you haven&apos;t added anything yet.</p>
+        <p className="font-sans text-lg font-semibold text-gray-800 dark:text-white">Your cart is empty</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Looks like you haven&apos;t added anything yet.</p>
         <Link
           href="/"
-          className="mt-3 inline-flex items-center rounded-full bg-black px-5 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 transition-colors"
+          className="mt-3 inline-flex items-center rounded-full bg-black dark:bg-white px-5 py-2.5 text-xs font-semibold text-white dark:text-black shadow-xs hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
         >
           Explore Catalog →
         </Link>
@@ -97,14 +97,14 @@ export function CartPageBody() {
   return (
     <div className="flex flex-col gap-6">
       {/* Cart Lines */}
-      <div className="flex flex-col divide-y divide-gray-100">
+      <div className="flex flex-col divide-y divide-gray-100 dark:divide-ink-800">
         {cart.lines.map((line) => (
           <CartLineItem key={line.itemId} line={line} onChanged={refresh} />
         ))}
       </div>
 
       {/* Discount form */}
-      <div className="border-t border-gray-100 pt-4">
+      <div className="border-t border-gray-100 dark:border-ink-800 pt-4">
         <DiscountCodeForm
           onApplied={(code, preview) =>
             setDiscount({
@@ -117,10 +117,10 @@ export function CartPageBody() {
       </div>
 
       {/* Price breakdown */}
-      <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 p-4 font-sans text-xs text-gray-600">
+      <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 dark:bg-ink-800/60 border border-gray-100 dark:border-ink-700/50 p-4 font-sans text-xs text-gray-600 dark:text-gray-300">
         <div className="flex justify-between">
           <span>Subtotal</span>
-          <span className="font-semibold text-gray-900">{formatMoney({ amount: cart.subtotal, currency })}</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{formatMoney({ amount: cart.subtotal, currency })}</span>
         </div>
         <AnimatePresence>
           {discount && (
@@ -128,7 +128,7 @@ export function CartPageBody() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex justify-between text-emerald-600 font-medium"
+              className="flex justify-between text-emerald-600 dark:text-emerald-400 font-medium"
             >
               <span>Discount ({discount.code})</span>
               <span>
@@ -139,15 +139,15 @@ export function CartPageBody() {
         </AnimatePresence>
         <div className="flex justify-between">
           <span>Shipping</span>
-          <span className="font-semibold text-gray-900">
+          <span className="font-semibold text-gray-900 dark:text-white">
             {shippingAmount === 0 ? "$0.00" : formatMoney({ amount: shippingAmount, currency })}
           </span>
         </div>
         <div className="flex justify-between">
           <span>Tax</span>
-          <span className="font-semibold text-gray-900">$0.00</span>
+          <span className="font-semibold text-gray-900 dark:text-white">$0.00</span>
         </div>
-        <div className="flex justify-between border-t border-gray-200 pt-2.5 font-sans text-sm font-bold text-gray-900">
+        <div className="flex justify-between border-t border-gray-200 dark:border-ink-700 pt-2.5 font-sans text-sm font-bold text-gray-900 dark:text-white">
           <span>Total</span>
           <span>{formatMoney({ amount: total, currency })}</span>
         </div>
@@ -158,11 +158,11 @@ export function CartPageBody() {
         type="button"
         disabled={!canCheckout || isRedirecting}
         onClick={handleCheckout}
-        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-neutral-800 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] cursor-pointer"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-black dark:bg-white py-3.5 text-sm font-semibold text-white dark:text-black shadow-sm transition-all hover:bg-neutral-800 dark:hover:bg-gray-200 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] cursor-pointer"
       >
         {isRedirecting ? (
           <>
-            <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white dark:border-black/30 dark:border-t-black animate-spin" />
             <span>Checking authentication...</span>
           </>
         ) : (

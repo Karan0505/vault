@@ -118,19 +118,19 @@ export default async function ProductPage({ params }: ProductPageProps) {
       )}
 
       {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-2 text-xs text-gray-500">
-        <Link href="/" className="hover:text-black transition-colors">
+      <nav className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <Link href="/" className="hover:text-black dark:hover:text-white transition-colors">
           Home
         </Link>
-        <ChevronRight size={12} className="text-gray-400" />
+        <ChevronRight size={12} className="text-gray-400 dark:text-gray-500" />
         <Link
           href={product.category ? `/categories/${product.category.slug}` : "/"}
-          className="hover:text-black transition-colors"
+          className="hover:text-black dark:hover:text-white transition-colors"
         >
           {product.category?.name ?? "Clothing"}
         </Link>
-        <ChevronRight size={12} className="text-gray-400" />
-        <span className="font-medium text-gray-900">{product.title}</span>
+        <ChevronRight size={12} className="text-gray-400 dark:text-gray-500" />
+        <span className="font-medium text-gray-900 dark:text-white">{product.title}</span>
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
@@ -142,11 +142,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
         {/* Right: Product Details & Purchase Form */}
         <div className="flex flex-col gap-6 lg:col-span-5 lg:sticky lg:top-24 lg:self-start">
           <div>
-            <h1 className="font-sans text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+            <h1 className="font-sans text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
               {product.title}
             </h1>
             <div className="mt-3 flex items-center justify-between">
-              <span className="font-sans text-2xl font-bold text-gray-900">
+              <span className="font-sans text-2xl font-bold text-gray-900 dark:text-white">
                 {priceLabel}
               </span>
               {/* Reviews Stars */}
@@ -156,16 +156,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
                     <Star key={i} size={14} className="fill-amber-400" />
                   ))}
                 </div>
-                <span className="font-sans text-xs font-semibold text-gray-500">(128)</span>
+                <span className="font-sans text-xs font-semibold text-gray-500 dark:text-gray-400">(128)</span>
               </div>
             </div>
           </div>
 
           {product.description && (
-            <p className="text-sm leading-relaxed text-gray-600">{product.description}</p>
+            <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{product.description}</p>
           )}
 
-          <div className="h-px bg-gray-200" />
+          <div className="h-px bg-gray-200 dark:bg-ink-800" />
 
           <Suspense fallback={<div className="skeleton h-48 rounded-2xl" />}>
             <VariantSelector

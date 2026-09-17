@@ -71,7 +71,7 @@ export function CartDrawer() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={close}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs"
+            className="fixed inset-0 z-50 bg-black/50 dark:bg-black/70 backdrop-blur-xs"
             aria-hidden
           />
           <motion.div
@@ -83,16 +83,16 @@ export function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-gray-200 bg-white p-6 shadow-2xl"
+            className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col overflow-y-auto border-l border-gray-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-6 shadow-2xl text-gray-900 dark:text-gray-100"
           >
-            <div className="mb-6 flex items-center justify-between border-b border-gray-100 pb-4">
-              <h2 className="font-sans text-lg font-bold text-gray-900">Your Cart</h2>
+            <div className="mb-6 flex items-center justify-between border-b border-gray-100 dark:border-ink-800 pb-4">
+              <h2 className="font-sans text-lg font-bold text-gray-900 dark:text-white">Your Cart</h2>
               <button
                 ref={closeButtonRef}
                 type="button"
                 onClick={close}
                 aria-label="Close cart"
-                className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-black"
+                className="rounded-full p-2 text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white"
               >
                 <X size={18} />
               </button>

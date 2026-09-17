@@ -6,7 +6,7 @@ export default function StorefrontLayout({ children }: { children: React.ReactNo
   return (
     <WishlistProvider>
       <CartDrawerProvider>
-        <div className="flex min-h-screen flex-col bg-white">
+        <div className="flex min-h-screen flex-col bg-white dark:bg-ink-950 text-gray-900 dark:text-gray-100">
           <TopAnnouncementBar />
           <Header />
           <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 py-6 sm:py-8">{children}</main>

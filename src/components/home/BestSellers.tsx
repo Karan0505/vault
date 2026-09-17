@@ -37,7 +37,7 @@ export async function BestSellers() {
           return (
             <div
               key={item.id}
-              className="group relative flex flex-col rounded-2xl border border-gray-200/80 bg-white p-2.5 shadow-2xs transition-all duration-300 hover:border-gray-300 hover:shadow-md"
+              className="group relative flex flex-col rounded-2xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-2.5 shadow-2xs transition-all duration-300 hover:border-gray-300 dark:hover:border-ink-700 hover:shadow-md"
             >
               {/* Wishlist button */}
               <WishlistButton
@@ -53,13 +53,13 @@ export async function BestSellers() {
                   currency: item.currency,
                   totalOnHand: item.totalOnHand,
                 }}
-                className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-600 backdrop-blur-xs transition-all hover:bg-white hover:text-rose-600 shadow-xs"
+                className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 dark:bg-ink-800/90 text-gray-600 dark:text-gray-300 backdrop-blur-xs transition-all hover:bg-white dark:hover:bg-ink-800 hover:text-rose-600 dark:hover:text-rose-400 shadow-xs"
               />
 
               {/* Product Image */}
               <Link
                 href={`/products/${item.slug}`}
-                className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50"
+                className="relative aspect-square w-full overflow-hidden rounded-xl bg-gray-50 dark:bg-ink-800"
               >
                 {item.imageUrl ? (
                   <Image
@@ -70,7 +70,7 @@ export async function BestSellers() {
                     sizes="(min-width: 1024px) 16vw, (min-width: 640px) 33vw, 50vw"
                   />
                 ) : (
-                  <div className="h-full w-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                  <div className="h-full w-full bg-gray-100 dark:bg-ink-800 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
                     No image
                   </div>
                 )}
@@ -80,18 +80,18 @@ export async function BestSellers() {
               <div className="mt-3 flex flex-col gap-1 px-1">
                 <Link
                   href={`/products/${item.slug}`}
-                  className="font-sans text-xs font-bold text-gray-900 hover:underline line-clamp-1"
+                  className="font-sans text-xs font-bold text-gray-900 dark:text-gray-100 hover:underline line-clamp-1"
                 >
                   {item.title}
                 </Link>
 
                 <div className="flex items-center justify-between">
-                  <span className="font-sans text-xs font-extrabold text-gray-900">
+                  <span className="font-sans text-xs font-extrabold text-gray-900 dark:text-white">
                     {priceLabel}
                   </span>
 
                   {item.totalOnHand <= 0 && (
-                    <span className="font-mono text-[10px] font-semibold text-rose-600">
+                    <span className="font-mono text-[10px] font-semibold text-rose-600 dark:text-rose-400">
                       Sold out
                     </span>
                   )}
@@ -103,7 +103,7 @@ export async function BestSellers() {
                     {item.colors.slice(0, 4).map((c, i) => (
                       <span
                         key={i}
-                        className="h-2 w-2 rounded-full border border-black/10 shadow-xs"
+                        className="h-2 w-2 rounded-full border border-black/10 dark:border-white/10 shadow-xs"
                         style={{ backgroundColor: c }}
                       />
                     ))}

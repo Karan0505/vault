@@ -44,7 +44,7 @@ export function PaymentStep({ orderId }: { orderId: string }) {
       <Button type="submit" size="lg" disabled={!stripe || isSubmitting}>
         {isSubmitting ? "Processing…" : "Pay now"}
       </Button>
-      <p className="text-center text-xs text-ink-600">
+      <p className="text-center text-xs text-ink-600 dark:text-ink-400">
         Test mode — use card 4242 4242 4242 4242, any future expiry, any CVC.
       </p>
     </form>

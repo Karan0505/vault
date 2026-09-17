@@ -34,7 +34,7 @@ export function PromoBanners() {
       {banners.map((b, idx) => (
         <div
           key={idx}
-          className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl border border-gray-200/80 bg-gray-100 p-7 shadow-xs"
+          className="relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-gray-100 dark:bg-ink-900 p-7 shadow-xs"
         >
           {/* Background image on the right/cover */}
           <div className="absolute inset-0 -z-0">
@@ -45,14 +45,14 @@ export function PromoBanners() {
               className="object-cover object-right opacity-90 transition-transform duration-700 hover:scale-105"
               sizes="(min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-100/90 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-100/90 to-transparent dark:from-ink-950 dark:via-ink-950/90" />
           </div>
 
           <div className="relative z-10 flex flex-col items-start">
-            <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-gray-600">
+            <span className="font-sans text-[11px] font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-400">
               {b.eyebrow}
             </span>
-            <h3 className="mt-1.5 font-sans text-xl font-bold tracking-tight text-gray-950 max-w-[200px] leading-tight">
+            <h3 className="mt-1.5 font-sans text-xl font-bold tracking-tight text-gray-950 dark:text-white max-w-[200px] leading-tight">
               {b.title}
             </h3>
           </div>
@@ -62,8 +62,8 @@ export function PromoBanners() {
               href={b.href}
               className={`inline-flex items-center rounded-full px-5 py-2 text-xs font-semibold shadow-xs transition-all active:scale-[0.98] ${
                 b.isDark
-                  ? "bg-black text-white hover:bg-neutral-800"
-                  : "border border-gray-300 bg-white text-gray-900 hover:bg-gray-50"
+                  ? "bg-black dark:bg-white text-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200"
+                  : "border border-gray-300 dark:border-ink-700 bg-white dark:bg-ink-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-ink-800"
               }`}
             >
               {b.cta}

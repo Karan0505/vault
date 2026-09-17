@@ -167,7 +167,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
   return (
     <div className="flex flex-col gap-8">
       {/* 3-Step Progress Indicator */}
-      <div className="flex items-center justify-between border-b border-gray-200 pb-4 text-xs font-medium">
+      <div className="flex items-center justify-between border-b border-gray-200 dark:border-ink-800 pb-4 text-xs font-medium">
         {STEPS.map((s, idx) => {
           const isActive = currentStep === s.num;
           const isDone = currentStep > s.num;
@@ -176,18 +176,18 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
               <span
                 className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold ${
                   isActive
-                    ? "bg-black text-white"
+                    ? "bg-black dark:bg-white text-white dark:text-black"
                     : isDone
                     ? "bg-emerald-600 text-white"
-                    : "bg-gray-100 text-gray-400"
+                    : "bg-gray-100 dark:bg-ink-800 text-gray-400 dark:text-gray-500"
                 }`}
               >
                 {isDone ? <Check size={10} strokeWidth={3} /> : s.num}
               </span>
-              <span className={isActive ? "font-bold text-gray-900" : isDone ? "text-gray-700" : "text-gray-400"}>
+              <span className={isActive ? "font-bold text-gray-900 dark:text-white" : isDone ? "text-gray-700 dark:text-gray-300" : "text-gray-400 dark:text-gray-500"}>
                 {s.label}
               </span>
-              {idx < STEPS.length - 1 && <span className="ml-2 text-gray-300">/</span>}
+              {idx < STEPS.length - 1 && <span className="ml-2 text-gray-300 dark:text-ink-700">/</span>}
             </div>
           );
         })}
@@ -196,50 +196,50 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
       {currentStep === 1 && (
         <form onSubmit={handleStartPayment} className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <h3 className="font-sans text-base font-bold text-gray-900">
+            <h3 className="font-sans text-base font-bold text-gray-900 dark:text-white">
               1. Delivery & Contact Information
             </h3>
 
             <div className="space-y-6">
               {/* Contact Information */}
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 space-y-3 text-xs">
-                <h4 className="font-bold uppercase tracking-wider text-gray-900">
+              <div className="rounded-2xl border border-gray-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-4 space-y-3 text-xs">
+                <h4 className="font-bold uppercase tracking-wider text-gray-900 dark:text-white">
                   Contact Information
                 </h4>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Full Name</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Full Name</label>
                     <input
                       type="text"
                       required
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Jane Doe"
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-700">Email Address</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email Address</label>
                     <input
                       type="email"
                       required
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="jane@example.com"
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className="text-xs font-semibold text-gray-700">Phone Number (Optional)</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Phone Number (Optional)</label>
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+1 (555) 000-0000"
-                      className="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                      className="mt-1 w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -258,7 +258,7 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
             <button
               type="submit"
               disabled={isSubmitting || savedAddressesCount === 0 || !selectedAddressId}
-              className="ml-auto inline-flex items-center rounded-full bg-black px-7 py-3 text-xs font-semibold text-white shadow-sm hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+              className="ml-auto inline-flex items-center rounded-full bg-black dark:bg-white px-7 py-3 text-xs font-semibold text-white dark:text-black shadow-sm hover:bg-neutral-800 dark:hover:bg-neutral-200 disabled:opacity-50 transition-colors"
             >
               {isSubmitting ? "Reserving Items…" : "Continue to Payment"}
             </button>
@@ -269,14 +269,14 @@ export function CheckoutForm({ initialDiscountCode }: { initialDiscountCode?: st
       {currentStep === 2 && session && (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <ShieldCheck size={16} className="text-emerald-600" />
               <span>All transactions are secure and encrypted.</span>
             </div>
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="text-xs font-medium text-gray-600 hover:text-black"
+              className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
             >
               ← Edit Information
             </button>

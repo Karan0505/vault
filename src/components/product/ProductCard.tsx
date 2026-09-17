@@ -39,11 +39,11 @@ export function ProductCard({
       <WishlistButton
         productId={product.id}
         product={product}
-        className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-600 backdrop-blur-xs transition-all hover:bg-white hover:text-rose-600 shadow-xs"
+        className="absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 dark:bg-ink-800/90 text-gray-600 dark:text-gray-300 backdrop-blur-xs transition-all hover:bg-white dark:hover:bg-ink-800 hover:text-rose-600 dark:hover:text-rose-400 shadow-xs"
       />
 
       <Link href={`/products/${product.slug}`} className="flex flex-col">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 border border-gray-200/70 shadow-2xs transition-all duration-500 group-hover:shadow-md group-hover:border-gray-300">
+        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-ink-900 border border-gray-200/70 dark:border-ink-800 shadow-2xs transition-all duration-500 group-hover:shadow-md group-hover:border-gray-300 dark:group-hover:border-ink-700">
           {product.imageUrl ? (
             <Image
               src={product.imageUrl}
@@ -54,7 +54,7 @@ export function ProductCard({
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="h-full w-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+            <div className="h-full w-full bg-gray-100 dark:bg-ink-900 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
               No image
             </div>
           )}
@@ -72,17 +72,17 @@ export function ProductCard({
             {colorDots.slice(0, 4).map((c, i) => (
               <span
                 key={i}
-                className="h-2.5 w-2.5 rounded-full border border-black/10 shadow-xs"
+                className="h-2.5 w-2.5 rounded-full border border-black/10 dark:border-white/10 shadow-xs"
                 style={{ backgroundColor: c }}
               />
             ))}
           </div>
 
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-sans text-sm font-medium text-gray-900 transition-colors group-hover:text-black group-hover:underline">
+            <h3 className="font-sans text-sm font-medium text-gray-900 dark:text-gray-100 transition-colors group-hover:text-black dark:group-hover:text-white group-hover:underline">
               {product.title}
             </h3>
-            <span className="shrink-0 font-sans text-sm font-semibold text-gray-900">
+            <span className="shrink-0 font-sans text-sm font-semibold text-gray-900 dark:text-white">
               {priceLabel}
             </span>
           </div>

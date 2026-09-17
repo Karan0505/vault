@@ -256,17 +256,17 @@ export function AddressManager({
       {/* Header & Add Button */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900 dark:text-white">
             Saved Addresses
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             Manage your delivery destinations for faster checkout
           </p>
         </div>
         <button
           type="button"
           onClick={openAddModal}
-          className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-full bg-black dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-black shadow-xs hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
         >
           <Plus size={14} />
           <span>Add New Address</span>
@@ -274,7 +274,7 @@ export function AddressManager({
       </div>
 
       {error && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-800">
+        <div className="rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/30 p-3 text-xs text-rose-800 dark:text-rose-300">
           {error}
         </div>
       )}
@@ -283,23 +283,23 @@ export function AddressManager({
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {[1, 2].map((n) => (
-            <div key={n} className="h-40 rounded-2xl border border-gray-100 bg-gray-50/50 p-4 animate-pulse" />
+            <div key={n} className="h-40 rounded-2xl border border-gray-100 dark:border-ink-800 bg-gray-50/50 dark:bg-ink-900/50 p-4 animate-pulse" />
           ))}
         </div>
       ) : addresses.length === 0 ? (
         /* Empty State */
-        <div className="rounded-2xl border border-dashed border-gray-200 p-8 text-center bg-gray-50/50">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 text-gray-400">
+        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-ink-800 p-8 text-center bg-gray-50/50 dark:bg-ink-900/50">
+          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-ink-800 text-gray-400 dark:text-gray-500">
             <MapPin size={18} />
           </div>
-          <p className="mt-3 text-xs font-bold text-gray-800">No saved addresses yet</p>
-          <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+          <p className="mt-3 text-xs font-bold text-gray-800 dark:text-white">No saved addresses yet</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
             Save delivery addresses to speed up your checkout process on future orders.
           </p>
           <button
             type="button"
             onClick={openAddModal}
-            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-2 text-xs font-semibold text-white hover:bg-gray-800 transition-colors"
+            className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-black dark:bg-white px-4 py-2 text-xs font-semibold text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             <Plus size={13} />
             <span>Add your first address</span>
@@ -327,16 +327,16 @@ export function AddressManager({
                     onAddressSelect(addr);
                   }
                 }}
-                className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all text-xs bg-white ${
+                className={`relative flex flex-col justify-between rounded-2xl border p-5 transition-all text-xs bg-white dark:bg-ink-900 ${
                   isSelected
-                    ? "border-black ring-2 ring-black/10 shadow-xs"
-                    : "border-slate-200 hover:border-slate-300 shadow-xs"
+                    ? "border-black dark:border-white ring-2 ring-black/10 dark:ring-white/10 shadow-xs"
+                    : "border-slate-200 dark:border-ink-800 hover:border-slate-300 dark:hover:border-ink-700 shadow-xs"
                 } ${isSelectable ? "cursor-pointer" : ""}`}
               >
                 <div>
                   {/* Top Bar: Label & Badges */}
-                  <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                    <div className="flex items-center gap-1.5 text-slate-800">
+                  <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-ink-800">
+                    <div className="flex items-center gap-1.5 text-slate-800 dark:text-slate-200">
                       {getLabelIcon(addr.label)}
                       <span className="font-bold uppercase tracking-wider text-xs">
                         {addr.label}
@@ -344,8 +344,8 @@ export function AddressManager({
                     </div>
 
                     {addr.isDefault && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-300 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                        <CheckCircle2 size={12} className="text-emerald-600" />
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                        <CheckCircle2 size={12} className="text-emerald-600 dark:text-emerald-400" />
                         DEFAULT
                       </span>
                     )}
@@ -353,17 +353,17 @@ export function AddressManager({
 
                   {/* Recipient and Address Details */}
                   <div className="mt-3.5 space-y-1">
-                    <p className="font-bold text-slate-900 text-sm">{addr.fullName}</p>
-                    <p className="text-slate-600 text-xs leading-relaxed">
+                    <p className="font-bold text-slate-900 dark:text-white text-sm">{addr.fullName}</p>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
                       {addr.address}
                       {addr.apartment ? `, ${addr.apartment}` : ""}
                     </p>
-                    <p className="text-slate-600 text-xs">
+                    <p className="text-slate-600 dark:text-slate-300 text-xs">
                       {addr.city}, {addr.state} {addr.zip}
                     </p>
-                    <p className="text-slate-600 text-xs font-normal">{addr.country}</p>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs font-normal">{addr.country}</p>
                     {addr.phone && (
-                      <p className="text-[11px] text-slate-400 font-mono mt-1">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1">
                         Phone: {addr.phone}
                       </p>
                     )}
@@ -371,7 +371,7 @@ export function AddressManager({
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-ink-800 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -379,12 +379,12 @@ export function AddressManager({
                         e.stopPropagation();
                         openEditModal(addr);
                       }}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
-                      <Edit2 size={13} className="text-slate-500" />
+                      <Edit2 size={13} className="text-slate-500 dark:text-slate-400" />
                       <span>Edit</span>
                     </button>
-                    <span className="text-slate-200">|</span>
+                    <span className="text-slate-200 dark:text-ink-700">|</span>
                     <button
                       type="button"
                       disabled={actionInProgressId === addr.id}
@@ -392,12 +392,12 @@ export function AddressManager({
                         e.stopPropagation();
                         handleDeleteAddress(addr.id);
                       }}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 transition-colors disabled:opacity-50"
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-colors disabled:opacity-50"
                     >
                       {actionInProgressId === addr.id ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
-                        <Trash2 size={13} className="text-rose-500" />
+                        <Trash2 size={13} className="text-rose-500 dark:text-rose-400" />
                       )}
                       <span>Delete</span>
                     </button>
@@ -411,7 +411,7 @@ export function AddressManager({
                         e.stopPropagation();
                         handleSetDefault(addr.id);
                       }}
-                      className="text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors disabled:opacity-50"
+                      className="text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-50"
                     >
                       {actionInProgressId === addr.id ? "Updating..." : "Set as Default"}
                     </button>
@@ -431,28 +431,28 @@ export function AddressManager({
           aria-modal="true"
           aria-labelledby="address-modal-title"
         >
-          <div className="relative w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+          <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-ink-900 p-6 shadow-2xl border border-gray-100 dark:border-ink-800 animate-in fade-in zoom-in-95 duration-150">
             {/* Close Button */}
             <button
               type="button"
               onClick={closeModal}
-              className="absolute right-5 top-5 rounded-full p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+              className="absolute right-5 top-5 rounded-full p-1.5 text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
               aria-label="Close modal"
             >
               <X size={18} />
             </button>
 
-            <h3 id="address-modal-title" className="text-base font-bold text-gray-900">
+            <h3 id="address-modal-title" className="text-base font-bold text-gray-900 dark:text-white">
               {editingAddress ? "Edit Saved Address" : "Add New Address"}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
               Enter your shipping destination details below.
             </p>
 
             <form onSubmit={handleSaveAddress} className="mt-5 space-y-4 text-xs">
               {/* Address Label Selector */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-1.5">
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
                   Address Type / Label
                 </label>
                 <div className="flex gap-2">
@@ -463,8 +463,8 @@ export function AddressManager({
                       onClick={() => setFormData((prev) => ({ ...prev, label: lbl }))}
                       className={`flex-1 rounded-xl border py-2 text-xs font-semibold transition-colors ${
                         formData.label === lbl
-                          ? "border-black bg-black text-white"
-                          : "border-gray-200 bg-gray-50/50 text-gray-700 hover:bg-gray-100"
+                          ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                          : "border-gray-200 dark:border-ink-700 bg-gray-50/50 dark:bg-ink-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-ink-700"
                       }`}
                     >
                       {lbl}
@@ -475,7 +475,7 @@ export function AddressManager({
 
               {/* Full Name */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   Recipient Full Name *
                 </label>
                 <input
@@ -486,20 +486,20 @@ export function AddressManager({
                     setFormData((prev) => ({ ...prev, fullName: e.target.value }))
                   }
                   placeholder="e.g. Max Parmar"
-                  className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none ${
+                  className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none ${
                     formErrors.fullName
-                      ? "border-rose-300 bg-rose-50/50 focus:border-rose-500"
-                      : "border-gray-200 bg-gray-50/70 focus:border-black focus:bg-white"
+                      ? "border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30 focus:border-rose-500"
+                      : "border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800"
                   }`}
                 />
                 {formErrors.fullName && (
-                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.fullName}</p>
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{formErrors.fullName}</p>
                 )}
               </div>
 
               {/* Street Address */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   Street Address *
                 </label>
                 <input
@@ -510,20 +510,20 @@ export function AddressManager({
                     setFormData((prev) => ({ ...prev, address: e.target.value }))
                   }
                   placeholder="e.g. 123 Main Street"
-                  className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-gray-900 focus:outline-none ${
+                  className={`w-full rounded-xl border px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none ${
                     formErrors.address
-                      ? "border-rose-300 bg-rose-50/50 focus:border-rose-500"
-                      : "border-gray-200 bg-gray-50/70 focus:border-black focus:bg-white"
+                      ? "border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30 focus:border-rose-500"
+                      : "border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800"
                   }`}
                 />
                 {formErrors.address && (
-                  <p className="mt-1 text-[11px] text-rose-600">{formErrors.address}</p>
+                  <p className="mt-1 text-[11px] text-rose-600 dark:text-rose-400">{formErrors.address}</p>
                 )}
               </div>
 
               {/* Apartment / Suite (Optional) */}
               <div>
-                <label className="block font-semibold text-gray-700 mb-1">
+                <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   Apartment, suite, unit (optional)
                 </label>
                 <input
@@ -533,14 +533,14 @@ export function AddressManager({
                     setFormData((prev) => ({ ...prev, apartment: e.target.value }))
                   }
                   placeholder="e.g. Apt 4B"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3.5 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                  className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 px-3.5 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                 />
               </div>
 
               {/* City, State, ZIP */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">City *</label>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">City *</label>
                   <input
                     type="text"
                     required
@@ -549,15 +549,15 @@ export function AddressManager({
                       setFormData((prev) => ({ ...prev, city: e.target.value }))
                     }
                     placeholder="San Francisco"
-                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 focus:outline-none ${
+                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none ${
                       formErrors.city
-                        ? "border-rose-300 bg-rose-50/50"
-                        : "border-gray-200 bg-gray-50/70 focus:border-black focus:bg-white"
+                        ? "border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30"
+                        : "border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800"
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">State *</label>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">State *</label>
                   <input
                     type="text"
                     required
@@ -566,15 +566,15 @@ export function AddressManager({
                       setFormData((prev) => ({ ...prev, state: e.target.value }))
                     }
                     placeholder="CA"
-                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 focus:outline-none ${
+                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none ${
                       formErrors.state
-                        ? "border-rose-300 bg-rose-50/50"
-                        : "border-gray-200 bg-gray-50/70 focus:border-black focus:bg-white"
+                        ? "border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30"
+                        : "border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800"
                     }`}
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">ZIP *</label>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">ZIP *</label>
                   <input
                     type="text"
                     required
@@ -583,10 +583,10 @@ export function AddressManager({
                       setFormData((prev) => ({ ...prev, zip: e.target.value }))
                     }
                     placeholder="94103"
-                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 focus:outline-none ${
+                    className={`w-full rounded-xl border px-3 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none ${
                       formErrors.zip
-                        ? "border-rose-300 bg-rose-50/50"
-                        : "border-gray-200 bg-gray-50/70 focus:border-black focus:bg-white"
+                        ? "border-rose-300 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/30"
+                        : "border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800"
                     }`}
                   />
                 </div>
@@ -595,23 +595,23 @@ export function AddressManager({
               {/* Country & Phone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Country *</label>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Country *</label>
                   <select
                     value={formData.country}
                     onChange={(e) =>
                       setFormData((prev) => ({ ...prev, country: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800 px-3 py-2.5 text-xs text-gray-900 dark:text-white focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                   >
-                    <option value="United States">United States</option>
-                    <option value="Canada">Canada</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="India">India</option>
-                    <option value="Australia">Australia</option>
+                    <option value="United States" className="bg-white dark:bg-ink-900 text-gray-900 dark:text-white">United States</option>
+                    <option value="Canada" className="bg-white dark:bg-ink-900 text-gray-900 dark:text-white">Canada</option>
+                    <option value="United Kingdom" className="bg-white dark:bg-ink-900 text-gray-900 dark:text-white">United Kingdom</option>
+                    <option value="India" className="bg-white dark:bg-ink-900 text-gray-900 dark:text-white">India</option>
+                    <option value="Australia" className="bg-white dark:bg-ink-900 text-gray-900 dark:text-white">Australia</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block font-semibold text-gray-700 mb-1">Phone Number</label>
+                  <label className="block font-semibold text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
                   <input
                     type="tel"
                     value={formData.phone || ""}
@@ -619,7 +619,7 @@ export function AddressManager({
                       setFormData((prev) => ({ ...prev, phone: e.target.value }))
                     }
                     placeholder="+1 (555) 000-0000"
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50/70 px-3 py-2.5 text-xs text-gray-900 focus:border-black focus:bg-white focus:outline-none"
+                    className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800/80 px-3 py-2.5 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none"
                   />
                 </div>
               </div>
@@ -634,25 +634,25 @@ export function AddressManager({
                   }
                   className="rounded text-black focus:ring-black h-4 w-4"
                 />
-                <span className="font-semibold text-gray-700">
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
                   Set as default delivery address
                 </span>
               </label>
 
               {/* Submit / Cancel Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 dark:border-ink-800">
                 <button
                   type="button"
                   onClick={closeModal}
                   disabled={saving}
-                  className="rounded-full border border-gray-200 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-full border border-gray-200 dark:border-ink-700 px-4 py-2 font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-2 font-semibold text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-full bg-black dark:bg-white px-6 py-2 font-semibold text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50"
                 >
                   {saving && <Loader2 size={13} className="animate-spin" />}
                   <span>{editingAddress ? "Save Changes" : "Save Address"}</span>
