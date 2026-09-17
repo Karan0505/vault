@@ -79,22 +79,22 @@ export default function RegisterPage() {
     <div className="flex min-h-[calc(100vh-140px)] items-center justify-center py-12 px-4 sm:px-6">
       <div className="w-full max-w-md">
         {/* Card */}
-        <div className="rounded-3xl border border-gray-200/80 bg-white p-8 shadow-xs sm:p-10">
+        <div className="rounded-3xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-8 shadow-xs sm:p-10">
           <div className="text-center">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black font-serif text-base font-bold italic text-white shadow-xs">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-black dark:bg-white font-serif text-base font-bold italic text-white dark:text-black shadow-xs">
               V
             </span>
-            <h1 className="mt-4 font-sans text-2xl font-bold tracking-tight text-gray-900">
+            <h1 className="mt-4 font-sans text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
               Create an account
             </h1>
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               Join VAULT for order tracking, wishlist, and fast checkout.
             </p>
           </div>
 
           {error && (
-            <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-700">
-              <AlertCircle size={15} className="shrink-0 text-rose-500" />
+            <div className="mt-6 flex items-center gap-2 rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 p-3.5 text-xs text-rose-700 dark:text-rose-300">
+              <AlertCircle size={15} className="shrink-0 text-rose-500 dark:text-rose-400" />
               <span>{error}</span>
             </div>
           )}
@@ -102,7 +102,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4">
             {/* Full Name */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Full name
               </label>
               <div className="relative mt-1.5">
@@ -112,18 +112,18 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Jane Doe"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 py-2.5 pr-4 pl-10 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
                 <UserIcon
                   size={15}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                 />
               </div>
             </div>
 
             {/* Email Address */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Email address
               </label>
               <div className="relative mt-1.5">
@@ -133,18 +133,18 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 py-2.5 pr-4 pl-10 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
                 <Mail
                   size={15}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                 />
               </div>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Password
               </label>
               <div className="relative mt-1.5">
@@ -154,18 +154,18 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 py-2.5 pr-4 pl-10 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
                 <Lock
                   size={15}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                 />
               </div>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label className="block text-xs font-semibold text-gray-700">
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300">
                 Confirm password
               </label>
               <div className="relative mt-1.5">
@@ -175,35 +175,35 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pr-4 pl-10 text-xs text-gray-900 placeholder:text-gray-400 focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 py-2.5 pr-4 pl-10 text-xs text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-black dark:focus:border-white focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
                 />
                 <Lock
                   size={15}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
                 />
               </div>
             </div>
 
             {/* Password strength checklist */}
             {password.length > 0 && (
-              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-3 text-[11px] text-gray-600">
-                <p className="font-semibold text-gray-700 mb-1.5">Password requirements:</p>
+              <div className="rounded-2xl border border-gray-100 dark:border-ink-800 bg-gray-50/80 dark:bg-ink-850/60 p-3 text-[11px] text-gray-600 dark:text-gray-300">
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1.5">Password requirements:</p>
                 <ul className="space-y-1">
-                  <li className={`flex items-center gap-1.5 ${password.length >= 8 ? "text-emerald-600 font-medium" : "text-gray-500"}`}>
-                    <Check size={12} className={password.length >= 8 ? "text-emerald-600" : "text-gray-300"} />
+                  <li className={`flex items-center gap-1.5 ${password.length >= 8 ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}>
+                    <Check size={12} className={password.length >= 8 ? "text-emerald-600 dark:text-emerald-400" : "text-gray-300 dark:text-ink-600"} />
                     <span>At least 8 characters</span>
                   </li>
-                  <li className={`flex items-center gap-1.5 ${/\d/.test(password) ? "text-emerald-600 font-medium" : "text-gray-500"}`}>
-                    <Check size={12} className={/\d/.test(password) ? "text-emerald-600" : "text-gray-300"} />
+                  <li className={`flex items-center gap-1.5 ${/\d/.test(password) ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}>
+                    <Check size={12} className={/\d/.test(password) ? "text-emerald-600 dark:text-emerald-400" : "text-gray-300 dark:text-ink-600"} />
                     <span>At least one number (0-9)</span>
                   </li>
-                  <li className={`flex items-center gap-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "text-emerald-600 font-medium" : "text-gray-500"}`}>
-                    <Check size={12} className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "text-emerald-600" : "text-gray-300"} />
+                  <li className={`flex items-center gap-1.5 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-gray-500 dark:text-gray-400"}`}>
+                    <Check size={12} className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? "text-emerald-600 dark:text-emerald-400" : "text-gray-300 dark:text-ink-600"} />
                     <span>At least one special character (@, #, $, etc.)</span>
                   </li>
                   {confirmPassword.length > 0 && (
-                    <li className={`flex items-center gap-1.5 ${passwordsMatch ? "text-emerald-600 font-medium" : "text-rose-600 font-medium"}`}>
-                      <Check size={12} className={passwordsMatch ? "text-emerald-600" : "text-rose-400"} />
+                    <li className={`flex items-center gap-1.5 ${passwordsMatch ? "text-emerald-600 dark:text-emerald-400 font-medium" : "text-rose-600 dark:text-rose-400 font-medium"}`}>
+                      <Check size={12} className={passwordsMatch ? "text-emerald-600 dark:text-emerald-400" : "text-rose-400"} />
                       <span>Passwords match</span>
                     </li>
                   )}
@@ -214,16 +214,16 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || !passwordValidation.isValid || !passwordsMatch}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-black py-3 text-xs font-semibold text-white shadow-xs transition-colors hover:bg-gray-800 disabled:opacity-50 disabled:pointer-events-none"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-full bg-black dark:bg-white py-3 text-xs font-semibold text-white dark:text-black shadow-xs transition-colors hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
             >
               <span>{loading ? "Creating account..." : "Create account"}</span>
               {!loading && <ArrowRight size={14} />}
             </button>
           </form>
 
-          <div className="mt-8 border-t border-gray-100 pt-6 text-center text-xs text-gray-500">
+          <div className="mt-8 border-t border-gray-100 dark:border-ink-800 pt-6 text-center text-xs text-gray-500 dark:text-gray-400">
             <span>Already have an account? </span>
-            <Link href="/login" className="font-semibold text-black hover:underline">
+            <Link href="/login" className="font-semibold text-black dark:text-white hover:underline">
               Sign in
             </Link>
           </div>

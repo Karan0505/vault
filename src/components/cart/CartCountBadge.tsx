@@ -46,7 +46,7 @@ export function CartCountBadge() {
       type="button"
       onClick={open}
       aria-label={`Open cart${count ? `, ${count} items` : ""}`}
-      className="relative flex items-center justify-center p-2 text-gray-700 transition-colors hover:text-black rounded-full hover:bg-gray-100"
+      className="relative flex items-center justify-center p-2 text-gray-700 dark:text-gray-300 transition-colors hover:text-black dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-ink-800"
     >
       <ShoppingBag size={20} strokeWidth={1.8} />
       {Boolean(count && count > 0) && (

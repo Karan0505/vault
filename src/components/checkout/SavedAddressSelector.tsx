@@ -165,25 +165,25 @@ export function SavedAddressSelector({
                 }
               }}
               onClick={() => onSelectAddress(addr)}
-              className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all text-xs focus:outline-hidden bg-white ${
+              className={`relative flex cursor-pointer flex-col justify-between rounded-2xl border p-4 transition-all text-xs focus:outline-hidden bg-white dark:bg-ink-900 ${
                 isSelected
-                  ? "border-black ring-2 ring-black/10 shadow-xs"
-                  : "border-slate-200 hover:border-slate-300 shadow-xs"
+                  ? "border-black dark:border-white ring-2 ring-black/10 dark:ring-white/10 shadow-xs"
+                  : "border-slate-200 dark:border-ink-800 hover:border-slate-300 dark:hover:border-ink-700 shadow-xs"
               }`}
             >
               <div>
-                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-ink-800">
                   <div className="flex items-center gap-2">
                     {/* Custom Radio Button Indicator */}
                     <div
                       className={`flex h-4 w-4 items-center justify-center rounded-full border transition-colors ${
-                        isSelected ? "border-black bg-black text-white" : "border-gray-300 bg-white"
+                        isSelected ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black" : "border-gray-300 dark:border-ink-700 bg-white dark:bg-ink-800"
                       }`}
                     >
                       {isSelected && <Check size={10} strokeWidth={3} />}
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-slate-800">
+                    <div className="flex items-center gap-1.5 text-slate-800 dark:text-gray-100">
                       {getLabelIcon(addr.label)}
                       <span className="font-bold uppercase tracking-wider text-xs">
                         {addr.label}
@@ -192,25 +192,25 @@ export function SavedAddressSelector({
                   </div>
 
                   {addr.isDefault && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-300 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700">
-                      <CheckCircle2 size={10} className="text-emerald-600" />
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                      <CheckCircle2 size={10} className="text-emerald-600 dark:text-emerald-400" />
                       DEFAULT
                     </span>
                   )}
                 </div>
 
-                <div className="mt-2.5 space-y-0.5 text-gray-700">
-                  <p className="font-bold text-gray-900 text-xs">{addr.fullName}</p>
-                  <p className="text-gray-600 leading-tight">
+                <div className="mt-2.5 space-y-0.5 text-gray-700 dark:text-gray-300">
+                  <p className="font-bold text-gray-900 dark:text-white text-xs">{addr.fullName}</p>
+                  <p className="text-gray-600 dark:text-gray-300 leading-tight">
                     {addr.address}
                     {addr.apartment ? `, ${addr.apartment}` : ""}
                   </p>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300">
                     {addr.city}, {addr.state} {addr.zip}
                   </p>
-                  <p className="text-[11px] text-gray-500 font-medium">{addr.country}</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">{addr.country}</p>
                   {addr.phone && (
-                    <p className="text-[10px] text-gray-400 font-mono mt-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-1">
                       Phone: {addr.phone}
                     </p>
                   )}

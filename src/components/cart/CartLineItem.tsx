@@ -38,8 +38,8 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
   const overStock = localQuantity > line.onHand;
 
   return (
-    <div className="flex items-start gap-4 border-b border-gray-100 py-4.5 last:border-0">
-      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 border border-gray-200/70">
+    <div className="flex items-start gap-4 border-b border-gray-100 dark:border-ink-800 py-4.5 last:border-0">
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-ink-800 border border-gray-200/70 dark:border-ink-700">
         {line.imageUrl ? (
           <Image
             src={line.imageUrl}
@@ -49,7 +49,7 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
             className="object-cover object-center"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-500">
+          <div className="flex h-full w-full items-center justify-center font-sans text-xs text-gray-500 dark:text-gray-400">
             📦
           </div>
         )}
@@ -59,16 +59,16 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
         <div className="flex items-start justify-between gap-2">
           <Link
             href={`/products/${line.productSlug}`}
-            className="font-sans text-sm font-semibold text-gray-900 transition-colors hover:underline"
+            className="font-sans text-sm font-semibold text-gray-900 dark:text-white transition-colors hover:underline"
           >
             {line.productTitle}
           </Link>
-          <span className="font-sans text-sm font-bold text-gray-900">
+          <span className="font-sans text-sm font-bold text-gray-900 dark:text-white">
             {formatMoney({ amount: line.lineTotal, currency: line.currency })}
           </span>
         </div>
 
-        <p className="mt-0.5 font-sans text-xs text-gray-500">
+        <p className="mt-0.5 font-sans text-xs text-gray-500 dark:text-gray-400">
           {Object.values(line.options).join(" / ")}
         </p>
 
@@ -85,17 +85,17 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
 
         <div className="mt-3 flex items-center justify-between">
           {/* Stepper */}
-          <div className="flex items-center rounded-lg border border-gray-200 bg-white p-0.5 shadow-xs">
+          <div className="flex items-center rounded-lg border border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-800 p-0.5 shadow-xs">
             <button
               type="button"
               onClick={() => updateQuantity(localQuantity - 1)}
               disabled={isPending}
               aria-label="Decrease quantity"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-ink-700 disabled:opacity-30"
             >
               <Minus size={12} />
             </button>
-            <span className="w-7 text-center font-mono text-xs font-semibold text-gray-900">
+            <span className="w-7 text-center font-mono text-xs font-semibold text-gray-900 dark:text-white">
               {localQuantity}
             </span>
             <button
@@ -103,7 +103,7 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
               onClick={() => updateQuantity(localQuantity + 1)}
               disabled={isPending}
               aria-label="Increase quantity"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 disabled:opacity-30"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-ink-700 disabled:opacity-30"
             >
               <Plus size={12} />
             </button>
@@ -113,7 +113,7 @@ export function CartLineItem({ line, onChanged }: { line: CartLineView; onChange
             type="button"
             onClick={remove}
             disabled={isPending}
-            className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-rose-600"
+            className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 transition-colors hover:text-rose-600 dark:hover:text-rose-400"
           >
             <Trash2 size={13} />
             <span>Remove</span>

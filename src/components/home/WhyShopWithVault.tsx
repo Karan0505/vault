@@ -25,8 +25,8 @@ export function WhyShopWithVault() {
   ];
 
   return (
-    <section className="flex flex-col items-center gap-8 py-6 border-t border-b border-gray-200/80">
-      <h2 className="font-sans text-xl font-bold tracking-tight text-gray-900 sm:text-2xl text-center">
+    <section className="flex flex-col items-center gap-8 py-6 border-t border-b border-gray-200/80 dark:border-ink-800">
+      <h2 className="font-sans text-xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-2xl text-center">
         Why Shop With VAULT?
       </h2>
 
@@ -36,14 +36,14 @@ export function WhyShopWithVault() {
           return (
             <div
               key={idx}
-              className="flex items-start gap-3.5 rounded-2xl border border-gray-200/70 bg-white p-4 shadow-2xs"
+              className="flex items-start gap-3.5 rounded-2xl border border-gray-200/70 dark:border-ink-800 bg-white dark:bg-ink-900 p-4 shadow-2xs"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-800">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-ink-800 text-gray-800 dark:text-gray-200">
                 <Icon size={18} strokeWidth={1.8} />
               </div>
               <div className="flex flex-col text-left">
-                <h3 className="font-sans text-xs font-bold text-gray-900">{f.title}</h3>
-                <p className="mt-0.5 font-sans text-xs text-gray-500 leading-snug">{f.desc}</p>
+                <h3 className="font-sans text-xs font-bold text-gray-900 dark:text-white">{f.title}</h3>
+                <p className="mt-0.5 font-sans text-xs text-gray-500 dark:text-gray-400 leading-snug">{f.desc}</p>
               </div>
             </div>
           );

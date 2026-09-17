@@ -42,11 +42,11 @@ export default async function AccountPage() {
 
   return (
     <div className="mx-auto max-w-5xl py-6">
-      <div className="border-b border-gray-200 pb-6">
-        <h1 className="font-sans text-3xl font-extrabold tracking-tight text-gray-900">
+      <div className="border-b border-gray-200 dark:border-ink-800 pb-6">
+        <h1 className="font-sans text-3xl font-extrabold tracking-tight text-gray-900 dark:text-white">
           My Account
         </h1>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           Welcome back, {userProfile?.name || session.user.name || "Customer"}. Manage your orders and preferences.
         </p>
       </div>

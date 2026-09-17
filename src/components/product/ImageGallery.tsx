@@ -16,7 +16,7 @@ export function ImageGallery({ images, productTitle }: { images: GalleryImage[];
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gray-100 border border-gray-200/80 shadow-xs">
+      <div className="relative aspect-[4/5] overflow-hidden rounded-3xl bg-gray-100 dark:bg-ink-900 border border-gray-200/80 dark:border-ink-800 shadow-xs">
         <AnimatePresence mode="wait" initial={false}>
           {active ? (
             <motion.div
@@ -52,10 +52,10 @@ export function ImageGallery({ images, productTitle }: { images: GalleryImage[];
               aria-label={`Show image ${index + 1} of ${images.length}`}
               aria-current={index === activeIndex}
               className={cn(
-                "relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border transition-all",
+                "relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border transition-all cursor-pointer",
                 index === activeIndex
-                  ? "border-black ring-2 ring-black/10 scale-95"
-                  : "border-gray-200 hover:border-gray-400 opacity-70 hover:opacity-100"
+                  ? "border-black dark:border-white ring-2 ring-black/10 dark:ring-white/10 scale-95"
+                  : "border-gray-200 dark:border-ink-700 hover:border-gray-400 dark:hover:border-ink-500 opacity-70 hover:opacity-100"
               )}
             >
               <Image src={image.url} alt="" fill sizes="80px" className="object-cover" />

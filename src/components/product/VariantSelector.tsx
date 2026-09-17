@@ -93,10 +93,10 @@ export function VariantSelector({
 
         return (
           <div key={name} className="flex flex-col gap-2.5">
-            <div className="flex items-center justify-between text-xs font-semibold text-gray-900">
+            <div className="flex items-center justify-between text-xs font-semibold text-gray-900 dark:text-white">
               <span className="capitalize">{name}</span>
               {currentSelected && (
-                <span className="text-gray-500 font-normal">{currentSelected}</span>
+                <span className="text-gray-500 dark:text-gray-400 font-normal">{currentSelected}</span>
               )}
             </div>
 
@@ -110,8 +110,8 @@ export function VariantSelector({
                     onClick={() => setOption(name, val)}
                     className={`flex h-10 min-w-10 items-center justify-center rounded-xl border px-3 text-xs font-medium transition-all ${
                       isSelected
-                        ? "border-black bg-black text-white shadow-xs"
-                        : "border-gray-200 bg-white text-gray-800 hover:border-gray-400"
+                        ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black shadow-xs"
+                        : "border-gray-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-gray-800 dark:text-gray-200 hover:border-gray-400 dark:hover:border-ink-500"
                     }`}
                   >
                     {val}
@@ -125,16 +125,16 @@ export function VariantSelector({
 
       {/* Stock & pricing status */}
       {resolvedVariant && (
-        <div className="flex items-center justify-between border-t border-gray-100 pt-4 text-xs font-medium">
-          <span className="text-gray-500 font-mono">SKU: {resolvedVariant.sku}</span>
+        <div className="flex items-center justify-between border-t border-gray-100 dark:border-ink-800 pt-4 text-xs font-medium">
+          <span className="text-gray-500 dark:text-gray-400 font-mono">SKU: {resolvedVariant.sku}</span>
           {resolvedVariant.onHand <= 0 ? (
-            <span className="text-rose-600 font-semibold">Out of Stock</span>
+            <span className="text-rose-600 dark:text-rose-400 font-semibold">Out of Stock</span>
           ) : resolvedVariant.onHand <= resolvedVariant.lowStockThreshold ? (
-            <span className="text-amber-600 font-semibold">
+            <span className="text-amber-600 dark:text-amber-400 font-semibold">
               Low Stock — Only {resolvedVariant.onHand} left
             </span>
           ) : (
-            <span className="text-emerald-600 font-semibold">In Stock</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">In Stock</span>
           )}
         </div>
       )}
@@ -151,11 +151,11 @@ export function VariantSelector({
           <button
             type="button"
             onClick={handleWishlistClick}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white py-3 text-xs font-semibold text-gray-800 shadow-xs transition-colors hover:bg-gray-50 cursor-pointer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 dark:border-ink-700 bg-white dark:bg-ink-900 py-3 text-xs font-semibold text-gray-800 dark:text-gray-100 shadow-xs transition-colors hover:bg-gray-50 dark:hover:bg-ink-800 cursor-pointer"
           >
             <Heart
               size={16}
-              className={wishlisted ? "fill-rose-500 text-rose-500" : "text-gray-600"}
+              className={wishlisted ? "fill-rose-500 text-rose-500" : "text-gray-600 dark:text-gray-400"}
             />
             <span>{wishlisted ? "In Your Wishlist" : "Add to Wishlist"}</span>
           </button>

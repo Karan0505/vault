@@ -8,7 +8,7 @@ export default function CartPage() {
     <div className="flex flex-col gap-8">
       <div>
         <p className="eyebrow">Cart</p>
-        <h1 className="mt-2 font-display text-3xl italic text-ink-50">Your cart</h1>
+        <h1 className="mt-2 font-display text-3xl italic text-gray-900 dark:text-gray-100">Your cart</h1>
       </div>
       <CartPageBody />
     </div>

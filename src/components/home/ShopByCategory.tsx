@@ -51,12 +51,12 @@ export function ShopByCategory() {
   return (
     <section className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h2 className="font-sans text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+        <h2 className="font-sans text-xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-2xl">
           Shop by Category
         </h2>
         <Link
           href="/search"
-          className="group inline-flex items-center gap-1 font-sans text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+          className="group inline-flex items-center gap-1 font-sans text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
         >
           <span>View all categories</span>
           <ArrowRight size={13} className="transition-transform group-hover:translate-x-0.5" />
@@ -68,9 +68,9 @@ export function ShopByCategory() {
           <Link
             key={cat.name}
             href={cat.href}
-            className="group flex flex-col items-center rounded-2xl border border-gray-200/80 bg-gray-50/60 p-3 text-center transition-all duration-300 hover:border-gray-300 hover:bg-white hover:shadow-md"
+            className="group flex flex-col items-center rounded-2xl border border-gray-200/80 dark:border-ink-800 bg-gray-50/60 dark:bg-ink-900/60 p-3 text-center transition-all duration-300 hover:border-gray-300 dark:hover:border-ink-700 hover:bg-white dark:hover:bg-ink-900 hover:shadow-md"
           >
-            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-white p-2">
+            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-white dark:bg-ink-800 p-2">
               <Image
                 src={cat.image}
                 alt={cat.name}
@@ -80,10 +80,10 @@ export function ShopByCategory() {
               />
             </div>
             <div className="mt-3 flex flex-col items-center">
-              <span className="font-sans text-xs font-bold text-gray-900 group-hover:underline">
+              <span className="font-sans text-xs font-bold text-gray-900 dark:text-gray-100 group-hover:underline">
                 {cat.name}
               </span>
-              <span className="font-sans text-[11px] text-gray-500">
+              <span className="font-sans text-[11px] text-gray-500 dark:text-gray-400">
                 {cat.count}
               </span>
             </div>

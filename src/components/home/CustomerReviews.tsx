@@ -49,7 +49,7 @@ export function CustomerReviews() {
         {reviews.map((r, idx) => (
           <div
             key={idx}
-            className="flex flex-col justify-between rounded-2xl border border-gray-200/80 bg-white p-6 shadow-2xs transition-all hover:border-gray-300 hover:shadow-sm"
+            className="flex flex-col justify-between rounded-2xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-6 shadow-2xs transition-all hover:border-gray-300 dark:hover:border-ink-700 hover:shadow-sm"
           >
             <div>
               {/* Rating stars */}
@@ -59,18 +59,18 @@ export function CustomerReviews() {
                 ))}
               </div>
 
-              <p className="mt-4 font-sans text-xs text-gray-700 leading-relaxed italic">
+              <p className="mt-4 font-sans text-xs text-gray-700 dark:text-gray-300 leading-relaxed italic">
                 “{r.quote}”
               </p>
             </div>
 
-            <div className="mt-6 flex items-center gap-3 border-t border-gray-100 pt-4">
-              <div className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200">
+            <div className="mt-6 flex items-center gap-3 border-t border-gray-100 dark:border-ink-800 pt-4">
+              <div className="relative h-9 w-9 overflow-hidden rounded-full border border-gray-200 dark:border-ink-700">
                 <Image src={r.avatar} alt={r.name} fill className="object-cover" />
               </div>
               <div className="flex flex-col text-left">
-                <span className="font-sans text-xs font-bold text-gray-900">{r.name}</span>
-                <span className="font-sans text-[10px] text-gray-500">{r.role}</span>
+                <span className="font-sans text-xs font-bold text-gray-900 dark:text-white">{r.name}</span>
+                <span className="font-sans text-[10px] text-gray-500 dark:text-gray-400">{r.role}</span>
               </div>
             </div>
           </div>

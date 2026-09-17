@@ -61,21 +61,21 @@ export function DiscountCodeForm({ onApplied }: { onApplied: (code: string, prev
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <label className="font-sans text-xs font-semibold text-gray-700">Discount code</label>
+      <label className="font-sans text-xs font-semibold text-gray-700 dark:text-gray-300">Discount code</label>
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Tag size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" />
           <input
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             placeholder="Enter code"
-            className="w-full rounded-xl border border-gray-200 bg-gray-50/70 py-2.5 pl-9 pr-3 font-mono text-xs uppercase text-gray-900 placeholder:text-gray-400 placeholder:normal-case focus:border-black focus:bg-white focus:outline-none transition-colors"
+            className="w-full rounded-xl border border-gray-200 dark:border-ink-700 bg-gray-50/70 dark:bg-ink-800 py-2.5 pl-9 pr-3 font-mono text-xs uppercase text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 placeholder:normal-case focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-ink-800 focus:outline-none transition-colors"
           />
         </div>
         <button
           type="submit"
           disabled={status === "loading" || !code.trim()}
-          className="rounded-xl border border-gray-300 bg-white px-4 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-50 active:bg-gray-100 disabled:opacity-40 cursor-pointer"
+          className="rounded-xl border border-gray-300 dark:border-ink-700 bg-white dark:bg-ink-800 px-4 text-xs font-semibold text-gray-800 dark:text-gray-100 transition-colors hover:bg-gray-50 dark:hover:bg-ink-700 active:bg-gray-100 dark:active:bg-ink-600 disabled:opacity-40 cursor-pointer"
         >
           {status === "loading" ? "…" : "Apply"}
         </button>

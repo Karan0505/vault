@@ -11,7 +11,7 @@ export function WishlistCountBadge() {
     <Link
       href="/wishlist"
       aria-label={`Wishlist${wishlistCount > 0 ? `, ${wishlistCount} items` : ""}`}
-      className="relative flex items-center gap-1.5 p-2 text-gray-700 transition-colors hover:text-black rounded-full hover:bg-gray-100"
+      className="relative flex items-center gap-1.5 p-2 text-gray-700 dark:text-gray-300 transition-colors hover:text-black dark:hover:text-white rounded-full hover:bg-gray-100 dark:hover:bg-ink-800"
     >
       <Heart
         size={18}

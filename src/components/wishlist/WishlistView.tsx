@@ -26,18 +26,18 @@ export function WishlistView() {
 
   if (wishlistItems.length === 0) {
     return (
-      <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-xs">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 text-rose-500">
+      <div className="rounded-3xl border border-dashed border-gray-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-12 text-center shadow-xs">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-500 dark:text-rose-400">
           <Heart size={28} className="stroke-[1.5]" />
         </div>
-        <h3 className="mt-4 font-display text-lg font-bold text-gray-900">Your Wishlist is Empty</h3>
-        <p className="mt-1 text-xs text-gray-500 max-w-sm mx-auto">
+        <h3 className="mt-4 font-display text-lg font-bold text-gray-900 dark:text-white">Your Wishlist is Empty</h3>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
           Explore the VAULT catalogue and click the heart icon on any item you love to save it here for later.
         </p>
         <div className="mt-6">
           <Link
             href="/search"
-            className="inline-flex items-center gap-2 rounded-full bg-black px-6 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center gap-2 rounded-full bg-black dark:bg-white px-6 py-2.5 text-xs font-semibold text-white dark:text-black shadow-xs hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             <span>Discover Products</span>
             <ArrowRight size={13} />
@@ -50,7 +50,7 @@ export function WishlistView() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-xs text-gray-500">
+        <p className="font-mono text-xs text-gray-500 dark:text-gray-400">
           {wishlistItems.length} {wishlistItems.length === 1 ? "saved item" : "saved items"}
         </p>
       </div>
@@ -65,7 +65,7 @@ export function WishlistView() {
           return (
             <div
               key={item.id}
-              className="group relative flex flex-col justify-between rounded-2xl border border-gray-200/80 bg-white p-3 shadow-2xs transition-all duration-300 hover:border-gray-300 hover:shadow-md"
+              className="group relative flex flex-col justify-between rounded-2xl border border-gray-200/80 dark:border-ink-800 bg-white dark:bg-ink-900 p-3 shadow-2xs transition-all duration-300 hover:border-gray-300 dark:hover:border-ink-700 hover:shadow-md"
             >
               <div>
                 {/* Remove button */}
@@ -73,7 +73,7 @@ export function WishlistView() {
                   type="button"
                   onClick={() => removeFromWishlist(item.id)}
                   aria-label={`Remove ${item.title} from wishlist`}
-                  className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-rose-500 backdrop-blur-xs transition-all hover:bg-rose-50 hover:text-rose-600 shadow-xs cursor-pointer"
+                  className="absolute top-4 right-4 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 dark:bg-ink-800/90 text-rose-500 dark:text-rose-400 backdrop-blur-xs transition-all hover:bg-rose-50 dark:hover:bg-ink-700 hover:text-rose-600 shadow-xs cursor-pointer"
                 >
                   <Trash2 size={13} />
                 </button>
@@ -81,7 +81,7 @@ export function WishlistView() {
                 {/* Product Image */}
                 <Link
                   href={`/products/${item.slug}`}
-                  className="relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-gray-50"
+                  className="relative block aspect-[4/5] w-full overflow-hidden rounded-xl bg-gray-50 dark:bg-ink-800"
                 >
                   {item.imageUrl ? (
                     <Image
@@ -92,7 +92,7 @@ export function WishlistView() {
                       sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
                     />
                   ) : (
-                    <div className="h-full w-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+                    <div className="h-full w-full bg-gray-100 dark:bg-ink-800 flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
                       No image
                     </div>
                   )}
@@ -107,27 +107,27 @@ export function WishlistView() {
                 {/* Product Info */}
                 <div className="mt-3 flex flex-col gap-1">
                   {item.categoryName && (
-                    <span className="font-mono text-[10px] uppercase tracking-wider text-gray-400">
+                    <span className="font-mono text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500">
                       {item.categoryName}
                     </span>
                   )}
                   <Link
                     href={`/products/${item.slug}`}
-                    className="font-sans text-xs font-semibold text-gray-900 hover:underline line-clamp-1"
+                    className="font-sans text-xs font-semibold text-gray-900 dark:text-gray-100 hover:underline line-clamp-1"
                   >
                     {item.title}
                   </Link>
-                  <span className="font-sans text-xs font-bold text-gray-900 mt-0.5">
+                  <span className="font-sans text-xs font-bold text-gray-900 dark:text-white mt-0.5">
                     {priceLabel}
                   </span>
                 </div>
               </div>
 
               {/* View / Buy Action */}
-              <div className="mt-4 pt-3 border-t border-gray-100">
+              <div className="mt-4 pt-3 border-t border-gray-100 dark:border-ink-800">
                 <Link
                   href={`/products/${item.slug}`}
-                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gray-50 py-2 text-xs font-semibold text-gray-900 hover:bg-black hover:text-white transition-colors"
+                  className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gray-50 dark:bg-ink-800 py-2 text-xs font-semibold text-gray-900 dark:text-gray-100 hover:bg-black dark:hover:bg-white hover:text-white dark:hover:text-black transition-colors"
                 >
                   <span>View Product</span>
                   <ExternalLink size={11} />

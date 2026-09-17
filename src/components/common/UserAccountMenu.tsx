@@ -99,8 +99,8 @@ export function UserAccountMenu() {
   if (isLoading) {
     return (
       <div className="flex items-center gap-1.5 py-1 px-2">
-        <div className="h-4 w-4 rounded-full bg-gray-200 animate-pulse" />
-        <div className="hidden h-3 w-12 rounded bg-gray-200 animate-pulse sm:inline-block" />
+        <div className="h-4 w-4 rounded-full bg-gray-200 dark:bg-ink-800 animate-pulse" />
+        <div className="hidden h-3 w-12 rounded bg-gray-200 dark:bg-ink-800 animate-pulse sm:inline-block" />
       </div>
     );
   }
@@ -110,7 +110,7 @@ export function UserAccountMenu() {
     return (
       <Link
         href="/login?callbackUrl=/account"
-        className="flex items-center gap-1.5 hover:text-black transition-colors py-1 px-2 rounded-full hover:bg-gray-50"
+        className="flex items-center gap-1.5 hover:text-black dark:text-gray-300 dark:hover:text-white transition-colors py-1 px-2 rounded-full hover:bg-gray-50 dark:hover:bg-ink-800"
       >
         <UserIcon size={16} strokeWidth={1.8} />
         <span className="hidden sm:inline">Account</span>
@@ -120,10 +120,10 @@ export function UserAccountMenu() {
 
   // 2. Authenticated: Click opens interactive role-aware menu
   const roleBadgeStyles: Record<UserRole, string> = {
-    CUSTOMER: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    ADMIN: "bg-purple-50 text-purple-700 border-purple-200",
-    FULFILMENT: "bg-blue-50 text-blue-700 border-blue-200",
-    SUPPORT: "bg-amber-50 text-amber-700 border-amber-200",
+    CUSTOMER: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800",
+    ADMIN: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-800",
+    FULFILMENT: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800",
+    SUPPORT: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800",
   };
 
   return (
@@ -132,9 +132,9 @@ export function UserAccountMenu() {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        className="flex items-center gap-1.5 rounded-full py-1 px-2.5 text-xs font-semibold text-gray-800 transition-colors hover:bg-gray-100 hover:text-black"
+        className="flex items-center gap-1.5 rounded-full py-1 px-2.5 text-xs font-semibold text-gray-800 dark:text-gray-200 transition-colors hover:bg-gray-100 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white"
       >
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black text-[10px] font-bold text-white uppercase">
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-black dark:bg-white text-[10px] font-bold text-white dark:text-black uppercase">
           {user.name ? user.name[0] : user.email[0]}
         </span>
         <span className="hidden sm:inline max-w-[90px] truncate">
@@ -145,11 +145,11 @@ export function UserAccountMenu() {
 
       {/* Dropdown Card */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-gray-200 bg-white p-2 shadow-xl ring-1 ring-black/5 z-50 animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-2xl border border-gray-200 dark:border-ink-800 bg-white dark:bg-ink-900 p-2 shadow-xl ring-1 ring-black/5 dark:ring-white/5 z-50 animate-in fade-in zoom-in-95 duration-100">
           {/* User info banner */}
-          <div className="border-b border-gray-100 px-3 py-2.5">
+          <div className="border-b border-gray-100 dark:border-ink-800 px-3 py-2.5">
             <div className="flex items-center justify-between">
-              <p className="text-xs font-bold text-gray-900 truncate">
+              <p className="text-xs font-bold text-gray-900 dark:text-white truncate">
                 {user.name || "Customer"}
               </p>
               <span
@@ -160,7 +160,7 @@ export function UserAccountMenu() {
                 {user.role}
               </span>
             </div>
-            <p className="mt-0.5 text-[11px] text-gray-500 truncate font-mono">
+            <p className="mt-0.5 text-[11px] text-gray-500 dark:text-gray-400 truncate font-mono">
               {user.email}
             </p>
           </div>
@@ -172,7 +172,7 @@ export function UserAccountMenu() {
                 <Link
                   href="/account"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <UserIcon size={14} className="text-gray-400" />
                   <span>My Account</span>
@@ -180,7 +180,7 @@ export function UserAccountMenu() {
                 <Link
                   href="/account"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Package size={14} className="text-gray-400" />
                   <span>My Orders</span>
@@ -188,7 +188,7 @@ export function UserAccountMenu() {
                 <Link
                   href="/account"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Settings size={14} className="text-gray-400" />
                   <span>Settings</span>
@@ -201,15 +201,15 @@ export function UserAccountMenu() {
                 <Link
                   href="/admin"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-purple-900 hover:bg-purple-50 transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-purple-900 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors"
                 >
-                  <LayoutDashboard size={14} className="text-purple-600" />
+                  <LayoutDashboard size={14} className="text-purple-600 dark:text-purple-400" />
                   <span>Admin Dashboard</span>
                 </Link>
                 <Link
                   href="/admin/products"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Package size={14} className="text-gray-400" />
                   <span>Catalogue & Products</span>
@@ -217,7 +217,7 @@ export function UserAccountMenu() {
                 <Link
                   href="/admin/orders"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Truck size={14} className="text-gray-400" />
                   <span>Orders & Shipments</span>
@@ -225,7 +225,7 @@ export function UserAccountMenu() {
                 <Link
                   href="/admin/inventory"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Shield size={14} className="text-gray-400" />
                   <span>Inventory Control</span>
@@ -238,15 +238,15 @@ export function UserAccountMenu() {
                 <Link
                   href="/fulfilment"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-blue-900 hover:bg-blue-50 transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-blue-900 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors"
                 >
-                  <LayoutDashboard size={14} className="text-blue-600" />
+                  <LayoutDashboard size={14} className="text-blue-600 dark:text-blue-400" />
                   <span>Fulfilment Dashboard</span>
                 </Link>
                 <Link
                   href="/fulfilment"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <Package size={14} className="text-gray-400" />
                   <span>Packing Queue</span>
@@ -259,15 +259,15 @@ export function UserAccountMenu() {
                 <Link
                   href="/support"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-amber-900 hover:bg-amber-50 transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-medium text-amber-900 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors"
                 >
-                  <LayoutDashboard size={14} className="text-amber-600" />
+                  <LayoutDashboard size={14} className="text-amber-600 dark:text-amber-400" />
                   <span>Support Dashboard</span>
                 </Link>
                 <Link
                   href="/support"
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-ink-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   <HelpCircle size={14} className="text-gray-400" />
                   <span>Customer Tickets</span>
@@ -277,11 +277,11 @@ export function UserAccountMenu() {
           </div>
 
           {/* Sign Out Action */}
-          <div className="border-t border-gray-100 pt-1">
+          <div className="border-t border-gray-100 dark:border-ink-800 pt-1">
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+              className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left"
             >
               <LogOut size={14} />
               <span>Sign out</span>

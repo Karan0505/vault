@@ -14,7 +14,7 @@ interface WishlistButtonProps {
 export function WishlistButton({
   productId,
   product,
-  className = "absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-gray-600 backdrop-blur-xs transition-all hover:bg-white hover:text-rose-600 shadow-xs",
+  className = "absolute top-3 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 dark:bg-ink-800/90 text-gray-600 dark:text-gray-300 backdrop-blur-xs transition-all hover:bg-white dark:hover:bg-ink-800 hover:text-rose-600 dark:hover:text-rose-400 shadow-xs",
   iconSize = 14,
 }: WishlistButtonProps) {
   const { isWishlisted, toggleWishlist } = useWishlist();
@@ -38,7 +38,7 @@ export function WishlistButton({
         className={`transition-transform duration-200 ${
           wishlisted
             ? "fill-rose-500 text-rose-500 scale-110"
-            : "text-gray-600 group-hover/btn:text-rose-600"
+            : "text-gray-600 dark:text-gray-400 group-hover/btn:text-rose-600 dark:group-hover/btn:text-rose-400"
         }`}
       />
     </button>
