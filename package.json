@@ -37,7 +37,7 @@
     "resend": "^4.0.1",
     "stripe": "^17.2.1",
     "uploadthing": "^7.1.0",
-    "zod": "^3.23.8"
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^15.0.0",
